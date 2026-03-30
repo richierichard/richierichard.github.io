@@ -35,9 +35,9 @@
 
 <!-- NAV -->
 <nav>
-  <a href="#" class="nav-logo">RR/</a>
+  <a href="#" class="nav-logo">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup>∞</a>
   <ul class="nav-links">
-    <li><a href="#about">About</a></li>
+    <li><a href="#about-me">About</a></li>
     <li><a href="#skills">Skills</a></li>
     <li><a href="#experience">Experience</a></li>
     <li><a href="#projects">Projects</a></li>
@@ -52,20 +52,11 @@
 </nav>
 
 <!-- HERO -->
-<section class="hero" id="about">
+<section class="hero" id="hero">
   <div class="hero-content">
     <h1 class="hero-name">Richie<br>Richard <span>Rajkumar</span></h1>
     <p class="hero-role">// Infrastructure Architect · Platform Leader · Berlin, Germany</p>
-    <div class="hero-desc">
-      <p style="margin-bottom:1rem;">15 years building and leading cloud infrastructure from hands-on architecture to engineering team leadership.</p>
-      <ul style="list-style:none;display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem;">
-        <li><span style="color:var(--accent);font-family:var(--mono);margin-right:0.6rem;">▸</span>Cloud platform strategy &amp; architecture</li>
-        <li><span style="color:var(--accent);font-family:var(--mono);margin-right:0.6rem;">▸</span>End-to-end infrastructure ownership</li>
-        <li><span style="color:var(--accent);font-family:var(--mono);margin-right:0.6rem;">▸</span>Security &amp; compliance as a business enabler</li>
-        <li><span style="color:var(--accent);font-family:var(--mono);margin-right:0.6rem;">▸</span>Engineering culture &amp; team leadership</li>
-      </ul>
-      <p style="color:var(--muted);font-size:0.9rem;">Moving towards engineering leadership — where architectural thinking and organisational impact work at full scale.</p>
-    </div>
+    <p class="hero-desc">I specialise in building cloud infrastructure that scales — turning complex platforms into reliable, secure foundations that let engineering teams ship faster and organisations grow without limits.</p>
     <div class="hero-ctas">
       <a href="#contact" class="btn btn-primary">Get in touch</a>
       <a href="#experience" class="btn btn-outline">View experience</a>
@@ -110,6 +101,53 @@
         <span class="t-line"><span class="t-muted">}</span></span>
         <span class="t-line">&nbsp;</span>
         <span class="t-line"><span class="t-prompt">❯ </span><span class="cursor"></span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ABOUT ME -->
+<section id="about-me">
+  <div class="section-inner">
+    <p class="section-label reveal">Who I am</p>
+    <h2 class="section-title reveal">About Me</h2>
+    <div class="about-grid">
+      <div class="about-text reveal">
+        <p>With over 15 years of experience building and leading cloud infrastructure, I've grown from hands-on engineering into a role that sits at the intersection of architecture, security, and organisational impact. I don't just build platforms — I build the foundations that let engineering teams move fast, operate reliably, and scale without friction.</p>
+        <p>My work spans the full spectrum: cloud platform strategy and architecture, end-to-end infrastructure ownership, security and compliance as deliberate business enablers, and the engineering culture that makes it all sustainable. I've led teams, driven certifications that opened enterprise contracts, and made the kind of platform investments that compound over time.</p>
+        <p>I'm moving towards engineering leadership — where architectural thinking and organisational impact work at full scale, and where the right infrastructure decisions shape not just systems but entire product trajectories.</p>
+      </div>
+      <div class="about-highlights reveal">
+        <div class="about-highlight-item">
+          <span class="about-highlight-icon">☁</span>
+          <div>
+            <div class="about-highlight-title">Cloud Platform Strategy &amp; Architecture</div>
+            <div class="about-highlight-desc">Defining direction across AWS, GCP, and beyond — at startup and enterprise scale.</div>
+          </div>
+        </div>
+        <div class="about-highlight-item">
+          <span class="about-highlight-icon">🔒</span>
+          <div>
+            <div class="about-highlight-title">Security &amp; Compliance as a Business Enabler</div>
+            <div class="about-highlight-desc">PCI-DSS, ISO 27001, SOC 2 — not checkboxes, but levers that unlock growth.</div>
+          </div>
+        </div>
+        <div class="about-highlight-item">
+          <span class="about-highlight-icon">⚙</span>
+          <div>
+            <div class="about-highlight-title">End-to-End Infrastructure Ownership</div>
+            <div class="about-highlight-desc">From first principles to production — fully accountable for the platform and its outcomes.</div>
+          </div>
+        </div>
+        <div class="about-highlight-item">
+          <span class="about-highlight-icon">👥</span>
+          <div>
+            <div class="about-highlight-title">Engineering Culture &amp; Team Leadership</div>
+            <div class="about-highlight-desc">Building teams that don't need heroics — because the systems and standards are right.</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -171,12 +209,14 @@
         <div class="skill-card-title">☁ Cloud Services</div>
         <div style="display:flex;gap:0.5rem;align-items:flex-start;">
           <div class="skill-tags" id="cloud-tags" style="max-height:9rem;overflow-y:auto;flex:1;scrollbar-width:none;">
-            <span class="tag">AWS WAF</span><span class="tag">EC2 / Compute Engine</span><span class="tag">EKS / GKE</span>
-            <span class="tag">Fargate / Cloud Run</span><span class="tag">IAM / Cloud IAM</span>
-            <span class="tag">KMS / Cloud KMS</span><span class="tag">Lambda / Cloud Functions</span>
-            <span class="tag">RDS / Cloud SQL</span><span class="tag">Elasticache (Redshift &amp; Valkey)</span>
-            <span class="tag">Route53 / Cloud DNS</span><span class="tag">S3 / Cloud Storage</span>
-            <span class="tag">SQS / Pub/Sub</span><span class="tag">VPC</span>
+            <span class="tag">Aurora &amp; RDS / Cloud SQL</span><span class="tag">AWS Backup</span><span class="tag">AWS Certificate Manager</span>
+            <span class="tag">CloudWatch</span><span class="tag">Database Migration Service</span><span class="tag">DataSync</span>
+            <span class="tag">EC2 / Compute Engine</span><span class="tag">ECR</span><span class="tag">EKS / GKE</span>
+            <span class="tag">Elasticache (Redshift &amp; Valkey)</span><span class="tag">Fargate / Cloud Run</span>
+            <span class="tag">IAM / Cloud IAM</span><span class="tag">IAM Identity Center</span><span class="tag">KMS / Cloud KMS</span>
+            <span class="tag">Lambda / Cloud Functions</span><span class="tag">Organizations</span><span class="tag">Route53 / Cloud DNS</span>
+            <span class="tag">S3 / Cloud Storage</span><span class="tag">SQS / Pub/Sub</span><span class="tag">Systems Manager</span>
+            <span class="tag">VPC</span><span class="tag">WAF</span>
           </div>
           <div id="cloud-dots" style="display:flex;flex-direction:column;gap:10px;padding-top:0.2rem;flex-shrink:0;"></div>
         </div>

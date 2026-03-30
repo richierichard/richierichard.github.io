@@ -27,7 +27,12 @@ function initCloudDots() {
     d.style.cssText =
       'width:10px;height:10px;border-radius:50%;border:none;cursor:pointer;padding:0;' +
       'transition:background 0.2s;background:' + (i === 0 ? 'var(--accent)' : 'var(--border2)') + ';';
-    d.addEventListener('click', () => tags.scrollTo({ top: i * pageH, behavior: 'smooth' }));
+    d.addEventListener('click', () => {
+      // Read maxScroll at click time so fonts/layout are fully settled
+      const maxScroll = tags.scrollHeight - tags.clientHeight;
+      const scrollPos = i === pageCount - 1 ? maxScroll : i * pageH;
+      tags.scrollTo({ top: scrollPos, behavior: 'smooth' });
+    });
     dotsEl.appendChild(d);
     dots.push(d);
   }
@@ -37,7 +42,8 @@ function initCloudDots() {
     dots.forEach((d, i) => d.style.background = i === cur ? 'var(--accent)' : 'var(--border2)');
   });
 }
-window.addEventListener('load', initCloudDots);
+// Use document.fonts.ready so scrollHeight is measured after fonts are applied
+document.fonts.ready.then(initCloudDots);
 
 /* ============================================================
    THEME TOGGLE
