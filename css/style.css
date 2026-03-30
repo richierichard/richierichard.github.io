@@ -47,6 +47,19 @@ body {
 }
 
 /* ============================================================
+   NETWORK CANVAS BACKGROUND
+   ============================================================ */
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+section, footer, .hero, .side-nav { position: relative; z-index: 1; }
+
+/* ============================================================
    NAV
    ============================================================ */
 nav {
