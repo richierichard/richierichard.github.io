@@ -452,6 +452,83 @@
   nav { padding: 1rem 1.25rem; }
   .nav-links { gap: 1rem; }
 }
+
+/* Detailed cert cards */
+.section-sub {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.cert-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.5rem;
+}
+.cert-detail-card {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.cert-detail-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+}
+.cert-detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.cert-detail-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+.cert-detail-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+  line-height: 1.3;
+}
+.cert-detail-meta {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  margin-top: 0.2rem;
+}
+.cert-detail-desc {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+.cert-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: auto;
+}
+.cert-tag {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(74,222,128,0.2);
+  border-radius: 20px;
+  padding: 0.2rem 0.65rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+body.light .cert-tag {
+  border-color: rgba(22,163,74,0.25);
+}
+@media (max-width: 768px) {
+  .cert-detail-grid { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
@@ -520,7 +597,7 @@
         </div>
         <div class="bio-sidebar-card">
           <div class="bio-sidebar-label">Certifications</div>
-          <div class="bio-sidebar-value">CKA · CKAD · RHCE</div>
+          <div class="bio-sidebar-value">CKA · CKAD · HashiCorp Vault</div>
           <div class="bio-sidebar-sub">8 industry certifications in total</div>
         </div>
         <div class="bio-sidebar-card">
@@ -884,68 +961,150 @@
 
 <div class="divider"></div>
 
-<!-- CERTIFICATIONS (brief) -->
+<!-- CERTIFICATIONS (detailed) -->
 <section id="certs">
   <div class="section-inner">
     <p class="section-label reveal">Credentials</p>
     <h2 class="section-title reveal">Certifications</h2>
-    <div class="certs-grid">
-      <div class="cert-card reveal">
-        <div class="cert-icon">⎈</div>
-        <div>
-          <div class="cert-name">Certified Kubernetes Administrator</div>
-          <div class="cert-body">CKA · CNCF</div>
+    <p class="section-sub reveal" style="max-width:640px;margin-bottom:2.5rem;">8 industry certifications spanning container orchestration, secrets management, Linux engineering, networking, and enterprise IT — earned across 15+ years in infrastructure and platform engineering.</p>
+    <div class="cert-detail-grid">
+
+      <div class="cert-detail-card reveal">
+        <div class="cert-detail-header">
+          <span class="cert-detail-icon">⎈</span>
+          <div>
+            <div class="cert-detail-name">Certified Kubernetes Administrator</div>
+            <div class="cert-detail-meta">CKA · CNCF</div>
+          </div>
+        </div>
+        <p class="cert-detail-desc">Validates the ability to design, install, configure, and manage production-grade Kubernetes clusters. Covers workload scheduling, networking, storage, security, and troubleshooting under real exam conditions.</p>
+        <div class="cert-detail-tags">
+          <span class="cert-tag">Cluster Management</span>
+          <span class="cert-tag">Networking</span>
+          <span class="cert-tag">Storage</span>
+          <span class="cert-tag">RBAC</span>
         </div>
       </div>
-      <div class="cert-card reveal">
-        <div class="cert-icon">⎈</div>
-        <div>
-          <div class="cert-name">Certified Kubernetes Application Developer</div>
-          <div class="cert-body">CKAD · CNCF</div>
+
+      <div class="cert-detail-card reveal">
+        <div class="cert-detail-header">
+          <span class="cert-detail-icon">⎈</span>
+          <div>
+            <div class="cert-detail-name">Certified Kubernetes Application Developer</div>
+            <div class="cert-detail-meta">CKAD · CNCF</div>
+          </div>
+        </div>
+        <p class="cert-detail-desc">Demonstrates proficiency in designing, building, and deploying cloud-native applications on Kubernetes. Covers multi-container pods, configuration, observability, and application lifecycle management.</p>
+        <div class="cert-detail-tags">
+          <span class="cert-tag">Deployments</span>
+          <span class="cert-tag">ConfigMaps</span>
+          <span class="cert-tag">Probes</span>
+          <span class="cert-tag">Services</span>
         </div>
       </div>
-      <div class="cert-card reveal">
-        <div class="cert-icon">🔐</div>
-        <div>
-          <div class="cert-name">HashiCorp Certified Vault Associate</div>
-          <div class="cert-body">HashiCorp</div>
+
+      <div class="cert-detail-card reveal">
+        <div class="cert-detail-header">
+          <span class="cert-detail-icon">🔐</span>
+          <div>
+            <div class="cert-detail-name">HashiCorp Certified: Vault Associate</div>
+            <div class="cert-detail-meta">HashiCorp</div>
+          </div>
+        </div>
+        <p class="cert-detail-desc">Certifies knowledge of secrets management, encryption as a service, and identity-based access using HashiCorp Vault. Applied in production to rotate credentials, manage PKI, and enforce least-privilege access across microservices.</p>
+        <div class="cert-detail-tags">
+          <span class="cert-tag">Secrets Management</span>
+          <span class="cert-tag">PKI</span>
+          <span class="cert-tag">Dynamic Credentials</span>
+          <span class="cert-tag">Policies</span>
         </div>
       </div>
-      <div class="cert-card reveal">
-        <div class="cert-icon">🎩</div>
-        <div>
-          <div class="cert-name">Red Hat Certified Engineer</div>
-          <div class="cert-body">RHCE · Red Hat · RHEL 5</div>
+
+      <div class="cert-detail-card reveal">
+        <div class="cert-detail-header">
+          <span class="cert-detail-icon">🎩</span>
+          <div>
+            <div class="cert-detail-name">Red Hat Certified Engineer</div>
+            <div class="cert-detail-meta">RHCE · Red Hat · RHEL 5</div>
+          </div>
+        </div>
+        <p class="cert-detail-desc">Advanced Linux certification covering system administration, automation with shell scripting, network services, and security configuration on Red Hat Enterprise Linux. Validates real hands-on lab competency with no multiple-choice questions.</p>
+        <div class="cert-detail-tags">
+          <span class="cert-tag">Linux Administration</span>
+          <span class="cert-tag">Shell Scripting</span>
+          <span class="cert-tag">Network Services</span>
+          <span class="cert-tag">SELinux</span>
         </div>
       </div>
-      <div class="cert-card reveal">
-        <div class="cert-icon">🌐</div>
-        <div>
-          <div class="cert-name">Cisco Certified Network Associate</div>
-          <div class="cert-body">CCNA · Cisco</div>
+
+      <div class="cert-detail-card reveal">
+        <div class="cert-detail-header">
+          <span class="cert-detail-icon">🌐</span>
+          <div>
+            <div class="cert-detail-name">Cisco Certified Network Associate</div>
+            <div class="cert-detail-meta">CCNA · Cisco</div>
+          </div>
+        </div>
+        <p class="cert-detail-desc">Foundation-level networking certification covering IP addressing, routing protocols (OSPF, EIGRP), switching, VLANs, WAN technologies, and network security fundamentals. Core to understanding the infrastructure layer beneath every cloud platform.</p>
+        <div class="cert-detail-tags">
+          <span class="cert-tag">Routing &amp; Switching</span>
+          <span class="cert-tag">VLANs</span>
+          <span class="cert-tag">TCP/IP</span>
+          <span class="cert-tag">Network Security</span>
         </div>
       </div>
-      <div class="cert-card reveal">
-        <div class="cert-icon">🌐</div>
-        <div>
-          <div class="cert-name">Juniper Network Certified Specialist</div>
-          <div class="cert-body">JNCS · Juniper Networks</div>
+
+      <div class="cert-detail-card reveal">
+        <div class="cert-detail-header">
+          <span class="cert-detail-icon">🌐</span>
+          <div>
+            <div class="cert-detail-name">Juniper Networks Certified Specialist</div>
+            <div class="cert-detail-meta">JNCS · Juniper Networks</div>
+          </div>
+        </div>
+        <p class="cert-detail-desc">Specialist-level certification validating expertise in Juniper routing and switching platforms. Covers Junos OS, policy configuration, firewall filters, and enterprise-grade network design and troubleshooting.</p>
+        <div class="cert-detail-tags">
+          <span class="cert-tag">Junos OS</span>
+          <span class="cert-tag">Routing Policies</span>
+          <span class="cert-tag">Firewall Filters</span>
+          <span class="cert-tag">BGP / OSPF</span>
         </div>
       </div>
-      <div class="cert-card reveal">
-        <div class="cert-icon">🪟</div>
-        <div>
-          <div class="cert-name">Microsoft Certified IT Professional</div>
-          <div class="cert-body">MCITP · Windows Server 2008</div>
+
+      <div class="cert-detail-card reveal">
+        <div class="cert-detail-header">
+          <span class="cert-detail-icon">🪟</span>
+          <div>
+            <div class="cert-detail-name">Microsoft Certified IT Professional</div>
+            <div class="cert-detail-meta">MCITP · Windows Server 2008</div>
+          </div>
+        </div>
+        <p class="cert-detail-desc">Enterprise-level Microsoft certification covering Windows Server administration, Active Directory, Group Policy, virtualisation with Hyper-V, and enterprise messaging. Built foundational skills in hybrid infrastructure and directory services.</p>
+        <div class="cert-detail-tags">
+          <span class="cert-tag">Active Directory</span>
+          <span class="cert-tag">Group Policy</span>
+          <span class="cert-tag">Hyper-V</span>
+          <span class="cert-tag">DNS / DHCP</span>
         </div>
       </div>
-      <div class="cert-card reveal">
-        <div class="cert-icon">☕</div>
-        <div>
-          <div class="cert-name">Oracle Certified Associate</div>
-          <div class="cert-body">OCA · Oracle</div>
+
+      <div class="cert-detail-card reveal">
+        <div class="cert-detail-header">
+          <span class="cert-detail-icon">☕</span>
+          <div>
+            <div class="cert-detail-name">Oracle Certified Associate</div>
+            <div class="cert-detail-meta">OCA · Oracle</div>
+          </div>
+        </div>
+        <p class="cert-detail-desc">Foundational Oracle certification covering Java programming concepts, object-oriented design principles, and core Java SE APIs. Established a solid software engineering base that underpins how I think about automation, tooling, and platform reliability.</p>
+        <div class="cert-detail-tags">
+          <span class="cert-tag">Java SE</span>
+          <span class="cert-tag">OOP</span>
+          <span class="cert-tag">Data Structures</span>
+          <span class="cert-tag">Exception Handling</span>
         </div>
       </div>
+
     </div>
   </div>
 </section>
