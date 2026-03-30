@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Richie Richard Rajkumar</title>
+
+<!-- SEO -->
+<meta name="description" content="Senior DevOps Engineer and Infrastructure Architect with 15+ years building cloud platforms at startup and enterprise scale. CKA & CKAD certified. Based in Berlin, Germany.">
+<meta name="keywords" content="Senior DevOps Engineer, Infrastructure Architect, Platform Engineering, Kubernetes, Terraform, AWS, GCP, CKA, CKAD, Berlin, engineering leadership">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://richierichard.com/about">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://richierichard.com/about">
+<meta property="og:title" content="About — Richie Richard Rajkumar">
+<meta property="og:description" content="Senior DevOps Engineer and Infrastructure Architect with 15+ years building cloud platforms at startup and enterprise scale.">
+<meta property="og:locale" content="en_GB">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="About — Richie Richard Rajkumar">
+<meta name="twitter:description" content="Senior DevOps Engineer and Infrastructure Architect with 15+ years building cloud platforms at startup and enterprise scale.">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Shared styles -->
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+/* ============================================================
+   ABOUT PAGE — PAGE-SPECIFIC STYLES
+   ============================================================ */
+
+/* Page hero */
+.about-page-hero {
+  padding: 10rem 3rem 5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  position: relative;
+}
+.about-page-hero::after {
+  content: '';
+  position: fixed;
+  top: -200px; right: -150px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(74,222,128,0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+.about-page-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.about-page-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 32px; height: 1px;
+  background: var(--accent);
+}
+.about-page-title {
+  font-size: clamp(2.8rem, 5vw, 5rem);
+  font-weight: 500;
+  line-height: 1.0;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.5rem;
+}
+.about-page-title span { color: var(--accent); }
+.about-page-subtitle {
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: var(--muted);
+  max-width: 640px;
+  line-height: 1.75;
+  margin-bottom: 2.5rem;
+}
+.about-page-ctas { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+/* Bio section */
+.bio-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 4rem;
+  align-items: start;
+}
+.bio-text p {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.85;
+  margin-bottom: 1.4rem;
+}
+.bio-text p:last-child { margin-bottom: 0; }
+.bio-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: sticky;
+  top: 6rem;
+}
+.bio-sidebar-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  transition: border-color 0.2s;
+}
+.bio-sidebar-card:hover { border-color: var(--border2); }
+.bio-sidebar-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--accent2);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.bio-sidebar-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.bio-sidebar-sub {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
+/* Stats bar */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-top: 0;
+}
+.stat-large {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.75rem 1.5rem;
+  text-align: center;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.stat-large:hover { border-color: var(--accent); transform: translateY(-3px); }
+.stat-large-num {
+  font-size: 2.8rem;
+  font-weight: 500;
+  color: var(--accent);
+  line-height: 1;
+  display: block;
+  font-family: var(--mono);
+}
+.stat-large-label {
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.6rem;
+  display: block;
+}
+.stat-large-desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+  line-height: 1.4;
+}
+
+/* What I do */
+.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+.pillar-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem 1.75rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.pillar-card:hover { border-color: var(--border2); transform: translateY(-3px); }
+.pillar-icon {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+.pillar-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+}
+.pillar-desc {
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+.pillar-bullets {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.pillar-bullets li {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding-left: 1rem;
+  position: relative;
+}
+.pillar-bullets li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+/* Skill proficiency bars */
+.proficiency-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2.5rem 4rem;
+}
+.skill-bar-item {}
+.skill-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.skill-bar-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.skill-bar-pct {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--accent);
+}
+.skill-bar-track {
+  height: 5px;
+  background: var(--bg3);
+  border-radius: 99px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.skill-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  width: 0;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.skill-bar-sub {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 0.35rem;
+}
+
+/* Philosophy */
+.philosophy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+.philosophy-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.75rem;
+  transition: border-color 0.2s;
+}
+.philosophy-card:hover { border-color: var(--border2); }
+.philosophy-number {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+.philosophy-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.65rem;
+  line-height: 1.3;
+}
+.philosophy-body {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* Looking for */
+.looking-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+}
+.looking-text p {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.85;
+  margin-bottom: 1.25rem;
+}
+.looking-text p:last-child { margin-bottom: 0; }
+.looking-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.looking-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  transition: border-color 0.2s;
+}
+.looking-card:hover { border-color: var(--accent); }
+.looking-card-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+.looking-card-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
+.looking-card-desc {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Services */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+.service-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem 1.75rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.service-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+.service-icon {
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+.service-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+}
+.service-desc {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+}
+.service-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.service-tag {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-radius: 4px;
+  border: 1px solid rgba(74,222,128,0.2);
+}
+
+/* Contact CTA */
+.cta-block {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 4rem 3rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.cta-block::before {
+  content: '';
+  position: absolute;
+  top: -100px; left: 50%;
+  transform: translateX(-50%);
+  width: 500px; height: 300px;
+  background: radial-gradient(circle, rgba(74,222,128,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-title {
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin-bottom: 1rem;
+}
+.cta-subtitle {
+  color: var(--muted);
+  font-size: 1rem;
+  max-width: 520px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.75;
+}
+.cta-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .bio-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+  .bio-sidebar { position: static; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .pillars-grid { grid-template-columns: 1fr; }
+  .proficiency-grid { grid-template-columns: 1fr; }
+  .philosophy-grid { grid-template-columns: 1fr; }
+  .looking-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+  .services-grid { grid-template-columns: 1fr; }
+  .about-page-hero { padding: 8rem 1.5rem 3rem; }
+  section { padding: 4rem 1.5rem; }
+  .cta-block { padding: 2.5rem 1.5rem; }
+}
+@media (max-width: 640px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  nav { padding: 1rem 1.25rem; }
+  .nav-links { gap: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup>∞</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html" style="color:var(--accent)">About</a></li>
+    <li><a href="blog.html">Blog</a></li>
+    <li><a href="index.html#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Light</span>
+  </button>
+</nav>
+
+<!-- PAGE HERO -->
+<div class="about-page-hero">
+  <p class="about-page-eyebrow">Who I am</p>
+  <h1 class="about-page-title">Richie Richard<br><span>Rajkumar</span></h1>
+  <p class="about-page-subtitle">Senior DevOps Engineer &amp; Infrastructure Architect. I build cloud platforms that scale — and the engineering cultures that make them last.</p>
+  <div class="about-page-ctas">
+    <a href="index.html#contact" class="btn btn-primary">Get in touch</a>
+    <a href="index.html#experience" class="btn btn-outline">View experience</a>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- BIO -->
+<section>
+  <div class="section-inner">
+    <p class="section-label reveal">Background</p>
+    <h2 class="section-title reveal">The full story</h2>
+    <div class="bio-grid">
+      <div class="bio-text reveal">
+        <p>I started my career writing code and managing servers for a small SaaS company in India — before "DevOps" was even a job title. The term for what I was doing then was simply "making it work", and I've been doing that ever since, at increasing scale and complexity.</p>
+        <p>Over 15 years, I've grown from hands-on infrastructure engineer to the person organisations trust with their entire cloud strategy. The trajectory runs through SOC 2 audits at fintech startups, Kubernetes migrations for global consumer brands serving millions of users, ISO 27001 certifications that unlocked enterprise contracts, and end-to-end platform builds that went from whiteboard to production in under six months.</p>
+        <p>Today, I sit at the intersection of architecture, security, and organisational impact. I don't just build platforms — I build the foundations that let engineering teams move fast, operate reliably, and scale without friction. My work at keylight GmbH is the clearest expression of this: sole infrastructure authority for a FinTech startup, accountable for every cloud decision from first principles to production compliance.</p>
+        <p>What drives me is the compounding effect of good platform decisions. When you get the infrastructure right — the abstractions, the standards, the security posture, the observability — everything above it gets easier. Engineering teams ship faster. The organisation takes on more ambitious work. Security becomes a lever for growth rather than a blocker. That's the kind of infrastructure leadership I've built a career doing, and what I want to do at the largest possible scale.</p>
+        <p>I'm moving toward engineering leadership — Director or Staff / Principal Engineer scope — where architectural thinking and organisational impact operate together, and where the right infrastructure decisions shape entire product trajectories, not just individual services.</p>
+      </div>
+      <div class="bio-sidebar reveal">
+        <div class="bio-sidebar-card">
+          <div class="bio-sidebar-label">Current role</div>
+          <div class="bio-sidebar-value">Senior DevOps Engineer</div>
+          <div class="bio-sidebar-sub">keylight GmbH · Berlin</div>
+        </div>
+        <div class="bio-sidebar-card">
+          <div class="bio-sidebar-label">Location</div>
+          <div class="bio-sidebar-value">Berlin, Germany</div>
+          <div class="bio-sidebar-sub">Open to hybrid &amp; remote roles</div>
+        </div>
+        <div class="bio-sidebar-card">
+          <div class="bio-sidebar-label">Experience</div>
+          <div class="bio-sidebar-value">15+ years</div>
+          <div class="bio-sidebar-sub">Cloud infrastructure &amp; platform engineering</div>
+        </div>
+        <div class="bio-sidebar-card">
+          <div class="bio-sidebar-label">Certifications</div>
+          <div class="bio-sidebar-value">CKA · CKAD · RHCE</div>
+          <div class="bio-sidebar-sub">8 industry certifications in total</div>
+        </div>
+        <div class="bio-sidebar-card">
+          <div class="bio-sidebar-label">Education</div>
+          <div class="bio-sidebar-value">MSc Computer Software Engineering</div>
+          <div class="bio-sidebar-sub">Anna University · First Class Honours · Best Outgoing Student 2012</div>
+        </div>
+        <div class="bio-sidebar-card">
+          <div class="bio-sidebar-label">Languages</div>
+          <div class="bio-sidebar-value">English · Tamil</div>
+          <div class="bio-sidebar-sub">German (conversational)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BY THE NUMBERS -->
+<section>
+  <div class="section-inner">
+    <p class="section-label reveal">Impact</p>
+    <h2 class="section-title reveal">By the numbers</h2>
+    <div class="stats-row">
+      <div class="stat-large reveal">
+        <span class="stat-large-num">15+</span>
+        <span class="stat-large-label">Years of experience</span>
+        <p class="stat-large-desc">Spanning hands-on engineering to full platform strategy &amp; architecture</p>
+      </div>
+      <div class="stat-large reveal">
+        <span class="stat-large-num">8</span>
+        <span class="stat-large-label">Certifications</span>
+        <p class="stat-large-desc">CKA, CKAD, RHCE, HashiCorp Vault, CCNA, JNCS, MCITP, OCA</p>
+      </div>
+      <div class="stat-large reveal">
+        <span class="stat-large-num">7+</span>
+        <span class="stat-large-label">Cloud platforms</span>
+        <p class="stat-large-desc">AWS, GCP, DigitalOcean, Hetzner, Linode, Oracle Cloud, Rackspace</p>
+      </div>
+      <div class="stat-large reveal">
+        <span class="stat-large-num">5+</span>
+        <span class="stat-large-label">Teams led</span>
+        <p class="stat-large-desc">Built and mentored engineering teams across four organisations</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WHAT I DO -->
+<section>
+  <div class="section-inner">
+    <p class="section-label reveal">Core focus areas</p>
+    <h2 class="section-title reveal">What I do</h2>
+    <div class="pillars-grid">
+
+      <div class="pillar-card reveal">
+        <span class="pillar-icon">☁</span>
+        <div class="pillar-title">Cloud Platform Strategy &amp; Architecture</div>
+        <p class="pillar-desc">Defining cloud direction isn't just a technical exercise — it's a series of bets about where the organisation needs to go. I translate business constraints, security requirements, and engineering team realities into architecture decisions that compound over time rather than accumulate debt.</p>
+        <ul class="pillar-bullets">
+          <li>Multi-cloud architecture &amp; platform design</li>
+          <li>Cloud-native migration strategy</li>
+          <li>Kubernetes cluster architecture (EKS / GKE)</li>
+          <li>Infrastructure-as-Code at scale (Terraform)</li>
+          <li>Cost optimisation &amp; FinOps</li>
+        </ul>
+      </div>
+
+      <div class="pillar-card reveal">
+        <span class="pillar-icon">🔒</span>
+        <div class="pillar-title">Security &amp; Compliance as a Business Enabler</div>
+        <p class="pillar-desc">PCI-DSS, ISO 27001, SOC 2 — these aren't checkboxes. They're the credibility that opens enterprise doors. I've led compliance programmes that directly unlocked major customer contracts, treating security posture as a commercial lever rather than a cost of doing business.</p>
+        <ul class="pillar-bullets">
+          <li>PCI-DSS Level 1 compliance programmes</li>
+          <li>ISO 27001 certification end-to-end</li>
+          <li>SOC 2 Type II readiness &amp; audit support</li>
+          <li>Security-first CI/CD pipeline design</li>
+          <li>Vulnerability management (Trivy, Veracode, Nessus)</li>
+        </ul>
+      </div>
+
+      <div class="pillar-card reveal">
+        <span class="pillar-icon">⚙</span>
+        <div class="pillar-title">End-to-End Infrastructure Ownership</div>
+        <p class="pillar-desc">From first principles to production — I'm comfortable being the single technical voice accountable for an entire cloud platform. That means designing the system, writing the Terraform, setting the on-call standards, managing vendor relationships, and being the person who answers when something breaks at 3am.</p>
+        <ul class="pillar-bullets">
+          <li>Full-stack platform builds (cloud, k8s, CI/CD, observability)</li>
+          <li>Incident response leadership &amp; runbook design</li>
+          <li>Observability stacks (Prometheus, Grafana, Datadog, ELK)</li>
+          <li>Disaster recovery &amp; business continuity planning</li>
+          <li>Vendor evaluation &amp; contract management</li>
+        </ul>
+      </div>
+
+      <div class="pillar-card reveal">
+        <span class="pillar-icon">👥</span>
+        <div class="pillar-title">Engineering Culture &amp; Team Leadership</div>
+        <p class="pillar-desc">The best platform is the one the team around it can sustain and evolve. I've built engineering teams from scratch, mentored junior engineers into independent contributors, and established the standards and tooling culture that outlast any individual. Good leadership is invisible — you notice it when it's gone.</p>
+        <ul class="pillar-bullets">
+          <li>Engineering team building &amp; mentoring</li>
+          <li>Developer experience &amp; internal platform design</li>
+          <li>Engineering standards &amp; documentation culture</li>
+          <li>Hiring &amp; technical interview design</li>
+          <li>Cross-functional stakeholder communication</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SKILL PROFICIENCY -->
+<section>
+  <div class="section-inner">
+    <p class="section-label reveal">Technical depth</p>
+    <h2 class="section-title reveal">Skill proficiency</h2>
+    <div class="proficiency-grid" id="proficiency-grid">
+
+      <div class="skill-bar-item reveal">
+        <div class="skill-bar-header">
+          <span class="skill-bar-name">Kubernetes (EKS / GKE)</span>
+          <span class="skill-bar-pct">95%</span>
+        </div>
+        <div class="skill-bar-track">
+          <div class="skill-bar-fill" data-width="95"></div>
+        </div>
+        <div class="skill-bar-sub">CKA &amp; CKAD certified · Production clusters across 4 organisations</div>
+      </div>
+
+      <div class="skill-bar-item reveal">
+        <div class="skill-bar-header">
+          <span class="skill-bar-name">Terraform / IaC</span>
+          <span class="skill-bar-pct">95%</span>
+        </div>
+        <div class="skill-bar-track">
+          <div class="skill-bar-fill" data-width="95"></div>
+        </div>
+        <div class="skill-bar-sub">Primary IaC tool across every role since 2015 · Full module design</div>
+      </div>
+
+      <div class="skill-bar-item reveal">
+        <div class="skill-bar-header">
+          <span class="skill-bar-name">AWS</span>
+          <span class="skill-bar-pct">92%</span>
+        </div>
+        <div class="skill-bar-track">
+          <div class="skill-bar-fill" data-width="92"></div>
+        </div>
+        <div class="skill-bar-sub">EKS, EC2, IAM, KMS, VPC, S3, RDS, Lambda, CloudFront, WAF &amp; more</div>
+      </div>
+
+      <div class="skill-bar-item reveal">
+        <div class="skill-bar-header">
+          <span class="skill-bar-name">Security &amp; Compliance</span>
+          <span class="skill-bar-pct">90%</span>
+        </div>
+        <div class="skill-bar-track">
+          <div class="skill-bar-fill" data-width="90"></div>
+        </div>
+        <div class="skill-bar-sub">PCI-DSS · ISO 27001 · SOC 2 · HashiCorp Vault (certified)</div>
+      </div>
+
+      <div class="skill-bar-item reveal">
+        <div class="skill-bar-header">
+          <span class="skill-bar-name">CI/CD Pipeline Design</span>
+          <span class="skill-bar-pct">92%</span>
+        </div>
+        <div class="skill-bar-track">
+          <div class="skill-bar-fill" data-width="92"></div>
+        </div>
+        <div class="skill-bar-sub">GitHub Actions · GitLab CI · ArgoCD · Jenkins · Cloud Build</div>
+      </div>
+
+      <div class="skill-bar-item reveal">
+        <div class="skill-bar-header">
+          <span class="skill-bar-name">GCP</span>
+          <span class="skill-bar-pct">82%</span>
+        </div>
+        <div class="skill-bar-track">
+          <div class="skill-bar-fill" data-width="82"></div>
+        </div>
+        <div class="skill-bar-sub">GKE · Cloud Run · Cloud Build · IAM · Cloud SQL · Pub/Sub</div>
+      </div>
+
+      <div class="skill-bar-item reveal">
+        <div class="skill-bar-header">
+          <span class="skill-bar-name">Observability &amp; Monitoring</span>
+          <span class="skill-bar-pct">88%</span>
+        </div>
+        <div class="skill-bar-track">
+          <div class="skill-bar-fill" data-width="88"></div>
+        </div>
+        <div class="skill-bar-sub">Prometheus · Grafana · Datadog · ELK · New Relic · PagerDuty</div>
+      </div>
+
+      <div class="skill-bar-item reveal">
+        <div class="skill-bar-header">
+          <span class="skill-bar-name">Linux &amp; Systems Engineering</span>
+          <span class="skill-bar-pct">97%</span>
+        </div>
+        <div class="skill-bar-track">
+          <div class="skill-bar-fill" data-width="97"></div>
+        </div>
+        <div class="skill-bar-sub">RHCE certified · 15+ years daily Linux administration</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PHILOSOPHY -->
+<section>
+  <div class="section-inner">
+    <p class="section-label reveal">How I think</p>
+    <h2 class="section-title reveal">Engineering philosophy</h2>
+    <div class="philosophy-grid">
+
+      <div class="philosophy-card reveal">
+        <div class="philosophy-number">01 — Platform thinking</div>
+        <div class="philosophy-title">Infrastructure is a product, not a service</div>
+        <p class="philosophy-body">The platform team's customers are the engineering teams. That means platform decisions need to be evaluated on developer experience, cognitive load, and the velocity they enable — not just technical elegance. I treat internal infrastructure with the same product discipline as customer-facing software.</p>
+      </div>
+
+      <div class="philosophy-card reveal">
+        <div class="philosophy-number">02 — Security posture</div>
+        <div class="philosophy-title">Security that enables, not security that blocks</div>
+        <p class="philosophy-body">Bad security is security that slows things down without a clear return. Good security is invisible in day-to-day flow and shows up as confidence — the confidence to take on bigger customers, move faster, and ship without fear. I design security controls as multipliers, not gates.</p>
+      </div>
+
+      <div class="philosophy-card reveal">
+        <div class="philosophy-number">03 — Reliability</div>
+        <div class="philosophy-title">Heroics are a platform failure</div>
+        <p class="philosophy-body">If your organisation needs heroes to keep the lights on, the platform has failed. Good infrastructure is boring infrastructure — it runs quietly, recovers automatically, and gives engineers confidence to ship on a Friday. I design for the absence of incidents, not just recovery from them.</p>
+      </div>
+
+      <div class="philosophy-card reveal">
+        <div class="philosophy-number">04 — Decision-making</div>
+        <div class="philosophy-title">Reversibility over optimality</div>
+        <p class="philosophy-body">In fast-moving environments, the best architecture decision is often the one that's easiest to change. I favour reversible choices, explicit interfaces, and abstractions that let teams evolve their services without platform lock-in — even when a tighter coupling would look cleaner on paper today.</p>
+      </div>
+
+      <div class="philosophy-card reveal">
+        <div class="philosophy-number">05 — Compliance</div>
+        <div class="philosophy-title">Compliance as a commercial lever</div>
+        <p class="philosophy-body">ISO 27001, PCI-DSS, SOC 2 — these aren't regulatory hurdles, they're business development tools. The organisations I've worked with that treated compliance as a strategic investment rather than an audit cost consistently opened doors their less security-mature competitors couldn't.</p>
+      </div>
+
+      <div class="philosophy-card reveal">
+        <div class="philosophy-number">06 — Leadership</div>
+        <div class="philosophy-title">Leadership is about making yourself unnecessary</div>
+        <p class="philosophy-body">The goal of a good engineering leader isn't to be indispensable — it's to build teams and systems that are stronger than any individual. I invest heavily in documentation, on-call runbooks, architectural decision records, and the kind of knowledge transfer that means no one person holds the keys.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WHAT I'M LOOKING FOR -->
+<section>
+  <div class="section-inner">
+    <p class="section-label reveal">Career direction</p>
+    <h2 class="section-title reveal">What I'm looking for</h2>
+    <div class="looking-grid">
+      <div class="looking-text reveal">
+        <p>After 15+ years building cloud platforms, I'm ready for the next step — roles where I can shape not just the infrastructure, but the engineering organisation that builds on top of it.</p>
+        <p>I'm looking for Staff / Principal Engineer or Director of DevOps &amp; Infrastructure positions at organisations where platform thinking is taken seriously — where infrastructure is understood as a strategic investment, and where the right technical leadership can create compounding returns across the whole engineering function.</p>
+        <p>The contexts I find most compelling: scaling engineering organisations (Series B–D), FinTech and high-compliance industries where my security background is directly relevant, and European companies building for global scale.</p>
+        <p>I work best in environments that combine high technical standards with genuine product ambition — where the platform isn't just keeping the lights on, but actively accelerating what the organisation can do.</p>
+      </div>
+      <div class="looking-cards reveal">
+        <div class="looking-card">
+          <span class="looking-card-icon">🎯</span>
+          <div>
+            <div class="looking-card-title">Director of DevOps &amp; Infrastructure / Staff Principal Engineer</div>
+            <div class="looking-card-desc">Scope that combines architectural authority with organisational impact — shaping engineering strategy, not just executing it.</div>
+          </div>
+        </div>
+        <div class="looking-card">
+          <span class="looking-card-icon">🏗</span>
+          <div>
+            <div class="looking-card-title">Platform-serious organisations</div>
+            <div class="looking-card-desc">Companies where infrastructure is understood as a strategic function, not just a cost centre or ops team.</div>
+          </div>
+        </div>
+        <div class="looking-card">
+          <span class="looking-card-icon">🔐</span>
+          <div>
+            <div class="looking-card-title">High-compliance industries</div>
+            <div class="looking-card-desc">FinTech, HealthTech, enterprise SaaS — environments where my security and compliance background creates direct commercial value.</div>
+          </div>
+        </div>
+        <div class="looking-card">
+          <span class="looking-card-icon">🌍</span>
+          <div>
+            <div class="looking-card-title">Europe-based, global-scale</div>
+            <div class="looking-card-desc">Berlin-based or remote-first European companies building for international markets. Hybrid working preferred.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SERVICES -->
+<section>
+  <div class="section-inner">
+    <p class="section-label reveal">Consulting</p>
+    <h2 class="section-title reveal">How I can help</h2>
+    <div class="services-grid">
+
+      <div class="service-card reveal">
+        <span class="service-icon">🏛</span>
+        <div class="service-title">Infrastructure Architecture Review</div>
+        <p class="service-desc">A structured review of your cloud platform — from topology and IAM design to cost structure and resilience posture. I identify the gaps that will slow you down at scale before they become incidents.</p>
+        <div class="service-tag-row">
+          <span class="service-tag">AWS / GCP</span>
+          <span class="service-tag">Kubernetes</span>
+          <span class="service-tag">Cost review</span>
+          <span class="service-tag">Security posture</span>
+        </div>
+      </div>
+
+      <div class="service-card reveal">
+        <span class="service-icon">🔐</span>
+        <div class="service-title">Security &amp; Compliance Advisory</div>
+        <p class="service-desc">Hands-on support for PCI-DSS, ISO 27001, and SOC 2 programmes — from gap assessment to evidence collection and audit readiness. I've been through these certifications multiple times and know what auditors actually look for.</p>
+        <div class="service-tag-row">
+          <span class="service-tag">PCI-DSS</span>
+          <span class="service-tag">ISO 27001</span>
+          <span class="service-tag">SOC 2</span>
+          <span class="service-tag">Audit readiness</span>
+        </div>
+      </div>
+
+      <div class="service-card reveal">
+        <span class="service-icon">🚀</span>
+        <div class="service-title">Cloud Migration Strategy</div>
+        <p class="service-desc">Structured approach to moving from legacy infrastructure to cloud-native. I help you make the right technology choices for your team's maturity and organisation's risk appetite — including the honest conversations about what not to migrate yet.</p>
+        <div class="service-tag-row">
+          <span class="service-tag">Lift &amp; shift</span>
+          <span class="service-tag">Re-architecture</span>
+          <span class="service-tag">Kubernetes</span>
+          <span class="service-tag">Terraform</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CERTIFICATIONS (brief) -->
+<section id="certs">
+  <div class="section-inner">
+    <p class="section-label reveal">Credentials</p>
+    <h2 class="section-title reveal">Certifications</h2>
+    <div class="certs-grid">
+      <div class="cert-card reveal">
+        <div class="cert-icon">⎈</div>
+        <div>
+          <div class="cert-name">Certified Kubernetes Administrator</div>
+          <div class="cert-body">CKA · CNCF</div>
+        </div>
+      </div>
+      <div class="cert-card reveal">
+        <div class="cert-icon">⎈</div>
+        <div>
+          <div class="cert-name">Certified Kubernetes Application Developer</div>
+          <div class="cert-body">CKAD · CNCF</div>
+        </div>
+      </div>
+      <div class="cert-card reveal">
+        <div class="cert-icon">🔐</div>
+        <div>
+          <div class="cert-name">HashiCorp Certified Vault Associate</div>
+          <div class="cert-body">HashiCorp</div>
+        </div>
+      </div>
+      <div class="cert-card reveal">
+        <div class="cert-icon">🎩</div>
+        <div>
+          <div class="cert-name">Red Hat Certified Engineer</div>
+          <div class="cert-body">RHCE · Red Hat · RHEL 5</div>
+        </div>
+      </div>
+      <div class="cert-card reveal">
+        <div class="cert-icon">🌐</div>
+        <div>
+          <div class="cert-name">Cisco Certified Network Associate</div>
+          <div class="cert-body">CCNA · Cisco</div>
+        </div>
+      </div>
+      <div class="cert-card reveal">
+        <div class="cert-icon">🌐</div>
+        <div>
+          <div class="cert-name">Juniper Network Certified Specialist</div>
+          <div class="cert-body">JNCS · Juniper Networks</div>
+        </div>
+      </div>
+      <div class="cert-card reveal">
+        <div class="cert-icon">🪟</div>
+        <div>
+          <div class="cert-name">Microsoft Certified IT Professional</div>
+          <div class="cert-body">MCITP · Windows Server 2008</div>
+        </div>
+      </div>
+      <div class="cert-card reveal">
+        <div class="cert-icon">☕</div>
+        <div>
+          <div class="cert-name">Oracle Certified Associate</div>
+          <div class="cert-body">OCA · Oracle</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- EDUCATION -->
+<section id="education">
+  <div class="section-inner">
+    <p class="section-label reveal">Academic background</p>
+    <h2 class="section-title reveal">Education</h2>
+    <div class="exp-item reveal" style="padding-left:2rem;margin-bottom:0">
+      <div class="exp-header">
+        <div class="exp-role">Master of Science — Computer Software Engineering</div>
+        <div class="exp-meta">
+          <span class="exp-company">Bannari Amman Institute of Technology</span>
+          <span class="exp-period">2007 – 2012</span>
+          <span>Affiliated to Anna University, Tamil Nadu, India</span>
+        </div>
+      </div>
+      <p class="exp-desc">Graduated with First Class honours and was recognised as the Best Outgoing Student of the Year 2012 by the Department of Computer Applications — a distinction that set the tone for a career built on rigour, curiosity, and a drive to do the work well.</p>
+      <div class="exp-stack">
+        <span class="stack-tag">MSc</span>
+        <span class="stack-tag">Software Engineering</span>
+        <span class="stack-tag">1st Class Honours</span>
+        <span class="stack-tag">Best Outgoing Student 2012</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CONTACT CTA -->
+<section>
+  <div class="section-inner">
+    <div class="cta-block reveal">
+      <h2 class="cta-title">Let's build something<br><span style="color:var(--accent)">worth building</span></h2>
+      <p class="cta-subtitle">Whether it's an interesting infrastructure challenge, a role you think I'd be a great fit for, or a consulting engagement — I'd love to hear from you.</p>
+      <div class="cta-buttons">
+        <a href="index.html#contact" class="btn btn-primary">Get in touch</a>
+        <a href="https://www.linkedin.com/in/richierichard/" target="_blank" class="btn btn-outline">Connect on LinkedIn</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 Richie Richard Rajkumar · Built with care</p>
+  <p>Berlin, Germany · <a href="https://www.linkedin.com/in/richierichard/" target="_blank">LinkedIn</a></p>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+// Animate skill bars when they enter the viewport
+(function() {
+  const bars = document.querySelectorAll('.skill-bar-fill');
+  if (!bars.length) return;
+
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        const fill = entry.target;
+        const target = fill.getAttribute('data-width');
+        fill.style.width = target + '%';
+        observer.unobserve(fill);
+      }
+    });
+  }, { threshold: 0.2 });
+
+  bars.forEach(function(bar) { observer.observe(bar); });
+})();
+</script>
+</body>
+</html>

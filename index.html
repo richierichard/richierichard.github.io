@@ -37,12 +37,9 @@
 <nav>
   <a href="#" class="nav-logo">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup>∞</a>
   <ul class="nav-links">
-    <li><a href="#about-me">About</a></li>
-    <li><a href="#skills">Skills</a></li>
-    <li><a href="#experience">Experience</a></li>
-    <li><a href="#projects">Projects</a></li>
-    <li><a href="#certs">Certifications</a></li>
-    <li><a href="#education">Education</a></li>
+    <li><a href="index.html" style="color:var(--accent)">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="blog.html">Blog</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
   <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
@@ -50,6 +47,16 @@
     <span id="theme-label">Light</span>
   </button>
 </nav>
+
+<!-- SIDE NAV -->
+<div class="side-nav" aria-label="Page sections">
+  <a href="#about-me"   class="side-nav-link" data-section="about-me"><span class="side-nav-label">Introduction</span><span class="side-nav-dot"></span></a>
+  <a href="#skills"     class="side-nav-link" data-section="skills"><span class="side-nav-label">Skills</span><span class="side-nav-dot"></span></a>
+  <a href="#experience" class="side-nav-link" data-section="experience"><span class="side-nav-label">Experience</span><span class="side-nav-dot"></span></a>
+  <a href="#projects"   class="side-nav-link" data-section="projects"><span class="side-nav-label">Projects</span><span class="side-nav-dot"></span></a>
+  <a href="#certs"      class="side-nav-link" data-section="certs"><span class="side-nav-label">Certifications</span><span class="side-nav-dot"></span></a>
+  <a href="#contact"    class="side-nav-link" data-section="contact"><span class="side-nav-label">Contact</span><span class="side-nav-dot"></span></a>
+</div>
 
 <!-- HERO -->
 <section class="hero" id="hero">
@@ -111,8 +118,8 @@
 <!-- ABOUT ME -->
 <section id="about-me">
   <div class="section-inner">
-    <p class="section-label reveal">Who I am</p>
-    <h2 class="section-title reveal">About Me</h2>
+    <p class="section-label reveal">Introduction</p>
+    <h2 class="section-title reveal">Get to Know Me</h2>
     <div class="about-grid">
       <div class="about-text reveal">
         <p>With over 15 years of experience building and leading cloud infrastructure, I've grown from hands-on engineering into a role that sits at the intersection of architecture, security, and organisational impact. I don't just build platforms — I build the foundations that let engineering teams move fast, operate reliably, and scale without friction.</p>
@@ -511,33 +518,6 @@
 
 <div class="divider"></div>
 
-<!-- EDUCATION -->
-<section id="education">
-  <div class="section-inner">
-    <p class="section-label reveal">Academic Background</p>
-    <h2 class="section-title reveal">Education</h2>
-    <div class="exp-item reveal" style="padding-left:2rem;margin-bottom:0">
-      <div class="exp-header">
-        <div class="exp-role">Master of Science — Computer Software Engineering</div>
-        <div class="exp-meta">
-          <span class="exp-company">Bannari Amman Institute of Technology</span>
-          <span class="exp-period">2007 – 2012</span>
-          <span>Affiliated to Anna University, Tamil Nadu, India</span>
-        </div>
-      </div>
-      <p class="exp-desc">Graduated with First Class honours and was recognised as the Best Outgoing Student of the Year 2012 by the Department of Computer Applications — a distinction that set the tone for a career built on rigour, curiosity, and a drive to do the work well.</p>
-      <div class="exp-stack">
-        <span class="stack-tag">MSc</span>
-        <span class="stack-tag">Software Engineering</span>
-        <span class="stack-tag">1st Class</span>
-        <span class="stack-tag">Best Outgoing Student 2012</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="divider"></div>
-
 <!-- CONTACT -->
 <section id="contact">
   <div class="section-inner">
@@ -551,13 +531,17 @@
             <span class="contact-link-icon">✉</span>
             &#99;&#111;&#110;&#116;&#97;&#99;&#116;&#64;&#114;&#105;&#99;&#104;&#105;&#101;&#114;&#105;&#99;&#104;&#97;&#114;&#100;&#46;&#99;&#111;&#109;
           </a>
-          <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#114;&#105;&#99;&#104;&#105;&#101;&#46;&#114;&#101;&#100;&#104;&#97;&#116;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;" class="contact-link">
-            <span class="contact-link-icon">✉</span>
-            &#114;&#105;&#99;&#104;&#105;&#101;&#46;&#114;&#101;&#100;&#104;&#97;&#116;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;
-          </a>
           <a href="https://www.linkedin.com/in/richierichard/" target="_blank" class="contact-link">
             <span class="contact-link-icon">in</span>
             linkedin.com/in/richierichard
+          </a>
+          <a href="https://github.com/richierichard" target="_blank" class="contact-link">
+            <span class="contact-link-icon"><img src="https://github.githubassets.com/favicons/favicon-dark.png" width="16" height="16" alt="GitHub"></span>
+            github.com/richierichard
+          </a>
+          <a href="https://x.com/RajkumarRichie" target="_blank" class="contact-link">
+            <span class="contact-link-icon">𝕏</span>
+            @RajkumarRichie
           </a>
           <a href="#" class="contact-link">
             <span class="contact-link-icon">📍</span>
@@ -603,5 +587,23 @@
 </footer>
 
 <script src="js/main.js"></script>
+<script>
+(function () {
+  var ids = ['about-me','skills','experience','projects','certs','contact'];
+  var links = document.querySelectorAll('.side-nav-link');
+  function spy() {
+    var current = '';
+    ids.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el && el.getBoundingClientRect().top <= 140) current = id;
+    });
+    links.forEach(function (a) {
+      a.classList.toggle('active', a.dataset.section === current);
+    });
+  }
+  window.addEventListener('scroll', spy, { passive: true });
+  spy();
+}());
+</script>
 </body>
 </html>
