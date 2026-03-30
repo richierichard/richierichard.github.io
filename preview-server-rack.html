@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview — Server Rack Glow Background</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0c10; overflow: hidden; font-family: 'Nunito', sans-serif; }
+  canvas { position: fixed; inset: 0; z-index: 0; }
+
+  /* Simulated hero content overlay */
+  .hero-overlay {
+    position: fixed; inset: 0; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 1rem;
+    pointer-events: none;
+    padding: 2rem;
+    text-align: center;
+  }
+  .label {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.72rem;
+    color: #4ade80;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .name {
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    font-weight: 500;
+    color: #e8eaf0;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .name span { color: #4ade80; }
+  .role {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.95rem;
+    color: #7a8099;
+  }
+  .badge {
+    display: inline-block;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.7rem;
+    padding: 0.35rem 0.9rem;
+    border: 1px solid rgba(74,222,128,0.3);
+    border-radius: 4px;
+    color: #4ade80;
+    background: rgba(74,222,128,0.07);
+    margin-top: 0.5rem;
+  }
+
+  /* Toggle button */
+  #toggle {
+    position: fixed; top: 1.5rem; right: 1.5rem; z-index: 10;
+    font-family: 'Fira Code', monospace; font-size: 0.75rem;
+    padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;
+    background: rgba(74,222,128,0.1); color: #4ade80;
+    border: 1px solid rgba(74,222,128,0.3);
+    letter-spacing: 0.06em;
+    transition: all 0.2s;
+  }
+  #toggle:hover { background: rgba(74,222,128,0.2); }
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<!-- Simulated site content so you can judge it as a background -->
+<div class="hero-overlay">
+  <span class="label">// Infrastructure Architect · Berlin, Germany</span>
+  <div class="name">Richie Richard<br><span>Rajkumar</span></div>
+  <div class="role">Senior DevOps Engineer</div>
+  <span class="badge">Preview — Server Rack Glow</span>
+</div>
+
+<button id="toggle" onclick="toggleContent()">Hide content</button>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ─── Colour palette ───────────────────────────────────────────
+const C = {
+  bg:       '#0a0c10',
+  rackBg:   'rgba(18,21,28,0.95)',
+  rackBdr:  'rgba(74,222,128,0.18)',
+  unitBg:   'rgba(26,30,40,0.9)',
+  unitBdr:  'rgba(255,255,255,0.06)',
+  green:    '74,222,128',
+  cyan:     '34,211,238',
+  amber:    '251,191,36',
+  red:      '248,113,113',
+};
+
+// ─── Rack definition ─────────────────────────────────────────
+const UNIT_H    = 14;   // px per server unit
+const UNIT_GAP  = 3;
+const RACK_W    = 90;
+const RACK_PAD  = 10;
+const UNITS     = 16;   // server units per rack
+const RACK_H    = UNITS * (UNIT_H + UNIT_GAP) + RACK_PAD * 2 + 24; // +24 for top panel
+
+function makeRack(cx, cy) {
+  const units = [];
+  for (let i = 0; i < UNITS; i++) {
+    units.push({
+      type:  Math.random() < 0.15 ? 'empty' : (Math.random() < 0.2 ? '2u' : '1u'),
+      leds:  Array.from({ length: 3 }, (_, k) => ({
+        color:   k === 0 ? 'green' : (Math.random() < 0.7 ? 'green' : (Math.random() < 0.5 ? 'cyan' : 'amber')),
+        phase:   Math.random() * Math.PI * 2,
+        speed:   0.03 + Math.random() * 0.06,
+        blink:   k > 0 && Math.random() < 0.6,
+        blinkRate: 0.05 + Math.random() * 0.15,
+        on:      true,
+      })),
+      driveBar: Math.random() < 0.6 ? (0.2 + Math.random() * 0.7) : 0,
+      driveAnim: 0,
+    });
+  }
+  return { cx, cy, units, glowPhase: Math.random() * Math.PI * 2, glowSpeed: 0.008 };
+}
+
+// ─── Packets ─────────────────────────────────────────────────
+const packets = [];
+
+function makePacket(x1, y1, x2, y2) {
+  return { x1, y1, x2, y2, t: 0, speed: 0.006 + Math.random() * 0.006, cyan: Math.random() < 0.4 };
+}
+
+// ─── Build racks dynamically based on viewport ──────────────
+let racks = [];
+let cables = [];
+
+function buildScene() {
+  racks = [];
+  const midY = H / 2;
+  // Left rack
+  racks.push(makeRack(RACK_W / 2 + 30, midY));
+  // Right rack
+  racks.push(makeRack(W - RACK_W / 2 - 30, midY));
+  // Centre-bottom partial rack (peeking up)
+  if (W > 900) racks.push(makeRack(W / 2, H - RACK_H * 0.35));
+
+  // Cable endpoints: right edge of left rack → left edge of right rack
+  cables = [];
+  if (racks.length >= 2) {
+    for (let i = 0; i < 5; i++) {
+      const yL = racks[0].cy - RACK_H / 2 + RACK_PAD + 24 + i * 28 + 7;
+      const yR = racks[1].cy - RACK_H / 2 + RACK_PAD + 24 + i * 28 + 7;
+      cables.push({ x1: racks[0].cx + RACK_W / 2, y1: yL, x2: racks[1].cx - RACK_W / 2, y2: yR });
+    }
+    if (racks[2]) {
+      const y3 = racks[2].cy - RACK_H / 2 + RACK_PAD + 24 + 14;
+      cables.push({ x1: racks[0].cx + RACK_W / 2, y1: racks[0].cy, x2: racks[2].cx - RACK_W / 2, y2: y3 });
+      cables.push({ x1: racks[1].cx - RACK_W / 2, y1: racks[1].cy, x2: racks[2].cx + RACK_W / 2, y2: y3 });
+    }
+  }
+}
+
+buildScene();
+window.addEventListener('resize', () => { resize(); buildScene(); });
+
+// ─── Update ──────────────────────────────────────────────────
+let lastPacket = 0;
+function update(now) {
+  racks.forEach(r => {
+    r.glowPhase += r.glowSpeed;
+    r.units.forEach(u => {
+      u.leds.forEach(l => {
+        l.phase += l.speed;
+        if (l.blink) l.on = Math.sin(l.phase * l.blinkRate * 40) > 0;
+      });
+      if (u.driveBar > 0) {
+        u.driveAnim = (u.driveAnim + 0.004) % 1;
+      }
+    });
+  });
+
+  for (let i = packets.length - 1; i >= 0; i--) {
+    packets[i].t += packets[i].speed;
+    if (packets[i].t >= 1) packets.splice(i, 1);
+  }
+
+  if (now - lastPacket > 350 && packets.length < 12 && cables.length) {
+    const c = cables[Math.floor(Math.random() * cables.length)];
+    const rev = Math.random() < 0.5;
+    packets.push(makePacket(rev ? c.x2 : c.x1, rev ? c.y2 : c.y1, rev ? c.x1 : c.x2, rev ? c.y1 : c.y2));
+    lastPacket = now;
+  }
+}
+
+// ─── Draw helpers ────────────────────────────────────────────
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawRack(r) {
+  const x = r.cx - RACK_W / 2;
+  const y = r.cy - RACK_H / 2;
+  const glow = (Math.sin(r.glowPhase) + 1) * 0.5;
+
+  // Ambient glow behind rack
+  const grad = ctx.createRadialGradient(r.cx, r.cy, 0, r.cx, r.cy, RACK_W * 1.8);
+  grad.addColorStop(0, `rgba(${C.green},${0.04 + glow * 0.04})`);
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.fillRect(x - RACK_W, y - 60, RACK_W * 3, RACK_H + 120);
+
+  // Rack frame
+  roundRect(x, y, RACK_W, RACK_H, 6);
+  ctx.fillStyle = C.rackBg;
+  ctx.fill();
+  ctx.strokeStyle = `rgba(${C.green},${0.15 + glow * 0.1})`;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Top panel
+  roundRect(x + 4, y + 4, RACK_W - 8, 20, 3);
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  ctx.fill();
+  // Top panel LED strip
+  for (let i = 0; i < 6; i++) {
+    ctx.beginPath();
+    ctx.arc(x + 12 + i * 9, y + 14, 2.5, 0, Math.PI * 2);
+    const on = Math.sin(r.glowPhase * 2 + i * 0.8) > 0.2;
+    ctx.fillStyle = on
+      ? `rgba(${i < 4 ? C.green : C.cyan},0.9)`
+      : `rgba(${C.green},0.15)`;
+    ctx.fill();
+  }
+
+  // Server units
+  let uy = y + RACK_PAD + 24;
+  r.units.forEach(u => {
+    const uh = u.type === '2u' ? UNIT_H * 2 + UNIT_GAP : UNIT_H;
+    if (u.type !== 'empty') {
+      // Unit body
+      roundRect(x + 5, uy, RACK_W - 10, uh, 2);
+      ctx.fillStyle = C.unitBg;
+      ctx.fill();
+      ctx.strokeStyle = C.unitBdr;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+
+      // Drive activity bar
+      if (u.driveBar > 0) {
+        const bw = (RACK_W - 32) * u.driveBar;
+        const anim = (u.driveAnim * bw) % (RACK_W - 32);
+        ctx.fillStyle = `rgba(${C.cyan},0.12)`;
+        ctx.fillRect(x + 8, uy + uh - 5, RACK_W - 22, 3);
+        ctx.fillStyle = `rgba(${C.cyan},0.6)`;
+        ctx.fillRect(x + 8 + anim, uy + uh - 5, Math.min(20, bw), 3);
+      }
+
+      // LEDs
+      u.leds.forEach((l, li) => {
+        ctx.beginPath();
+        ctx.arc(x + RACK_W - 14 - li * 9, uy + uh / 2, 2.5, 0, Math.PI * 2);
+        let col = l.color === 'green' ? C.green : l.color === 'cyan' ? C.cyan : l.color === 'amber' ? C.amber : C.red;
+        ctx.fillStyle = l.on
+          ? `rgba(${col},${0.7 + Math.sin(l.phase) * 0.2})`
+          : `rgba(${col},0.1)`;
+        ctx.fill();
+        if (l.on) {
+          ctx.shadowColor = `rgba(${col},0.8)`;
+          ctx.shadowBlur = 4;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      });
+    } else {
+      // Empty slot: just a faint indent
+      roundRect(x + 5, uy, RACK_W - 10, uh, 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.01)';
+      ctx.fill();
+    }
+    uy += uh + UNIT_GAP;
+  });
+
+  // Side rails
+  ctx.fillStyle = `rgba(${C.green},0.06)`;
+  ctx.fillRect(x, y + 4, 5, RACK_H - 8);
+  ctx.fillRect(x + RACK_W - 5, y + 4, 5, RACK_H - 8);
+}
+
+function drawCables() {
+  cables.forEach(c => {
+    const mx = (c.x1 + c.x2) / 2;
+    ctx.beginPath();
+    ctx.moveTo(c.x1, c.y1);
+    ctx.bezierCurveTo(mx, c.y1, mx, c.y2, c.x2, c.y2);
+    ctx.strokeStyle = `rgba(${C.green},0.08)`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+}
+
+function drawPackets() {
+  packets.forEach(p => {
+    const t  = p.t;
+    const mt = 0.5;
+    const mx = (p.x1 + p.x2) / 2;
+    // Follow the same bezier as the cable
+    const bx = (1-t)*(1-t)*(1-t)*p.x1 + 3*(1-t)*(1-t)*t*mx + 3*(1-t)*t*t*mx + t*t*t*p.x2;
+    const by1= (1-t)*(1-t)*(1-t)*p.y1 + 3*(1-t)*(1-t)*t*p.y1 + 3*(1-t)*t*t*p.y2 + t*t*t*p.y2;
+
+    ctx.beginPath();
+    ctx.arc(bx, by1, 3, 0, Math.PI * 2);
+    const col = p.cyan ? C.cyan : C.green;
+    ctx.fillStyle = `rgba(${col},0.95)`;
+    ctx.shadowColor = `rgba(${col},1)`;
+    ctx.shadowBlur = 6;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+}
+
+// Floating labels
+const labels = [
+  { text: 'web-01',          col: C.green  },
+  { text: 'db-primary',      col: C.cyan   },
+  { text: 'k8s-node-01',     col: C.green  },
+  { text: '10.0.1.4',        col: C.green  },
+  { text: 'k8s-node-02',     col: C.cyan   },
+  { text: '192.168.0.1',     col: C.green  },
+  { text: 'redis-cache',     col: C.amber  },
+  { text: 'api-gateway',     col: C.cyan   },
+  { text: 'STATUS: OK',      col: C.green  },
+  { text: 'UPTIME: 99.98%',  col: C.green  },
+];
+const floats = labels.map((l, i) => ({
+  ...l,
+  x: 0.15 * W + Math.random() * 0.7 * W,
+  y: 0.1 * H + Math.random() * 0.8 * H,
+  vx: (Math.random() - 0.5) * 0.15,
+  vy: (Math.random() - 0.5) * 0.15,
+  alpha: 0.08 + Math.random() * 0.12,
+}));
+
+function drawLabels() {
+  ctx.font = '10px "Fira Code", monospace';
+  floats.forEach(f => {
+    f.x += f.vx; f.y += f.vy;
+    if (f.x < 50 || f.x > W - 50) f.vx *= -1;
+    if (f.y < 50 || f.y > H - 50) f.vy *= -1;
+    ctx.fillStyle = `rgba(${f.col},${f.alpha})`;
+    ctx.fillText(f.text, f.x, f.y);
+  });
+}
+
+// ─── Main loop ───────────────────────────────────────────────
+function loop(now) {
+  ctx.clearRect(0, 0, W, H);
+  update(now);
+  drawLabels();
+  drawCables();
+  drawPackets();
+  racks.forEach(drawRack);
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+
+// ─── Toggle overlay ──────────────────────────────────────────
+function toggleContent() {
+  const overlay = document.querySelector('.hero-overlay');
+  const btn = document.getElementById('toggle');
+  if (overlay.style.display === 'none') {
+    overlay.style.display = 'flex';
+    btn.textContent = 'Hide content';
+  } else {
+    overlay.style.display = 'none';
+    btn.textContent = 'Show content';
+  }
+}
+</script>
+</body>
+</html>

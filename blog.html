@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog — Richie Richard Rajkumar</title>
+
+<meta name="description" content="Blog by Richie Richard Rajkumar — DevOps, infrastructure, cloud, and platform engineering insights. Coming soon.">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://richierichard.com/blog.html">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Styles -->
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+  .blog-coming-soon {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    gap: 1.5rem;
+  }
+
+  .blog-icon {
+    font-size: 3.5rem;
+    line-height: 1;
+  }
+
+  .blog-coming-soon h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    color: var(--text);
+    margin: 0;
+  }
+
+  .blog-coming-soon h1 span {
+    color: var(--accent);
+  }
+
+  .blog-coming-soon p {
+    color: var(--muted);
+    font-size: 1.1rem;
+    max-width: 480px;
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  .blog-terminal {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 1.25rem 1.75rem;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    text-align: left;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .blog-terminal .prompt { color: var(--muted); }
+  .blog-terminal .cursor {
+    display: inline-block;
+    width: 10px;
+    height: 1.1em;
+    background: var(--accent);
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .blog-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1.5rem;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .blog-back:hover {
+    background: var(--accent);
+    color: #000;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
+    <span class="nav-logo-tag">build · scale · secure</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="blog.html" style="color:var(--accent)">Blog</a></li>
+    <li><a href="index.html#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Light</span>
+  </button>
+</nav>
+
+<!-- COMING SOON -->
+<section class="blog-coming-soon">
+  <div class="blog-icon">&#9997;</div>
+  <h1>Something is <span>cooking</span></h1>
+  <p>I'm working on articles about DevOps, platform engineering, cloud infrastructure, and lessons learned from 15+ years in the field. Check back soon.</p>
+
+  <div class="blog-terminal">
+    <div><span class="prompt">$ </span>git status</div>
+    <div style="color:var(--muted);margin:0.25rem 0;">On branch <span style="color:var(--accent)">blog/drafts</span></div>
+    <div style="color:var(--muted);">3 articles in progress...</div>
+    <div style="margin-top:0.5rem;"><span class="prompt">$ </span><span class="cursor"></span></div>
+  </div>
+
+  <a href="index.html" class="blog-back">&#8592; Back to Home</a>
+</section>
+
+<script src="js/main.js"></script>
+</body>
+</html>

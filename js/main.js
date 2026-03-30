@@ -195,7 +195,7 @@ function initCloudDots() {
   });
 }
 // Use document.fonts.ready so scrollHeight is measured after fonts are applied
-document.fonts.ready.then(initCloudDots);
+if (document.getElementById('cloud-tags')) document.fonts.ready.then(initCloudDots);
 
 /* ============================================================
    THEME TOGGLE
@@ -214,7 +214,8 @@ if (localStorage.getItem('theme') === 'light') {
 /* ============================================================
    CONTACT FORM — AJAX SUBMIT (no redirect)
    ============================================================ */
-document.getElementById('contact-form').addEventListener('submit', async function(e) {
+const contactForm = document.getElementById('contact-form');
+if (contactForm) contactForm.addEventListener('submit', async function(e) {
   e.preventDefault();
   const form = e.target;
   const btn = form.querySelector('button[type="submit"]');
