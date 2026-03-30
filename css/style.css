@@ -57,7 +57,7 @@ body {
   z-index: 0;
   pointer-events: none;
 }
-section, footer, .hero, .side-nav { position: relative; z-index: 1; }
+section, footer, .hero { position: relative; z-index: 1; }
 
 /* ============================================================
    NAV
@@ -74,17 +74,19 @@ nav {
   font-family: var(--mono);
   color: var(--accent);
   text-decoration: none;
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.1rem;
   line-height: 1;
 }
 .nav-logo-mark {
+  display: block;
   font-size: 1.6rem;
   letter-spacing: -0.02em;
 }
 .nav-logo-tag {
+  display: block;
   font-size: 0.72rem;
   color: var(--muted);
   letter-spacing: 0.1em;
