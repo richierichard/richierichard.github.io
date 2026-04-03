@@ -81,8 +81,8 @@
   function draw() {
     ctx.clearRect(0, 0, W, H);
     const light = isLight();
-    const nodeColor  = light ? '22,163,74'  : '74,222,128';
-    const cyanColor  = light ? '8,145,178'  : '34,211,238';
+    const nodeColor  = light ? '2,132,199'   : '56,189,248';
+    const cyanColor  = light ? '67,56,202'   : '129,140,248';
     const lineAlpha  = light ? 0.12 : 0.18;
     const nodeAlpha  = light ? 0.55 : 0.55;
 
@@ -206,7 +206,12 @@ function toggleTheme() {
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
 }
 
-if (localStorage.getItem('theme') === 'light') {
+
+// Default is light; switch to dark only if explicitly saved
+if (localStorage.getItem('theme') === 'dark') {
+  document.body.classList.remove('light');
+  document.getElementById('theme-label').textContent = 'Light';
+} else {
   document.body.classList.add('light');
   document.getElementById('theme-label').textContent = 'Dark';
 }

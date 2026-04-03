@@ -9,10 +9,10 @@
   --border2: rgba(255,255,255,0.12);
   --text: #e8eaf0;
   --muted: #7a8099;
-  --accent: #4ade80;
-  --accent2: #22d3ee;
-  --accent-dim: rgba(74,222,128,0.1);
-  --accent-dim2: rgba(34,211,238,0.1);
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --accent-dim: rgba(56,189,248,0.1);
+  --accent-dim2: rgba(129,140,248,0.1);
   --mono: 'Fira Code', monospace;
   --sans: 'Nunito', sans-serif;
   --nav-bg: rgba(10,12,16,0.85);
@@ -25,10 +25,10 @@ body.light {
   --border2: rgba(0,0,0,0.15);
   --text: #1a1c22;
   --muted: #5a6070;
-  --accent: #16a34a;
-  --accent2: #0891b2;
-  --accent-dim: rgba(22,163,74,0.1);
-  --accent-dim2: rgba(8,145,178,0.1);
+  --accent: #0284c7;
+  --accent2: #4338ca;
+  --accent-dim: rgba(2,132,199,0.1);
+  --accent-dim2: rgba(67,56,202,0.1);
   --nav-bg: rgba(245,245,242,0.88);
 }
 
