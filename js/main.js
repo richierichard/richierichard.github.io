@@ -207,11 +207,8 @@ function toggleTheme() {
 }
 
 
-// Default is light; switch to dark only if explicitly saved
-if (localStorage.getItem('theme') === 'dark') {
-  document.body.classList.remove('light');
-  document.getElementById('theme-label').textContent = 'Light';
-} else {
+// Default is dark; switch to light only if explicitly saved
+if (localStorage.getItem('theme') === 'light') {
   document.body.classList.add('light');
   document.getElementById('theme-label').textContent = 'Dark';
 }
