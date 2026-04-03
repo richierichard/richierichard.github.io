@@ -24,13 +24,14 @@ richierichard.github.io/
 - Plain HTML/CSS/JS — no framework, no build tool, no bundler
 - Fonts loaded from Google Fonts (Nunito + Fira Code)
 - Contact form submitted via **Formspree** (`https://formspree.io/f/mgoporww`) using fetch + JSON — no page redirect
-- Deployed automatically by GitHub Pages on push to `main`
+- Deployed automatically by **Vercel** on push to `main`
 
 ## Navigation structure
 Top nav (all pages): **Home · About · Blog · Contact** only.
-- `Blog` links to `blog.html` — "Something is cooking" coming soon page
+- `Blog` links to `/blog` — "Something is cooking" coming soon page
 - Active page link is highlighted with `style="color:var(--accent)"`
-- All links use **relative paths** (`about.html`, `blog.html`, `index.html#contact`) — no leading `/` — so they work locally with `file://` and on GitHub Pages
+- All nav links use **absolute paths** (`/about`, `/blog`, `/#contact`, `/`)
+- All asset paths (CSS, JS, favicon) use **absolute paths** (`/css/style.css`, `/js/main.js`, `/favicon.svg`) — required because Vercel serves `about.html` at `/about` and relative paths would resolve incorrectly
 
 ## index.html — Homepage sections (by anchor ID)
 | ID           | Content                                         |
@@ -116,9 +117,16 @@ Canvas-based animation in `main.js` (`#bg-canvas` element, first child of `<body
 - **CSS variables** for theming (`--bg`, `--accent`, `--muted`, etc.) — dark mode by default, light mode toggled via `body.light`
 - **Scroll reveal** — add class `reveal` to any element to animate it in on scroll
 - **Emails are HTML-entity-encoded** in HTML files to deter scrapers — do not decode them
-- All inter-page links use relative paths (no leading `/`) — absolute paths break `file://` local testing
+- All asset paths (`/css/style.css`, `/js/main.js`, `/favicon.svg`) use absolute paths — do not use relative paths or they will break on `/about` and `/blog`
+- All nav links use absolute paths (`/`, `/about`, `/blog`, `/#contact`)
 - Avoid adding frameworks, build tools, or extra dependencies; keep it static and fast
 - Preview files (`preview-*.html`) are throwaway — can be deleted after use
 
 ## Deployment
-Push to `main` → GitHub Actions auto-deploys to GitHub Pages → live at `https://richierichard.com/` within ~1 minute.
+Hosted on **Vercel** (migrated from GitHub Pages).
+- Push to `main` on GitHub → Vercel auto-deploys → live at `https://richierichard.com/` within ~30 seconds
+- Vercel serves clean URLs: `/` → `index.html`, `/about` → `about.html`, `/blog` → `blog.html`
+- Every branch/PR gets an auto-generated preview URL for reviewing changes before merging
+- The `CNAME` file is a GitHub Pages artefact and no longer used by Vercel (DNS is managed in Vercel dashboard)
+- Vercel automatically redirects `richierichard.com` → `www.richierichard.com` (apex to www redirect handled at the platform level, no config needed)
+- Local testing with `file://` will not reflect clean URLs — use `vercel dev` CLI or `python3 -m http.server` for local previews
