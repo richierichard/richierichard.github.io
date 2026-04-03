@@ -75,15 +75,15 @@
     </div>
     <div class="hero-stats">
       <div class="stat">
-        <span class="stat-num">15+</span>
+        <span class="stat-num" data-site-value="yearsExperience">15+</span>
         <span class="stat-label">Years of Experience</span>
       </div>
       <div class="stat">
-        <span class="stat-num">8</span>
+        <span class="stat-num" data-site-value="certifications">8</span>
         <span class="stat-label">Certifications</span>
       </div>
       <div class="stat">
-        <span class="stat-num">7+</span>
+        <span class="stat-num" data-site-value="cloudPlatforms">7+</span>
         <span class="stat-label">Cloud Platforms</span>
       </div>
     </div>
@@ -519,7 +519,7 @@
 
 <!-- FOOTER -->
 <footer>
-  <p>© 2026 Richie Richard Rajkumar · Built with Claude</p>
+  <p>© <span data-site-value="copyrightYear">2026</span> Richie Richard Rajkumar · Built with Claude</p>
   <p>Berlin, Germany · <a href="https://www.linkedin.com/in/richierichard/" target="_blank">LinkedIn</a></p>
 </footer>
 
@@ -530,9 +530,11 @@
   var links = document.querySelectorAll('.side-nav-link');
   function spy() {
     var current = '';
-    ids.forEach(function (id) {
+    ids.forEach(function (id, i) {
       var el = document.getElementById(id);
-      if (el && el.getBoundingClientRect().top <= 140) current = id;
+      if (!el) return;
+      var threshold = (i === ids.length - 1) ? window.innerHeight : window.innerHeight * 0.55;
+      if (el.getBoundingClientRect().top <= threshold) current = id;
     });
     links.forEach(function (a) {
       a.classList.toggle('active', a.dataset.section === current);

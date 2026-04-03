@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS S3 Account-Regional Namespaces — Richie Richard Rajkumar</title>
+
+<meta name="description" content="AWS changed how S3 bucket naming works in March 2026. Here's what shifted, what breaks, and what every DevOps engineer needs to update in their infrastructure.">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://www.richierichard.com/blog/s3-regional-namespaces">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.richierichard.com/blog/s3-regional-namespaces">
+<meta property="og:title" content="AWS S3 Account-Regional Namespaces — Richie Richard Rajkumar">
+<meta property="og:description" content="AWS changed how S3 bucket naming works in March 2026. Here's what shifted, what breaks, and what every DevOps engineer needs to update.">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+
+<style>
+/* ── ARTICLE PAGE ── */
+.article-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 7rem 2rem 5rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Full-width top: back link, title, hero */
+.article-top {
+  max-width: 960px;
+}
+
+/* Full-width intro text */
+.article-intro {
+  max-width: 960px;
+  margin-bottom: 2.5rem;
+  color: var(--text);
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+.article-intro p { margin-bottom: 1.25rem; }
+.article-intro code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+
+/* Back link */
+.article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  margin-bottom: 2.5rem;
+  transition: color 0.2s;
+}
+.article-back:hover { color: var(--accent); }
+
+/* Header */
+.article-header { margin-bottom: 2.5rem; }
+.article-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.article-tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.2);
+  letter-spacing: 0.04em;
+}
+body.light .article-tag { border-color: rgba(2,132,199,0.25); }
+
+.article-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.article-title span { color: var(--accent); }
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.article-meta-dot { opacity: 0.3; }
+
+/* Hero illustration */
+.article-hero {
+  width: 100%;
+  max-width: 960px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+}
+
+/* Body */
+.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 2.5rem 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 6rem;
+}
+.article-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 1.75rem 0 0.5rem;
+}
+.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.article-body li { margin-bottom: 0.4rem; color: var(--text); }
+.article-body strong { color: var(--text); font-weight: 700; }
+.article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Code blocks */
+.article-body pre {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.article-body code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+.article-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 1em;
+}
+.article-body pre .cm { color: var(--muted); }
+.article-body pre .ky { color: var(--accent); }
+.article-body pre .st { color: #f9a8d4; }
+.article-body pre .nm { color: #fde68a; }
+
+/* Callout box */
+.callout {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+.callout strong { color: var(--accent); }
+
+/* Comparison table */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
+}
+.compare-table th {
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.compare-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .good { color: var(--accent); font-weight: 700; }
+.compare-table .bad  { color: #f87171; }
+
+/* Divider */
+.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+
+/* Footer */
+.article-footer {
+  max-width: 960px;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.article-author { display: flex; align-items: center; gap: 0.85rem; }
+.author-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
+  flex-shrink: 0;
+}
+.author-name { font-weight: 700; font-size: 0.9rem; }
+.author-role { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--accent); color: var(--accent);
+  font-weight: 700; font-size: 0.85rem; text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #000; }
+
+
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
+    <span class="nav-logo-tag">build · scale · secure</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Light</span>
+  </button>
+</nav>
+
+<div class="article-page">
+
+  <!-- ── Full-width: back link, title, hero ── -->
+  <div class="article-top">
+    <a href="/blog" class="article-back">← Back to Blog</a>
+    <header class="article-header">
+      <div class="article-tags">
+        <span class="article-tag">AWS</span>
+        <span class="article-tag">S3</span>
+        <span class="article-tag">Infrastructure</span>
+        <span class="article-tag">DevOps</span>
+      </div>
+      <h1 class="article-title">AWS S3 Bucket Naming Just <span>Changed Forever</span></h1>
+      <div class="article-meta">
+        <span>Richie Richard Rajkumar</span>
+        <span class="article-meta-dot">·</span>
+        <span>March 2026</span>
+        <span class="article-meta-dot">·</span>
+        <span>6 min read</span>
+      </div>
+    </header>
+  </div>
+
+  <div class="article-hero">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 320" width="760" height="320" style="width:100%;height:auto;display:block;">
+          <defs>
+            <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#0a0c10"/>
+              <stop offset="100%" stop-color="#12151c"/>
+            </linearGradient>
+          </defs>
+          <rect width="760" height="320" fill="url(#bg-grad)"/>
+
+          <!-- LEFT: OLD (global namespace) -->
+          <text x="190" y="36" font-family="'Fira Code',monospace" font-size="11" fill="#7a8099" text-anchor="middle" letter-spacing="2">BEFORE — GLOBAL NAMESPACE</text>
+          <!-- Globe circle -->
+          <circle cx="190" cy="160" r="72" fill="none" stroke="#f87171" stroke-width="1.5" stroke-dasharray="6 3" opacity="0.6"/>
+          <circle cx="190" cy="160" r="72" fill="rgba(248,113,113,0.04)"/>
+          <!-- Globe lines -->
+          <ellipse cx="190" cy="160" rx="30" ry="72" fill="none" stroke="#f87171" stroke-width="0.8" opacity="0.3"/>
+          <line x1="118" y1="160" x2="262" y2="160" stroke="#f87171" stroke-width="0.8" opacity="0.3"/>
+          <line x1="126" y1="120" x2="254" y2="120" stroke="#f87171" stroke-width="0.8" opacity="0.3"/>
+          <line x1="126" y1="200" x2="254" y2="200" stroke="#f87171" stroke-width="0.8" opacity="0.3"/>
+          <!-- Bucket icons competing -->
+          <rect x="155" y="145" width="70" height="30" rx="4" fill="#1a1e28" stroke="#f87171" stroke-width="1.2"/>
+          <text x="190" y="165" font-family="'Fira Code',monospace" font-size="10" fill="#f87171" text-anchor="middle">my-bucket</text>
+          <!-- Conflict arrows -->
+          <text x="190" y="116" font-family="'Fira Code',monospace" font-size="9" fill="#f87171" text-anchor="middle" opacity="0.7">Account A ✗</text>
+          <text x="190" y="210" font-family="'Fira Code',monospace" font-size="9" fill="#f87171" text-anchor="middle" opacity="0.7">Account B ✗</text>
+          <line x1="190" y1="119" x2="190" y2="145" stroke="#f87171" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
+          <line x1="190" y1="175" x2="190" y2="203" stroke="#f87171" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
+          <!-- Label -->
+          <text x="190" y="258" font-family="'Nunito',sans-serif" font-size="12" fill="#f87171" text-anchor="middle" font-weight="700">Name collision risk</text>
+          <text x="190" y="274" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle">arn:aws:s3:::my-bucket</text>
+
+          <!-- DIVIDER -->
+          <line x1="380" y1="40" x2="380" y2="290" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <text x="380" y="170" font-family="'Fira Code',monospace" font-size="18" fill="rgba(255,255,255,0.1)" text-anchor="middle">→</text>
+
+          <!-- RIGHT: NEW (account-regional namespace) -->
+          <text x="570" y="36" font-family="'Fira Code',monospace" font-size="11" fill="#7a8099" text-anchor="middle" letter-spacing="2">AFTER — ACCOUNT-REGIONAL</text>
+          <!-- Format legend -->
+          <rect x="400" y="44" width="340" height="16" rx="4" fill="rgba(56,189,248,0.07)"/>
+          <text x="570" y="56" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle" opacity="0.75">prefix — accountId — region — an</text>
+          <!-- Account A box -->
+          <rect x="408" y="68" width="325" height="76" rx="8" fill="rgba(56,189,248,0.05)" stroke="#38bdf8" stroke-width="1.2" opacity="0.8"/>
+          <text x="570" y="85" font-family="'Fira Code',monospace" font-size="9" fill="#38bdf8" text-anchor="middle" letter-spacing="1" opacity="0.8">ACCOUNT 111122223333 · eu-west-1</text>
+          <rect x="426" y="91" width="288" height="22" rx="4" fill="#1a1e28" stroke="#38bdf8" stroke-width="1"/>
+          <text x="570" y="107" font-family="'Fira Code',monospace" font-size="9" fill="#38bdf8" text-anchor="middle">app-logs-111122223333-eu-west-1-an  ✓</text>
+          <text x="570" y="131" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle" opacity="0.6">No global collision possible</text>
+          <!-- Account B box -->
+          <rect x="408" y="156" width="325" height="76" rx="8" fill="rgba(56,189,248,0.05)" stroke="#38bdf8" stroke-width="1.2" opacity="0.8"/>
+          <text x="570" y="173" font-family="'Fira Code',monospace" font-size="9" fill="#38bdf8" text-anchor="middle" letter-spacing="1" opacity="0.8">ACCOUNT 999988887777 · eu-west-1</text>
+          <rect x="426" y="179" width="288" height="22" rx="4" fill="#1a1e28" stroke="#38bdf8" stroke-width="1"/>
+          <text x="570" y="195" font-family="'Fira Code',monospace" font-size="9" fill="#38bdf8" text-anchor="middle">app-logs-999988887777-eu-west-1-an  ✓</text>
+          <text x="570" y="219" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle" opacity="0.6">Same prefix, different namespace</text>
+          <!-- Label -->
+          <text x="570" y="258" font-family="'Nunito',sans-serif" font-size="12" fill="#38bdf8" text-anchor="middle" font-weight="700">Scoped · Predictable · Conflict-free</text>
+          <text x="570" y="275" font-family="'Fira Code',monospace" font-size="8.5" fill="#7a8099" text-anchor="middle">{prefix}-{accountId}-{region}-an</text>
+          <text x="570" y="292" font-family="'Fira Code',monospace" font-size="8" fill="#7a8099" text-anchor="middle" opacity="0.7">ARN format unchanged: arn:aws:s3:::bucket-name</text>
+        </svg>
+  </div><!-- /article-hero -->
+
+  <div class="article-intro">
+    <p>If you manage AWS infrastructure at any meaningful scale, you've probably felt the friction of S3's global bucket namespace. Names like <code>my-company-prod-data-eu-west-1-2024</code> exist not because engineers love verbose names — they exist because someone already claimed <code>data</code>, <code>assets</code>, <code>backups</code>, and every other sane option years ago. That changed in March 2026.</p>
+    <p>AWS introduced <strong>account-regional namespaces for S3 general purpose buckets</strong>, scoping bucket names to a specific account and region. The mechanism is a structured naming convention — <code>{prefix}-{accountId}-{region}-an</code> — that encodes the namespace directly into the bucket name. Here's what actually changed, what the convention means, and what you need to update in your IaC.</p>
+  </div>
+
+  <article class="article-body">
+
+        <h2 id="why-global">Why the Global Namespace Was Always a Problem</h2>
+
+        <p>S3 launched in 2006 with a single global namespace. Every bucket name across every AWS account in the world had to be unique. At the time, the S3 user base was small enough that this worked. By 2026, it had become a genuine operational problem:</p>
+
+        <ul>
+          <li><strong>Bucket squatting</strong> — attackers registering predictable bucket names (e.g. <code>company-logs</code>, <code>company-backups</code>) before target organisations do. A deleted bucket's name immediately becomes available to anyone globally.</li>
+          <li><strong>Name exhaustion</strong> — short, meaningful names are almost universally taken across the entire AWS customer base</li>
+          <li><strong>Naming anti-patterns</strong> — teams were forced to append account IDs or timestamps to every bucket name just to guarantee uniqueness, creating exactly the pattern the new convention now formalises</li>
+          <li><strong>Multi-account drift</strong> — maintaining consistent naming conventions across dev, staging, and prod accounts was impossible when names had to be globally unique</li>
+          <li><strong>No availability guarantee</strong> — even if you deleted a bucket, another account could immediately claim that name before you recreated it</li>
+        </ul>
+
+        <div class="callout">
+          <strong>The core shift:</strong> Bucket names are now scoped to your AWS account and region. Two different accounts can use the same logical prefix in the same region — each gets their own isolated namespace, and the bucket name itself encodes the account and region explicitly.
+        </div>
+
+        <h2 id="what-changed">What Actually Changed</h2>
+
+        <p>From March 2026, buckets created with the new account-regional namespace use a structured naming convention that encodes the account and region directly into the bucket name. The ARN format is <strong>unchanged</strong> — the uniqueness is achieved through naming, not a new ARN scheme.</p>
+
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Old (Global)</th>
+              <th>New (Account-Regional)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Uniqueness scope</td>
+              <td class="bad">Global — all accounts worldwide</td>
+              <td class="good">Account + region only</td>
+            </tr>
+            <tr>
+              <td>Bucket name format</td>
+              <td class="bad"><code>my-bucket</code> (bare, manually unique)</td>
+              <td class="good"><code>my-bucket-{accountId}-{region}-an</code></td>
+            </tr>
+            <tr>
+              <td>ARN format</td>
+              <td><code>arn:aws:s3:::bucket-name</code></td>
+              <td class="good"><code>arn:aws:s3:::bucket-name</code> — unchanged</td>
+            </tr>
+            <tr>
+              <td>Name availability guarantee</td>
+              <td class="bad">None — anyone can claim deleted names</td>
+              <td class="good">Guaranteed — scoped to your account</td>
+            </tr>
+            <tr>
+              <td>Multi-account consistency</td>
+              <td class="bad">Impossible — names must differ per account</td>
+              <td class="good">Same prefix works across all your accounts</td>
+            </tr>
+            <tr>
+              <td>CreateBucket API</td>
+              <td class="bad">No extra params</td>
+              <td class="good">Add <code>--bucket-namespace account-regional</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2 id="naming-convention">The New Naming Convention</h2>
+
+        <p>This is the central mechanic. Account-regional buckets follow a structured format that makes the namespace explicit in the name itself:</p>
+
+        <pre><span class="nm">{prefix}-{AWS-Account-ID}-{AWS-Region}-an</span>
+
+<span class="cm"># Real examples</span>
+<span class="nm">app-logs-111122223333-eu-west-1-an</span>
+<span class="nm">tf-state-999988887777-us-east-1-an</span>
+<span class="nm">assets-012345678910-ap-southeast-1-an</span></pre>
+
+        <p>Breaking down the components:</p>
+        <ul>
+          <li><strong><code>{prefix}</code></strong> — your logical bucket name, up to 37 characters (leaving room for the suffix within the 63-char total limit)</li>
+          <li><strong><code>{AWS-Account-ID}</code></strong> — your 12-digit account ID, embedded directly in the name</li>
+          <li><strong><code>{AWS-Region}</code></strong> — the full region code where the bucket lives</li>
+          <li><strong><code>-an</code></strong> — the account namespace suffix, required to identify this as an account-regional bucket</li>
+        </ul>
+
+        <div class="callout">
+          <strong>Why this format?</strong> By encoding account ID and region into the name, the bucket is globally identifiable without requiring a global uniqueness check. The <code>-an</code> suffix signals to AWS (and to your team) that this bucket lives in an account-scoped namespace rather than the old global pool.
+        </div>
+
+        <p>Two different accounts can both create a bucket with the same prefix — the resulting names are different because the account ID differs. Your dev, staging, and prod accounts can all have an <code>app-logs</code> bucket with predictable, consistent naming:</p>
+
+        <pre><span class="cm"># Dev account (111122223333)</span>
+<span class="nm">app-logs-111122223333-eu-west-1-an</span>
+
+<span class="cm"># Staging account (444455556666)</span>
+<span class="nm">app-logs-444455556666-eu-west-1-an</span>
+
+<span class="cm"># Prod account (999988887777)</span>
+<span class="nm">app-logs-999988887777-eu-west-1-an</span></pre>
+
+        <h2 id="what-to-update">What You Need to Update</h2>
+
+        <h3>AWS CLI</h3>
+        <p>Pass <code>--bucket-namespace account-regional</code> when creating buckets. The <code>--bucket</code> value should be the full structured name:</p>
+
+        <pre>aws s3api create-bucket \
+    --bucket <span class="nm">app-logs-111122223333-eu-west-1-an</span> \
+    --bucket-namespace <span class="st">account-regional</span> \
+    --region eu-west-1 \
+    --create-bucket-configuration LocationConstraint=eu-west-1</pre>
+
+        <h3>CloudFormation</h3>
+        <p>Two options depending on whether you want to specify the full name or let CloudFormation build it:</p>
+
+        <pre><span class="cm"># Option 1 — explicit full name (using pseudo-parameters)</span>
+<span class="ky">Type</span>: AWS::S3::Bucket
+<span class="ky">Properties</span>:
+  <span class="ky">BucketName</span>: !Sub <span class="st">"app-logs-${AWS::AccountId}-${AWS::Region}-an"</span>
+  <span class="ky">BucketNamespace</span>: <span class="st">account-regional</span>
+
+<span class="cm"># Option 2 — prefix only, CloudFormation appends the suffix</span>
+<span class="ky">Type</span>: AWS::S3::Bucket
+<span class="ky">Properties</span>:
+  <span class="ky">BucketNamePrefix</span>: <span class="st">app-logs</span>
+  <span class="ky">BucketNamespace</span>: <span class="st">account-regional</span>
+<span class="cm"># → resolves to: app-logs-{accountId}-{region}-an</span></pre>
+
+        <h3>Terraform</h3>
+        <p>Use the <code>data.aws_caller_identity</code> and <code>data.aws_region</code> data sources to build the name dynamically. This way the same module works consistently across all your accounts:</p>
+
+        <pre>data <span class="st">"aws_caller_identity"</span> <span class="st">"current"</span> {}
+data <span class="st">"aws_region"</span> <span class="st">"current"</span> {}
+
+resource <span class="st">"aws_s3_bucket"</span> <span class="st">"app_logs"</span> {
+  bucket = <span class="st">"app-logs-</span><span class="nm">${data.aws_caller_identity.current.account_id}</span><span class="st">-</span><span class="nm">${data.aws_region.current.name}</span><span class="st">-an"</span>
+}
+
+<span class="cm"># Example output: app-logs-111122223333-eu-west-1-an</span></pre>
+
+        <h3>Boto3 (Python)</h3>
+        <p>Pass <code>BucketNamespace</code> in the <code>CreateBucketConfiguration</code> parameter:</p>
+
+        <pre><span class="cm"># boto3 — create an account-regional bucket</span>
+import boto3
+
+s3 = boto3.client(<span class="st">'s3'</span>, region_name=<span class="st">'eu-west-1'</span>)
+
+s3.create_bucket(
+    Bucket=<span class="st">'app-logs-111122223333-eu-west-1-an'</span>,
+    CreateBucketConfiguration={
+        <span class="st">'LocationConstraint'</span>: <span class="st">'eu-west-1'</span>,
+        <span class="st">'BucketNamespace'</span>: <span class="st">'account-regional'</span>
+    }
+)</pre>
+
+        <h3>Enforcing It via SCP</h3>
+        <p>Lock down your organisation so only account-regional buckets can be created — no one accidentally creates old-style global buckets:</p>
+
+        <pre>{
+  <span class="ky">"Sid"</span>: <span class="st">"RequireAccountRegionalBuckets"</span>,
+  <span class="ky">"Effect"</span>: <span class="st">"Deny"</span>,
+  <span class="ky">"Action"</span>: <span class="st">"s3:CreateBucket"</span>,
+  <span class="ky">"Resource"</span>: <span class="st">"*"</span>,
+  <span class="ky">"Condition"</span>: {
+    <span class="ky">"StringNotEquals"</span>: {
+      <span class="st">"s3:x-amz-bucket-namespace"</span>: <span class="st">"account-regional"</span>
+    }
+  }
+}</pre>
+
+        <h2 id="what-unchanged">What You Don't Need to Worry About</h2>
+
+        <p>A few things that are <em>not</em> affected by this change:</p>
+        <ul>
+          <li><strong>ARN format</strong> — remains <code>arn:aws:s3:::bucket-name</code>. No changes to IAM policies referencing bucket ARNs</li>
+          <li><strong>Existing buckets</strong> — they stay on the global namespace; migration is opt-in</li>
+          <li><strong>Performance and cost</strong> — zero impact, this is purely a naming and namespace change</li>
+          <li><strong>S3 APIs</strong> — all existing API operations (GetObject, PutObject, ListBuckets, etc.) work unchanged</li>
+          <li><strong>Access patterns</strong> — presigned URLs, static website hosting, event notifications, replication, and lifecycle rules are unaffected</li>
+          <li><strong>AWS service integrations</strong> — CloudFront, Lambda, Athena, Glue, and all other services that interact with S3 work without modification</li>
+        </ul>
+
+        <div class="callout">
+          <strong>My take:</strong> For 18 years, every DevOps engineer has cargo-culted account IDs and region codes into bucket names manually — precisely because the global namespace forced it. AWS has now formalised that pattern, added the <code>-an</code> suffix, and made the scoping enforceable. The upgrade path is straightforward: adopt the convention for new buckets, use CloudFormation's <code>BucketNamePrefix</code> to generate names automatically, and add an SCP to keep your org clean. Existing buckets need nothing — which means you can move at your own pace.
+        </div>
+
+        <h2 id="takeaways">Key Takeaways</h2>
+
+        <ol>
+          <li>New account-regional buckets follow the format <code>{prefix}-{accountId}-{region}-an</code> — the naming convention makes the scope explicit</li>
+          <li>The <code>-an</code> suffix is mandatory and identifies the bucket as account-regional, not global</li>
+          <li>ARN format is <strong>unchanged</strong> — <code>arn:aws:s3:::bucket-name</code> still works; no IAM policy rewrites needed</li>
+          <li>All creation paths require opting in: pass <code>--bucket-namespace account-regional</code> in the CLI, <code>BucketNamespace: account-regional</code> in CloudFormation, or <code>BucketNamespace</code> in SDK calls</li>
+          <li>Use <code>s3:x-amz-bucket-namespace</code> in SCPs to enforce account-regional creation org-wide</li>
+          <li>Existing global-namespace buckets are unaffected — migration is opt-in, no forced cutover</li>
+        </ol>
+
+        <h2 id="reference">Reference</h2>
+        <p>AWS announcement: <a href="https://aws.amazon.com/blogs/aws/introducing-account-regional-namespaces-for-amazon-s3-general-purpose-buckets/" target="_blank" rel="noopener">Introducing account regional namespaces for Amazon S3 general purpose buckets</a> — AWS Blog, March 2026.</p>
+
+  </article>
+
+  <div class="article-divider"></div>
+  <footer class="article-footer">
+    <div class="article-author">
+      <div class="author-avatar">R³</div>
+      <div>
+        <div class="author-name">Richie Richard Rajkumar</div>
+        <div class="author-role">Infrastructure Architect · Platform Leader · Berlin</div>
+      </div>
+    </div>
+    <a href="/blog" class="back-btn">← All articles</a>
+  </footer>
+
+</div><!-- /article-page -->
+
+<script src="/js/main.js"></script>
+</body>
+</html>

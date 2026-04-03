@@ -1,4 +1,22 @@
 /* ============================================================
+   SITE CONFIG — edit values here, they update everywhere
+   ============================================================ */
+var SITE_CONFIG = {
+  yearsExperience : '15+',
+  certifications  : '8',
+  cloudPlatforms  : '7+',
+  teamsLed        : '5+',
+  copyrightYear   : new Date().getFullYear()
+};
+
+(function () {
+  document.querySelectorAll('[data-site-value]').forEach(function (el) {
+    var key = el.getAttribute('data-site-value');
+    if (SITE_CONFIG[key] !== undefined) el.textContent = SITE_CONFIG[key];
+  });
+}());
+
+/* ============================================================
    NETWORK TOPOLOGY BACKGROUND
    ============================================================ */
 (function () {
