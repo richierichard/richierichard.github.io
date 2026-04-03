@@ -82,7 +82,7 @@
     ctx.clearRect(0, 0, W, H);
     const light = isLight();
     const nodeColor  = light ? '2,132,199'   : '56,189,248';
-    const cyanColor  = light ? '67,56,202'   : '129,140,248';
+    const cyanColor  = light ? '3,105,161'   : '96,165,250';
     const lineAlpha  = light ? 0.12 : 0.18;
     const nodeAlpha  = light ? 0.55 : 0.55;
 
