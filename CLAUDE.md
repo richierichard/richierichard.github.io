@@ -1,22 +1,27 @@
 # CLAUDE.md — Project Context for Claude Code
 
 ## Project overview
-Personal portfolio website for Richie Richard Rajkumar (Senior DevOps Engineer, Berlin).
-Deployed as a static site via **GitHub Pages** at `https://richierichard.com/`.
+Personal portfolio website and technical blog for Richie Richard Rajkumar (Senior DevOps Engineer, Berlin).
+Deployed as a static site via **Vercel** at `https://www.richierichard.com/`.
 
 ## File structure
 ```
 richierichard.github.io/
 ├── index.html               # Homepage — hero, intro, skills, experience, projects, contact
 ├── about.html               # Dedicated detailed About Me page
-├── blog.html                # Blog coming soon page
+├── blog.html                # Blog listing page — search, tag filters, post cards
 ├── favicon.svg              # SVG favicon — transparent background, green R³ in Courier New
+├── vercel.json              # Vercel config — clean URLs + .html → clean URL redirects
 ├── github-profile-README.md # Source file for GitHub profile README (deploy to richierichard/richierichard repo)
 ├── css/
 │   └── style.css            # All styles, organised by section with comments
 ├── js/
 │   └── main.js              # All scripts: network animation, scroll reveal, cloud dots, theme toggle, contact form
-├── CNAME                    # GitHub Pages custom domain → richierichard.com
+├── blog/
+│   ├── s3-regional-namespaces.html         # Article: AWS S3 Account-Regional Namespaces (March 2026)
+│   ├── kubernetes-mcp-server.html          # Article: Kubernetes MCP Server in Practice (April 2026)
+│   └── kubernetes-mcp-server-centralised.html # Article: Centralised MCP Server with IRSA (April 2026)
+├── CNAME                    # GitHub Pages artefact (no longer used by Vercel)
 └── README.md
 ```
 
@@ -28,7 +33,7 @@ richierichard.github.io/
 
 ## Navigation structure
 Top nav (all pages): **Home · About · Blog · Contact** only.
-- `Blog` links to `/blog` — "Something is cooking" coming soon page
+- `Blog` links to `/blog` — blog listing page with search, tag filters, and post cards
 - Active page link is highlighted with `style="color:var(--accent)"`
 - All nav links use **absolute paths** (`/about`, `/blog`, `/#contact`, `/`)
 - All asset paths (CSS, JS, favicon) use **absolute paths** (`/css/style.css`, `/js/main.js`, `/favicon.svg`) — required because Vercel serves `about.html` at `/about` and relative paths would resolve incorrectly
@@ -71,10 +76,72 @@ A separate full page at `richierichard.com/about.html` with:
 - Contact CTA block
 - Page-specific styles are inline `<style>` block in `about.html` — not in `style.css`
 
-## blog.html — Coming soon page
-- "Something is cooking" message with a terminal `git status` widget showing 3 articles in progress
-- Same nav and canvas animation as other pages
-- Inline styles in `blog.html`
+## blog.html — Blog listing page
+Full blog listing with client-side search and tag filtering.
+
+**Layout:**
+- Hero section with title and search bar
+- Two-column grid: sticky sidebar (210px) + post cards (1fr)
+- Responsive: sidebar stacks at 860px, post cards simplify at 600px
+- Inline styles in `blog.html` (~290 lines)
+
+**Sidebar:**
+- Tag filter buttons with post counts (e.g., `AWS (2)`, `Kubernetes (2)`)
+- Active tag highlighted; "All posts" is default
+- "Articles published" stat counter
+- Tags: AWS, Kubernetes, DevOps, AI, Platform Engineering, S3, Infrastructure, GitOps
+
+**Post cards:**
+- Each card is an `<a>` with `data-tags`, `data-title`, `data-excerpt` attributes for filtering
+- Tags, title, excerpt, date, read time, hover arrow
+- Cards link to `/blog/{slug}` (clean URLs)
+
+**Search & filter JS** (inline `<script>` at bottom):
+- Text search matches against title, excerpt, and tags (case-insensitive)
+- Tag buttons filter by `data-tags` attribute
+- "No results" message shown when nothing matches
+- `#visible-count` updates dynamically
+
+**"More coming" section:**
+- Terminal widget showing `git status` on `blog/drafts` branch with article count in progress
+- Update the article count when publishing new posts
+
+**When adding a new blog post:**
+1. Create `blog/{slug}.html` using an existing article as template
+2. Add a post card `<a>` in `blog.html` (newest first, above existing cards)
+3. Update tag filter counts in the sidebar
+4. Update the "All posts" count and `#visible-count` stat
+5. Update the "articles in progress" count in the terminal widget if applicable
+
+## blog/ — Article pages
+Each article is a standalone HTML file in the `blog/` directory with:
+- Same nav, canvas animation, and theme toggle as all pages
+- Page-specific inline `<style>` block (~200+ lines) — not in `style.css`
+- All asset paths use absolute paths (`/css/style.css`, `/js/main.js`, `/favicon.svg`)
+
+**Article structure (top to bottom):**
+| Component | Class | Content |
+|-----------|-------|---------|
+| Back link | `.article-back` | `← Back to Blog` linking to `/blog` |
+| Header | `.article-header` | Tags (`.article-tag`), title (`.article-title` with accent `<span>`), meta (author, date, read time) |
+| Hero image | `.article-hero` | Inline SVG diagram (~760×320–420px), dark gradient background, Fira Code labels |
+| Intro | `.article-intro` | 1–2 paragraphs of context before the main body |
+| Body | `.article-body` | Sections with `h2` (bordered bottom), `h3` (accent color), paragraphs, lists, code blocks |
+| Divider | `.article-divider` | Horizontal line |
+| Footer | `.article-footer` | Author card (R³ avatar, name, role) + "← All articles" back button |
+
+**Reusable content components in articles:**
+- **Code blocks** — `<pre>` with syntax highlighting via span classes: `.cm` (comment/muted), `.ky` (keyword/accent), `.st` (string/pink), `.nm` (name/yellow)
+- **Callout boxes** — `.callout` div with accent left border, used for key takeaways and author opinions
+- **Comparison tables** — `.compare-table` with `.good` (accent/green) and `.bad` (red) cell classes
+- **Conversation blocks** — `.conversation` div with `.human` (accent blue), `.ai` (purple #a78bfa), `.msg` children; used for AI dialogue examples
+
+**Published articles:**
+| Slug | Title | Date | Tags |
+|------|-------|------|------|
+| `s3-regional-namespaces` | AWS S3 Bucket Naming Just Changed Forever | March 2026 | AWS, S3, Infrastructure, DevOps |
+| `kubernetes-mcp-server` | Talk to Your Cluster: Kubernetes MCP Server in Practice | April 2026 | Kubernetes, AI, DevOps, Platform Engineering |
+| `kubernetes-mcp-server-centralised` | One MCP Server, Eight Clusters: Centralised AI Access with IRSA | April 2026 | Kubernetes, AWS, AI, Platform Engineering, DevOps |
 
 ## favicon.svg
 - SVG favicon, transparent background, green R³ in Courier New bold
@@ -83,7 +150,7 @@ A separate full page at `richierichard.com/about.html` with:
 
 ## Network topology background animation
 Canvas-based animation in `main.js` (`#bg-canvas` element, first child of `<body>`).
-- Applied to `index.html`, `about.html`, and `blog.html`
+- Applied to `index.html`, `about.html`, `blog.html`, and all `blog/*.html` article pages
 - 28 floating nodes (25% larger "server" nodes with pulse ring, 75% smaller endpoint nodes)
 - Connection lines drawn between nodes within 200px, opacity fades with distance
 - Data packets (small dots, green or cyan) travel along connections
@@ -124,8 +191,9 @@ Canvas-based animation in `main.js` (`#bg-canvas` element, first child of `<body
 
 ## Deployment
 Hosted on **Vercel** (migrated from GitHub Pages).
-- Push to `main` on GitHub → Vercel auto-deploys → live at `https://richierichard.com/` within ~30 seconds
-- Vercel serves clean URLs: `/` → `index.html`, `/about` → `about.html`, `/blog` → `blog.html`
+- Push to `main` on GitHub → Vercel auto-deploys → live at `https://www.richierichard.com/` within ~30 seconds
+- **`vercel.json`** configures clean URLs (`cleanUrls: true`) and permanent redirects for `.html` → clean URL (`/index.html` → `/`, `/about.html` → `/about`, `/blog.html` → `/blog`)
+- Vercel serves clean URLs: `/` → `index.html`, `/about` → `about.html`, `/blog` → `blog.html`, `/blog/slug` → `blog/slug.html`
 - Every branch/PR gets an auto-generated preview URL for reviewing changes before merging
 - The `CNAME` file is a GitHub Pages artefact and no longer used by Vercel (DNS is managed in Vercel dashboard)
 - Vercel automatically redirects `richierichard.com` → `www.richierichard.com` (apex to www redirect handled at the platform level, no config needed)
