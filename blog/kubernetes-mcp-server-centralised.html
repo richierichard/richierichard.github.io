@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One MCP Server for Eight Clusters: Centralised Kubernetes AI Access with IRSA — Richie Richard Rajkumar</title>
+
+<meta name="description" content="How to deploy the Kubernetes MCP Server as a shared platform service in a centralised infra cluster, using IRSA for cross-cluster authentication — so your entire DevOps team gets AI-powered cluster access with zero local setup.">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://www.richierichard.com/blog/kubernetes-mcp-server-centralised">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.richierichard.com/blog/kubernetes-mcp-server-centralised">
+<meta property="og:title" content="One MCP Server for Eight Clusters: Centralised Kubernetes AI Access with IRSA">
+<meta property="og:description" content="Deploy the Kubernetes MCP Server as a shared service in your infra cluster. IRSA for auth, one URL for every engineer, zero local setup.">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+
+<style>
+/* ── ARTICLE PAGE ── */
+.article-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 7rem 2rem 5rem;
+  position: relative;
+  z-index: 1;
+}
+.article-top { max-width: 960px; }
+
+.article-intro {
+  max-width: 960px;
+  margin-bottom: 2.5rem;
+  color: var(--text);
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+.article-intro p { margin-bottom: 1.25rem; }
+.article-intro code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+
+.article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  margin-bottom: 2.5rem;
+  transition: color 0.2s;
+}
+.article-back:hover { color: var(--accent); }
+
+.article-header { margin-bottom: 2.5rem; }
+.article-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.article-tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.2);
+  letter-spacing: 0.04em;
+}
+body.light .article-tag { border-color: rgba(2,132,199,0.25); }
+
+.article-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.article-title span { color: var(--accent); }
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.article-meta-dot { opacity: 0.3; }
+
+.article-hero {
+  width: 100%;
+  max-width: 960px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+}
+
+.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 2.5rem 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 6rem;
+}
+.article-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 1.75rem 0 0.5rem;
+}
+.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.article-body li { margin-bottom: 0.4rem; color: var(--text); }
+.article-body strong { color: var(--text); font-weight: 700; }
+.article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+.article-body pre {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.article-body code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+.article-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 1em;
+}
+.article-body pre .cm { color: var(--muted); }
+.article-body pre .ky { color: var(--accent); }
+.article-body pre .st { color: #f9a8d4; }
+.article-body pre .nm { color: #fde68a; }
+
+.callout {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+.callout strong { color: var(--accent); }
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
+}
+.compare-table th {
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.compare-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .good { color: var(--accent); font-weight: 700; }
+.compare-table .bad  { color: #f87171; }
+
+.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+
+.article-footer {
+  max-width: 960px;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.article-author { display: flex; align-items: center; gap: 0.85rem; }
+.author-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
+  flex-shrink: 0;
+}
+.author-name { font-weight: 700; font-size: 0.9rem; }
+.author-role { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--accent); color: var(--accent);
+  font-weight: 700; font-size: 0.85rem; text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #000; }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
+    <span class="nav-logo-tag">build · scale · secure</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Light</span>
+  </button>
+</nav>
+
+<div class="article-page">
+
+  <div class="article-top">
+    <a href="/blog" class="article-back">← Back to Blog</a>
+    <header class="article-header">
+      <div class="article-tags">
+        <span class="article-tag">Kubernetes</span>
+        <span class="article-tag">AWS</span>
+        <span class="article-tag">AI</span>
+        <span class="article-tag">Platform Engineering</span>
+        <span class="article-tag">DevOps</span>
+      </div>
+      <h1 class="article-title">One MCP Server, Eight Clusters: <span>Centralised AI Access</span> with IRSA</h1>
+      <div class="article-meta">
+        <span>Richie Richard Rajkumar</span>
+        <span class="article-meta-dot">·</span>
+        <span>April 2026</span>
+        <span class="article-meta-dot">·</span>
+        <span>12 min read</span>
+      </div>
+    </header>
+  </div>
+
+  <div class="article-hero">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" width="760" height="420" style="width:100%;height:auto;display:block;">
+      <defs>
+        <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0a0c10"/>
+          <stop offset="100%" stop-color="#12151c"/>
+        </linearGradient>
+      </defs>
+      <rect width="760" height="420" fill="url(#bg-grad)"/>
+
+      <!-- TITLE -->
+      <text x="380" y="28" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">CENTRALISED MCP SERVER ARCHITECTURE</text>
+
+      <!-- LEFT: DevOps Engineers -->
+      <text x="100" y="58" font-family="'Fira Code',monospace" font-size="9" fill="#7a8099" text-anchor="middle" letter-spacing="1">DEVOPS TEAM</text>
+
+      <rect x="30" y="72" width="140" height="30" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="100" y="92" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle">Engineer A · VS Code</text>
+
+      <rect x="30" y="112" width="140" height="30" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="100" y="132" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle">Engineer B · Claude</text>
+
+      <rect x="30" y="152" width="140" height="30" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="100" y="172" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle">Engineer C · Cursor</text>
+
+      <rect x="30" y="192" width="140" height="30" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="100" y="212" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle">Engineer D · VS Code</text>
+
+      <!-- "No local setup" label -->
+      <text x="100" y="248" font-family="'Fira Code',monospace" font-size="7" fill="#38bdf8" text-anchor="middle" opacity="0.7">No local MCP install</text>
+      <text x="100" y="260" font-family="'Fira Code',monospace" font-size="7" fill="#38bdf8" text-anchor="middle" opacity="0.7">No local kubeconfig</text>
+      <text x="100" y="272" font-family="'Fira Code',monospace" font-size="7" fill="#38bdf8" text-anchor="middle" opacity="0.7">Just one URL</text>
+
+      <!-- Arrows: Engineers → MCP Server -->
+      <line x1="170" y1="87" x2="270" y2="155" stroke="#38bdf8" stroke-width="0.8" stroke-dasharray="4 2" opacity="0.5"/>
+      <line x1="170" y1="127" x2="270" y2="160" stroke="#38bdf8" stroke-width="0.8" stroke-dasharray="4 2" opacity="0.5"/>
+      <line x1="170" y1="167" x2="270" y2="167" stroke="#38bdf8" stroke-width="0.8" stroke-dasharray="4 2" opacity="0.5"/>
+      <line x1="170" y1="207" x2="270" y2="175" stroke="#38bdf8" stroke-width="0.8" stroke-dasharray="4 2" opacity="0.5"/>
+
+      <!-- CENTRE: Infra Cluster -->
+      <rect x="260" y="70" width="240" height="210" rx="12" fill="rgba(167,139,250,0.05)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="380" y="92" font-family="'Fira Code',monospace" font-size="9" fill="#a78bfa" text-anchor="middle" letter-spacing="1">INFRA-PROD-EU-CENTRAL-1</text>
+
+      <!-- MCP Server Pod -->
+      <rect x="290" y="108" width="180" height="56" rx="8" fill="rgba(167,139,250,0.08)" stroke="#a78bfa" stroke-width="1.2"/>
+      <text x="380" y="128" font-family="'Nunito',sans-serif" font-size="11" fill="#a78bfa" text-anchor="middle" font-weight="800">MCP Server Pod</text>
+      <text x="380" y="144" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">--port 8080 --stateless --read-only</text>
+      <text x="380" y="156" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">ServiceAccount: mcp-server-sa</text>
+
+      <!-- IRSA arrow -->
+      <rect x="310" y="176" width="140" height="28" rx="6" fill="rgba(251,191,36,0.08)" stroke="#fbbf24" stroke-width="0.8"/>
+      <text x="380" y="195" font-family="'Fira Code',monospace" font-size="8" fill="#fbbf24" text-anchor="middle">IRSA → IAM Role</text>
+
+      <!-- Ingress -->
+      <rect x="310" y="216" width="140" height="28" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="380" y="235" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle">mcp.internal/sse</text>
+
+      <!-- Other infra tools -->
+      <text x="380" y="260" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle" opacity="0.6">Also hosts: Grafana · Runners · ArgoCD</text>
+
+      <!-- RIGHT: Target Clusters -->
+      <text x="630" y="58" font-family="'Fira Code',monospace" font-size="9" fill="#7a8099" text-anchor="middle" letter-spacing="1">TARGET CLUSTERS</text>
+
+      <!-- Production clusters -->
+      <rect x="555" y="72" width="150" height="24" rx="5" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="630" y="88" font-family="'Fira Code',monospace" font-size="6.5" fill="#38bdf8" text-anchor="middle">apps-production-eu-central-1</text>
+
+      <rect x="555" y="102" width="150" height="24" rx="5" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="630" y="118" font-family="'Fira Code',monospace" font-size="6.5" fill="#38bdf8" text-anchor="middle">apps-production-us-east-1</text>
+
+      <rect x="555" y="132" width="150" height="24" rx="5" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="630" y="148" font-family="'Fira Code',monospace" font-size="6.5" fill="#38bdf8" text-anchor="middle">apps-production-ap-northeast-1</text>
+
+      <!-- Sandbox clusters -->
+      <rect x="555" y="168" width="150" height="24" rx="5" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.8"/>
+      <text x="630" y="184" font-family="'Fira Code',monospace" font-size="6.5" fill="#a78bfa" text-anchor="middle">apps-sandbox-eu-central-1</text>
+
+      <rect x="555" y="198" width="150" height="24" rx="5" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.8"/>
+      <text x="630" y="214" font-family="'Fira Code',monospace" font-size="6.5" fill="#a78bfa" text-anchor="middle">apps-sandbox-us-east-1</text>
+
+      <rect x="555" y="228" width="150" height="24" rx="5" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.8"/>
+      <text x="630" y="244" font-family="'Fira Code',monospace" font-size="6.5" fill="#a78bfa" text-anchor="middle">apps-sandbox-ap-northeast-1</text>
+
+      <!-- Dev cluster -->
+      <rect x="555" y="264" width="150" height="24" rx="5" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.8"/>
+      <text x="630" y="280" font-family="'Fira Code',monospace" font-size="6.5" fill="#fbbf24" text-anchor="middle">apps-development-eu-central-1</text>
+
+      <!-- Arrows: MCP → clusters -->
+      <line x1="500" y1="136" x2="555" y2="84" stroke="#38bdf8" stroke-width="0.8" opacity="0.5"/>
+      <line x1="500" y1="136" x2="555" y2="114" stroke="#38bdf8" stroke-width="0.8" opacity="0.5"/>
+      <line x1="500" y1="136" x2="555" y2="144" stroke="#38bdf8" stroke-width="0.8" opacity="0.5"/>
+      <line x1="500" y1="145" x2="555" y2="180" stroke="#a78bfa" stroke-width="0.8" opacity="0.5"/>
+      <line x1="500" y1="145" x2="555" y2="210" stroke="#a78bfa" stroke-width="0.8" opacity="0.5"/>
+      <line x1="500" y1="145" x2="555" y2="240" stroke="#a78bfa" stroke-width="0.8" opacity="0.5"/>
+      <line x1="500" y1="150" x2="555" y2="276" stroke="#fbbf24" stroke-width="0.8" opacity="0.5"/>
+
+      <!-- IRSA Flow (bottom) -->
+      <text x="380" y="310" font-family="'Fira Code',monospace" font-size="10" fill="#fbbf24" text-anchor="middle" letter-spacing="2">IRSA AUTHENTICATION FLOW</text>
+
+      <rect x="60" y="326" width="130" height="34" rx="6" fill="rgba(167,139,250,0.06)" stroke="#a78bfa" stroke-width="0.8"/>
+      <text x="125" y="348" font-family="'Fira Code',monospace" font-size="7.5" fill="#a78bfa" text-anchor="middle">K8s ServiceAccount</text>
+
+      <text x="215" y="348" font-family="'Fira Code',monospace" font-size="12" fill="#7a8099" text-anchor="middle">→</text>
+
+      <rect x="240" y="326" width="130" height="34" rx="6" fill="rgba(251,191,36,0.06)" stroke="#fbbf24" stroke-width="0.8"/>
+      <text x="305" y="348" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">OIDC → IAM Role</text>
+
+      <text x="395" y="348" font-family="'Fira Code',monospace" font-size="12" fill="#7a8099" text-anchor="middle">→</text>
+
+      <rect x="420" y="326" width="130" height="34" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="485" y="348" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8" text-anchor="middle">AssumeRole → Target</text>
+
+      <text x="575" y="348" font-family="'Fira Code',monospace" font-size="12" fill="#7a8099" text-anchor="middle">→</text>
+
+      <rect x="600" y="326" width="130" height="34" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="665" y="348" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8" text-anchor="middle">K8s API Access</text>
+
+      <!-- Bottom tagline -->
+      <text x="380" y="392" font-family="'Nunito',sans-serif" font-size="12" fill="#38bdf8" text-anchor="middle" font-weight="700">Same Access · Same Guardrails · Same Visibility — Zero Local Setup</text>
+      <text x="380" y="410" font-family="'Fira Code',monospace" font-size="8" fill="#7a8099" text-anchor="middle">No kubeconfig distribution · No local binary installs · One URL for every engineer</text>
+    </svg>
+  </div><!-- /article-hero -->
+
+  <div class="article-intro">
+    <p>In the <a href="/blog/kubernetes-mcp-server">previous article</a> I covered what the Kubernetes MCP Server is and how it works. This article is about how to deploy it <em>once</em> for your entire team. Instead of every DevOps engineer installing a local binary and maintaining their own kubeconfig with eight cluster contexts, you deploy one MCP server in your centralised infrastructure cluster — and everyone connects to it with a single URL.</p>
+    <p>The result: <strong>same access, same guardrails, same cluster visibility</strong> for every engineer. No local kubeconfig distribution. No local MCP server installs. No configuration drift between team members. And with <strong>IRSA (IAM Roles for Service Accounts)</strong>, the MCP server authenticates to all eight clusters using short-lived, automatically rotated credentials — no static tokens, no long-lived secrets mounted in pods.</p>
+  </div>
+
+  <article class="article-body">
+
+    <h2 id="problem">The Problem with "Everyone Runs It Locally"</h2>
+
+    <p>The default MCP server setup assumes each user runs the binary on their laptop. For a team of one, that's fine. For a DevOps team managing multiple clusters across environments, it creates real operational headaches:</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Problem</th>
+          <th>Local MCP Server</th>
+          <th>Centralised MCP Server</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Kubeconfig management</td>
+          <td class="bad">Every engineer maintains 8 cluster contexts locally</td>
+          <td class="good">One kubeconfig, managed centrally</td>
+        </tr>
+        <tr>
+          <td>Credential rotation</td>
+          <td class="bad">Static tokens per engineer, manual rotation</td>
+          <td class="good">IRSA — automatic, short-lived, no human touch</td>
+        </tr>
+        <tr>
+          <td>Guardrails consistency</td>
+          <td class="bad">Each engineer configures their own TOML restrictions</td>
+          <td class="good">One config, enforced identically for everyone</td>
+        </tr>
+        <tr>
+          <td>Onboarding a new engineer</td>
+          <td class="bad">Install binary, distribute kubeconfig, copy TOML config</td>
+          <td class="good">Add one URL to VS Code settings</td>
+        </tr>
+        <tr>
+          <td>Offboarding</td>
+          <td class="bad">Hope they delete the kubeconfig and tokens</td>
+          <td class="good">Revoke VPN/network access — done</td>
+        </tr>
+        <tr>
+          <td>Audit trail</td>
+          <td class="bad">Distributed across individual laptops</td>
+          <td class="good">Centralised logs, one place to query</td>
+        </tr>
+        <tr>
+          <td>Version consistency</td>
+          <td class="bad">Engineers run different MCP server versions</td>
+          <td class="good">One version, one deployment</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The question isn't whether centralising is better — it obviously is. The question is whether the MCP server supports it. It does.</p>
+
+    <h2 id="cluster-landscape">The Cluster Landscape</h2>
+
+    <p>Here's the setup we're working with — a real-world multi-cluster topology on EKS:</p>
+
+    <pre><span class="cm"># 3 production clusters (application workloads)</span>
+<span class="nm">apps-production-eu-central-1</span>  <span class="cm"># Production — Frankfurt</span>
+<span class="nm">apps-production-us-east-1</span>     <span class="cm"># Production — N. Virginia</span>
+<span class="nm">apps-production-ap-northeast-1</span><span class="cm"># Production — Tokyo</span>
+
+<span class="cm"># 3 sandbox clusters (testing, experiments)</span>
+<span class="nm">apps-sandbox-eu-central-1</span>     <span class="cm"># Sandbox — Frankfurt</span>
+<span class="nm">apps-sandbox-us-east-1</span>        <span class="cm"># Sandbox — N. Virginia</span>
+<span class="nm">apps-sandbox-ap-northeast-1</span>   <span class="cm"># Sandbox — Tokyo</span>
+
+<span class="cm"># 1 dev cluster (application development)</span>
+<span class="nm">apps-development-eu-central-1</span> <span class="cm"># Devlopment — Frankfurt</span>
+
+<span class="cm"># 1 infra cluster (platform tooling)</span>
+<span class="nm">infra-production-eu-central-1</span> <span class="cm"># Grafana, GitHub Runners, ArgoCD, MCP Server</span></pre>
+
+    <p>The infra cluster already has network connectivity to all seven application clusters — it runs Grafana dashboards that scrape metrics from them, ArgoCD that deploys to them, and GitHub runners that interact with them. The MCP server is just another platform tool that fits naturally into this cluster.</p>
+
+    <div class="callout">
+      <strong>Why the infra cluster?</strong> It already has the network paths, the RBAC patterns, and the operational maturity. You're not establishing new trust boundaries — you're adding one more pod to a cluster that already talks to everything.
+    </div>
+
+    <h2 id="irsa">IRSA: Cross-Cluster Auth Without Static Credentials</h2>
+
+    <p><strong>IAM Roles for Service Accounts (IRSA)</strong> lets a Kubernetes ServiceAccount assume an AWS IAM role without any static credentials. EKS clusters expose an OIDC provider that AWS IAM trusts — when a pod runs with an annotated ServiceAccount, it gets a projected token that can be exchanged for temporary IAM credentials via STS.</p>
+
+    <p>For the MCP server, the chain works like this:</p>
+
+    <ol>
+      <li>The MCP server pod in <code>infra-production-eu-central-1</code> runs with a ServiceAccount annotated with an IAM role</li>
+      <li>IRSA injects a projected JWT token into the pod</li>
+      <li>The pod uses that token to call <code>sts:AssumeRole</code> and get temporary credentials for the <strong>hub IAM role</strong></li>
+      <li>The hub role has trust policies that allow it to <code>sts:AssumeRole</code> into <strong>target roles</strong> in each of the 7 other AWS accounts</li>
+      <li>Each target role is mapped to a Kubernetes RBAC ClusterRole in its respective cluster via <code>aws-auth</code> ConfigMap or EKS access entries</li>
+      <li>The MCP server's kubeconfig uses the <code>exec</code> credential plugin with <code>aws eks get-token</code> to authenticate to each target cluster using the assumed role</li>
+    </ol>
+
+    <p>No static tokens. No long-lived secrets. Credentials rotate automatically. If the pod restarts, it gets a fresh token. If IRSA annotation is removed, access dies instantly.</p>
+
+    <h3>Step 1 — Create the Hub IAM Role in the Infra Account</h3>
+
+    <p>This role lives in the AWS account that hosts <code>infra-production-eu-central-1</code>. It trusts the EKS OIDC provider so that the MCP server's ServiceAccount can assume it:</p>
+
+    <pre><span class="cm"># Terraform — infra account (111111111111)</span>
+
+data <span class="st">"aws_eks_cluster"</span> <span class="st">"infra"</span> {
+  name = <span class="st">"infra-production-eu-central-1"</span>
+}
+
+<span class="ky">module</span> <span class="st">"mcp_server_irsa"</span> {
+  source  = <span class="st">"terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"</span>
+  version = <span class="st">"~> 5.0"</span>
+
+  role_name = <span class="st">"mcp-server-hub-role"</span>
+
+  oidc_providers = {
+    main = {
+      provider_arn = data.aws_eks_cluster.infra.identity[0].oidc[0].issuer
+      namespace_service_accounts = [<span class="st">"platform-tools:mcp-server-sa"</span>]
+    }
+  }
+}
+
+<span class="cm"># Allow the hub role to assume target roles in other accounts</span>
+<span class="ky">resource</span> <span class="st">"aws_iam_role_policy"</span> <span class="st">"assume_target_roles"</span> {
+  name = <span class="st">"assume-target-cluster-roles"</span>
+  role = module.mcp_server_irsa.iam_role_name
+
+  policy = jsonencode({
+    Version = <span class="st">"2012-10-17"</span>
+    Statement = [{
+      Effect   = <span class="st">"Allow"</span>
+      Action   = <span class="st">"sts:AssumeRole"</span>
+      Resource = [
+        <span class="cm"># Production accounts</span>
+        <span class="st">"arn:aws:iam::222222222222:role/mcp-readonly-target"</span>,
+        <span class="st">"arn:aws:iam::333333333333:role/mcp-readonly-target"</span>,
+        <span class="st">"arn:aws:iam::444444444444:role/mcp-readonly-target"</span>,
+        <span class="cm"># Sandbox accounts</span>
+        <span class="st">"arn:aws:iam::555555555555:role/mcp-readonly-target"</span>,
+        <span class="st">"arn:aws:iam::666666666666:role/mcp-readonly-target"</span>,
+        <span class="st">"arn:aws:iam::777777777777:role/mcp-readonly-target"</span>,
+        <span class="cm"># Dev account</span>
+        <span class="st">"arn:aws:iam::888888888888:role/mcp-readonly-target"</span>,
+      ]
+    }]
+  })
+}</pre>
+
+    <h3>Step 2 — Create Target Roles in Each Cluster Account</h3>
+
+    <p>Each AWS account that hosts a target cluster gets a <code>mcp-readonly-target</code> role that trusts the hub role. Apply this Terraform in each of the 7 target accounts:</p>
+
+    <pre><span class="cm"># Terraform — each target account (e.g., 222222222222)</span>
+
+<span class="ky">resource</span> <span class="st">"aws_iam_role"</span> <span class="st">"mcp_readonly_target"</span> {
+  name = <span class="st">"mcp-readonly-target"</span>
+
+  assume_role_policy = jsonencode({
+    Version = <span class="st">"2012-10-17"</span>
+    Statement = [{
+      Effect    = <span class="st">"Allow"</span>
+      Principal = { AWS = <span class="st">"arn:aws:iam::111111111111:role/mcp-server-hub-role"</span> }
+      Action    = <span class="st">"sts:AssumeRole"</span>
+    }]
+  })
+}
+
+<span class="cm"># Minimal permissions — only EKS cluster discovery + token generation</span>
+<span class="ky">resource</span> <span class="st">"aws_iam_role_policy"</span> <span class="st">"eks_access"</span> {
+  name = <span class="st">"eks-describe-and-token"</span>
+  role = aws_iam_role.mcp_readonly_target.name
+
+  policy = jsonencode({
+    Version = <span class="st">"2012-10-17"</span>
+    Statement = [
+      {
+        Effect   = <span class="st">"Allow"</span>
+        Action   = [<span class="st">"eks:DescribeCluster"</span>, <span class="st">"eks:ListClusters"</span>]
+        Resource = <span class="st">"*"</span>
+      }
+    ]
+  })
+}</pre>
+
+    <h3>Step 3 — Map Target Roles to Kubernetes RBAC</h3>
+
+    <p>In each target cluster, map the <code>mcp-readonly-target</code> IAM role to a Kubernetes ClusterRole that grants read-only access. If you're using EKS access entries (the newer approach):</p>
+
+    <pre><span class="cm"># Terraform — EKS access entry in each target cluster</span>
+
+<span class="ky">resource</span> <span class="st">"aws_eks_access_entry"</span> <span class="st">"mcp_readonly"</span> {
+  cluster_name  = <span class="st">"apps-production-eu-central-1"</span>
+  principal_arn = <span class="st">"arn:aws:iam::222222222222:role/mcp-readonly-target"</span>
+  type          = <span class="st">"STANDARD"</span>
+}
+
+<span class="ky">resource</span> <span class="st">"aws_eks_access_policy_association"</span> <span class="st">"mcp_readonly"</span> {
+  cluster_name  = <span class="st">"apps-production-eu-central-1"</span>
+  principal_arn = <span class="st">"arn:aws:iam::222222222222:role/mcp-readonly-target"</span>
+  policy_arn    = <span class="st">"arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"</span>
+
+  access_scope {
+    type = <span class="st">"cluster"</span>
+  }
+}</pre>
+
+    <p>Or if you're using the legacy <code>aws-auth</code> ConfigMap:</p>
+
+    <pre><span class="cm"># aws-auth ConfigMap entry in each target cluster</span>
+<span class="ky">mapRoles</span>:
+  - <span class="ky">rolearn</span>: <span class="st">arn:aws:iam::222222222222:role/mcp-readonly-target</span>
+    <span class="ky">username</span>: <span class="st">mcp-server</span>
+    <span class="ky">groups</span>:
+      - <span class="st">mcp-readonly-group</span></pre>
+
+    <p>For the <code>aws-auth</code> approach, also create a ClusterRoleBinding in each cluster:</p>
+
+    <pre><span class="ky">apiVersion</span>: rbac.authorization.k8s.io/v1
+<span class="ky">kind</span>: ClusterRole
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">mcp-readonly</span>
+<span class="ky">rules</span>:
+  - <span class="ky">apiGroups</span>: [<span class="st">""</span>]
+    <span class="ky">resources</span>: [<span class="st">"pods"</span>, <span class="st">"pods/log"</span>, <span class="st">"services"</span>, <span class="st">"events"</span>, <span class="st">"nodes"</span>, <span class="st">"configmaps"</span>, <span class="st">"namespaces"</span>, <span class="st">"persistentvolumeclaims"</span>]
+    <span class="ky">verbs</span>: [<span class="st">"get"</span>, <span class="st">"list"</span>, <span class="st">"watch"</span>]
+  - <span class="ky">apiGroups</span>: [<span class="st">"apps"</span>]
+    <span class="ky">resources</span>: [<span class="st">"deployments"</span>, <span class="st">"replicasets"</span>, <span class="st">"statefulsets"</span>, <span class="st">"daemonsets"</span>]
+    <span class="ky">verbs</span>: [<span class="st">"get"</span>, <span class="st">"list"</span>, <span class="st">"watch"</span>]
+  - <span class="ky">apiGroups</span>: [<span class="st">"batch"</span>]
+    <span class="ky">resources</span>: [<span class="st">"jobs"</span>, <span class="st">"cronjobs"</span>]
+    <span class="ky">verbs</span>: [<span class="st">"get"</span>, <span class="st">"list"</span>, <span class="st">"watch"</span>]
+  - <span class="ky">apiGroups</span>: [<span class="st">"networking.k8s.io"</span>]
+    <span class="ky">resources</span>: [<span class="st">"ingresses"</span>, <span class="st">"networkpolicies"</span>]
+    <span class="ky">verbs</span>: [<span class="st">"get"</span>, <span class="st">"list"</span>, <span class="st">"watch"</span>]
+---
+<span class="ky">apiVersion</span>: rbac.authorization.k8s.io/v1
+<span class="ky">kind</span>: ClusterRoleBinding
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">mcp-readonly-binding</span>
+<span class="ky">roleRef</span>:
+  <span class="ky">apiGroup</span>: <span class="st">rbac.authorization.k8s.io</span>
+  <span class="ky">kind</span>: <span class="st">ClusterRole</span>
+  <span class="ky">name</span>: <span class="st">mcp-readonly</span>
+<span class="ky">subjects</span>:
+  - <span class="ky">kind</span>: <span class="st">Group</span>
+    <span class="ky">name</span>: <span class="st">mcp-readonly-group</span>
+    <span class="ky">apiGroup</span>: <span class="st">rbac.authorization.k8s.io</span></pre>
+
+    <div class="callout">
+      <strong>Note the intentional omissions.</strong> The ClusterRole does not include <code>secrets</code>, <code>serviceaccounts</code>, <code>roles</code>, or <code>rolebindings</code>. Even if the MCP server's TOML config is misconfigured, the RBAC layer physically prevents access to sensitive resources. Defense in depth — the TOML config is the first gate, RBAC is the second.
+    </div>
+
+    <h3>Step 4 — Build the Multi-Cluster Kubeconfig</h3>
+
+    <p>The kubeconfig mounted in the MCP server pod uses <code>exec</code>-based credential plugins to chain through the IRSA → hub role → target role path for each cluster:</p>
+
+    <pre><span class="ky">apiVersion</span>: v1
+<span class="ky">kind</span>: Config
+
+<span class="ky">clusters</span>:
+  - <span class="ky">name</span>: <span class="st">apps-production-eu-central-1</span>
+    <span class="ky">cluster</span>:
+      <span class="ky">server</span>: <span class="st">https://ABCDEF1234.gr7.eu-central-1.eks.amazonaws.com</span>
+      <span class="ky">certificate-authority-data</span>: <span class="st">LS0tLS1CRUd...</span>
+  - <span class="ky">name</span>: <span class="st">apps-production-us-east-1</span>
+    <span class="ky">cluster</span>:
+      <span class="ky">server</span>: <span class="st">https://GHIJKL5678.gr7.us-east-1.eks.amazonaws.com</span>
+      <span class="ky">certificate-authority-data</span>: <span class="st">LS0tLS1CRUd...</span>
+  <span class="cm"># ... repeat for all 8 clusters</span>
+
+<span class="ky">users</span>:
+  - <span class="ky">name</span>: <span class="st">mcp-apps-production-eu-central-1</span>
+    <span class="ky">user</span>:
+      <span class="ky">exec</span>:
+        <span class="ky">apiVersion</span>: <span class="st">client.authentication.k8s.io/v1beta1</span>
+        <span class="ky">command</span>: <span class="st">aws</span>
+        <span class="ky">args</span>:
+          - <span class="st">eks</span>
+          - <span class="st">get-token</span>
+          - <span class="st">--cluster-name</span>
+          - <span class="st">apps-production-eu-central-1</span>
+          - <span class="st">--role-arn</span>
+          - <span class="st">arn:aws:iam::222222222222:role/mcp-readonly-target</span>
+          - <span class="st">--region</span>
+          - <span class="st">eu-central-1</span>
+  - <span class="ky">name</span>: <span class="st">mcp-apps-production-us-east-1</span>
+    <span class="ky">user</span>:
+      <span class="ky">exec</span>:
+        <span class="ky">apiVersion</span>: <span class="st">client.authentication.k8s.io/v1beta1</span>
+        <span class="ky">command</span>: <span class="st">aws</span>
+        <span class="ky">args</span>:
+          - <span class="st">eks</span>
+          - <span class="st">get-token</span>
+          - <span class="st">--cluster-name</span>
+          - <span class="st">apps-production-us-east-1</span>
+          - <span class="st">--role-arn</span>
+          - <span class="st">arn:aws:iam::333333333333:role/mcp-readonly-target</span>
+          - <span class="st">--region</span>
+          - <span class="st">us-east-1</span>
+  <span class="cm"># ... repeat for each cluster with its account's target role ARN</span>
+
+<span class="ky">contexts</span>:
+  - <span class="ky">name</span>: <span class="st">apps-production-eu-central-1</span>
+    <span class="ky">context</span>:
+      <span class="ky">cluster</span>: <span class="st">apps-production-eu-central-1</span>
+      <span class="ky">user</span>: <span class="st">mcp-apps-production-eu-central-1</span>
+  - <span class="ky">name</span>: <span class="st">apps-production-us-east-1</span>
+    <span class="ky">context</span>:
+      <span class="ky">cluster</span>: <span class="st">apps-production-us-east-1</span>
+      <span class="ky">user</span>: <span class="st">mcp-apps-production-us-east-1</span>
+  <span class="cm"># ... repeat for all 8 clusters</span>
+
+<span class="ky">current-context</span>: <span class="st">apps-production-eu-central-1</span></pre>
+
+    <p>Each user entry calls <code>aws eks get-token</code> with a specific <code>--role-arn</code>. Because the pod already has IRSA credentials (the hub role), the <code>aws</code> CLI automatically chains: <strong>IRSA token → hub role → AssumeRole → target role → EKS token</strong>. No static credentials anywhere in this file.</p>
+
+    <h2 id="deployment">Deploying the MCP Server</h2>
+
+    <h3>The Kubernetes ServiceAccount</h3>
+
+    <pre><span class="ky">apiVersion</span>: v1
+<span class="ky">kind</span>: ServiceAccount
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">mcp-server-sa</span>
+  <span class="ky">namespace</span>: <span class="st">platform-tools</span>
+  <span class="ky">annotations</span>:
+    <span class="ky">eks.amazonaws.com/role-arn</span>: <span class="st">arn:aws:iam::111111111111:role/mcp-server-hub-role</span></pre>
+
+    <p>That annotation is the entire IRSA configuration. EKS sees it and projects a JWT token into any pod using this ServiceAccount.</p>
+
+    <h3>The MCP Server Config</h3>
+
+    <pre><span class="cm"># mcp-config.toml</span>
+
+[server]
+<span class="ky">read_only</span> = <span class="st">true</span>
+
+[restrictions]
+<span class="ky">blocked_resources</span> = [
+  <span class="st">"secrets"</span>,
+  <span class="st">"serviceaccounts"</span>,
+  <span class="st">"clusterroles"</span>,
+  <span class="st">"clusterrolebindings"</span>,
+  <span class="st">"roles"</span>,
+  <span class="st">"rolebindings"</span>,
+]
+
+<span class="ky">blocked_namespaces</span> = [
+  <span class="st">"kube-system"</span>,
+  <span class="st">"kube-public"</span>,
+  <span class="st">"kube-node-lease"</span>,
+]</pre>
+
+    <h3>The Deployment</h3>
+
+    <pre><span class="ky">apiVersion</span>: apps/v1
+<span class="ky">kind</span>: Deployment
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">kubernetes-mcp-server</span>
+  <span class="ky">namespace</span>: <span class="st">platform-tools</span>
+  <span class="ky">labels</span>:
+    <span class="ky">app</span>: <span class="st">kubernetes-mcp-server</span>
+<span class="ky">spec</span>:
+  <span class="ky">replicas</span>: <span class="nm">2</span>
+  <span class="ky">selector</span>:
+    <span class="ky">matchLabels</span>:
+      <span class="ky">app</span>: <span class="st">kubernetes-mcp-server</span>
+  <span class="ky">template</span>:
+    <span class="ky">metadata</span>:
+      <span class="ky">labels</span>:
+        <span class="ky">app</span>: <span class="st">kubernetes-mcp-server</span>
+    <span class="ky">spec</span>:
+      <span class="ky">serviceAccountName</span>: <span class="st">mcp-server-sa</span>
+      <span class="ky">containers</span>:
+        - <span class="ky">name</span>: <span class="st">mcp-server</span>
+          <span class="ky">image</span>: <span class="st">ghcr.io/containers/kubernetes-mcp-server:latest</span>
+          <span class="ky">args</span>:
+            - <span class="st">"--port=8080"</span>
+            - <span class="st">"--stateless"</span>
+            - <span class="st">"--read-only"</span>
+            - <span class="st">"--kubeconfig=/etc/kubeconfig/config"</span>
+            - <span class="st">"--config=/etc/mcp/config.toml"</span>
+          <span class="ky">ports</span>:
+            - <span class="ky">containerPort</span>: <span class="nm">8080</span>
+              <span class="ky">name</span>: <span class="st">http</span>
+          <span class="ky">readinessProbe</span>:
+            <span class="ky">httpGet</span>:
+              <span class="ky">path</span>: <span class="st">/stats</span>
+              <span class="ky">port</span>: <span class="nm">8080</span>
+            <span class="ky">initialDelaySeconds</span>: <span class="nm">5</span>
+            <span class="ky">periodSeconds</span>: <span class="nm">10</span>
+          <span class="ky">livenessProbe</span>:
+            <span class="ky">httpGet</span>:
+              <span class="ky">path</span>: <span class="st">/stats</span>
+              <span class="ky">port</span>: <span class="nm">8080</span>
+            <span class="ky">initialDelaySeconds</span>: <span class="nm">10</span>
+            <span class="ky">periodSeconds</span>: <span class="nm">30</span>
+          <span class="ky">resources</span>:
+            <span class="ky">requests</span>:
+              <span class="ky">cpu</span>: <span class="st">100m</span>
+              <span class="ky">memory</span>: <span class="st">128Mi</span>
+            <span class="ky">limits</span>:
+              <span class="ky">cpu</span>: <span class="st">500m</span>
+              <span class="ky">memory</span>: <span class="st">256Mi</span>
+          <span class="ky">volumeMounts</span>:
+            - <span class="ky">name</span>: <span class="st">kubeconfig</span>
+              <span class="ky">mountPath</span>: <span class="st">/etc/kubeconfig</span>
+              <span class="ky">readOnly</span>: <span class="st">true</span>
+            - <span class="ky">name</span>: <span class="st">mcp-config</span>
+              <span class="ky">mountPath</span>: <span class="st">/etc/mcp</span>
+              <span class="ky">readOnly</span>: <span class="st">true</span>
+      <span class="ky">volumes</span>:
+        - <span class="ky">name</span>: <span class="st">kubeconfig</span>
+          <span class="ky">secret</span>:
+            <span class="ky">secretName</span>: <span class="st">mcp-multi-cluster-kubeconfig</span>
+        - <span class="ky">name</span>: <span class="st">mcp-config</span>
+          <span class="ky">configMap</span>:
+            <span class="ky">name</span>: <span class="st">mcp-server-config</span>
+---
+<span class="ky">apiVersion</span>: v1
+<span class="ky">kind</span>: Service
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">kubernetes-mcp-server</span>
+  <span class="ky">namespace</span>: <span class="st">platform-tools</span>
+<span class="ky">spec</span>:
+  <span class="ky">selector</span>:
+    <span class="ky">app</span>: <span class="st">kubernetes-mcp-server</span>
+  <span class="ky">ports</span>:
+    - <span class="ky">port</span>: <span class="nm">80</span>
+      <span class="ky">targetPort</span>: <span class="nm">8080</span>
+      <span class="ky">name</span>: <span class="st">http</span></pre>
+
+    <p>Key flags:</p>
+    <ul>
+      <li><code>--port=8080</code> — enables HTTP/SSE transport (exposes <code>/mcp</code> and <code>/sse</code> endpoints)</li>
+      <li><code>--stateless</code> — disables session stickiness so you can safely run 2+ replicas behind a Service</li>
+      <li><code>--read-only</code> — blocks all mutations at the application layer (RBAC blocks them at the cluster layer too)</li>
+    </ul>
+
+    <h3>Expose via Ingress</h3>
+
+    <pre><span class="ky">apiVersion</span>: networking.k8s.io/v1
+<span class="ky">kind</span>: Ingress
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">kubernetes-mcp-server</span>
+  <span class="ky">namespace</span>: <span class="st">platform-tools</span>
+  <span class="ky">annotations</span>:
+    <span class="ky">nginx.ingress.kubernetes.io/proxy-read-timeout</span>: <span class="st">"3600"</span>
+    <span class="ky">nginx.ingress.kubernetes.io/proxy-send-timeout</span>: <span class="st">"3600"</span>
+    <span class="cm"># SSE requires long-lived connections</span>
+    <span class="ky">nginx.ingress.kubernetes.io/proxy-buffering</span>: <span class="st">"off"</span>
+<span class="ky">spec</span>:
+  <span class="ky">ingressClassName</span>: <span class="st">nginx</span>
+  <span class="ky">tls</span>:
+    - <span class="ky">hosts</span>: [<span class="st">mcp.internal.company.com</span>]
+      <span class="ky">secretName</span>: <span class="st">mcp-tls</span>
+  <span class="ky">rules</span>:
+    - <span class="ky">host</span>: <span class="st">mcp.internal.company.com</span>
+      <span class="ky">http</span>:
+        <span class="ky">paths</span>:
+          - <span class="ky">path</span>: <span class="st">/</span>
+            <span class="ky">pathType</span>: <span class="st">Prefix</span>
+            <span class="ky">backend</span>:
+              <span class="ky">service</span>:
+                <span class="ky">name</span>: <span class="st">kubernetes-mcp-server</span>
+                <span class="ky">port</span>:
+                  <span class="ky">number</span>: <span class="nm">80</span></pre>
+
+    <div class="callout">
+      <strong>Important:</strong> The Ingress annotations for proxy buffering and timeouts are critical. SSE connections are long-lived — if your ingress controller buffers responses or times out after 60 seconds, the connection will drop mid-conversation. Disable buffering and set generous timeouts.
+    </div>
+
+    <h2 id="client-config">What Every Engineer Adds: One URL</h2>
+
+    <p>This is the entire client-side setup for each DevOps engineer. No binary install. No kubeconfig. No TOML config. Just this:</p>
+
+    <h3>VS Code</h3>
+
+    <pre><span class="cm">// .vscode/mcp.json (or VS Code user settings)</span>
+{
+  <span class="ky">"servers"</span>: {
+    <span class="st">"kubernetes"</span>: {
+      <span class="ky">"type"</span>: <span class="st">"sse"</span>,
+      <span class="ky">"url"</span>: <span class="st">"https://mcp.internal.company.com/sse"</span>
+    }
+  }
+}</pre>
+
+    <h3>Claude Desktop</h3>
+
+    <pre><span class="cm">// ~/.claude/claude_desktop_config.json</span>
+{
+  <span class="ky">"mcpServers"</span>: {
+    <span class="st">"kubernetes"</span>: {
+      <span class="ky">"type"</span>: <span class="st">"sse"</span>,
+      <span class="ky">"url"</span>: <span class="st">"https://mcp.internal.company.com/sse"</span>
+    }
+  }
+}</pre>
+
+    <h3>Claude Code (CLI)</h3>
+
+    <pre><span class="cm"># ~/.claude/settings.json</span>
+{
+  <span class="ky">"mcpServers"</span>: {
+    <span class="st">"kubernetes"</span>: {
+      <span class="ky">"type"</span>: <span class="st">"sse"</span>,
+      <span class="ky">"url"</span>: <span class="st">"https://mcp.internal.company.com/sse"</span>
+    }
+  }
+}</pre>
+
+    <p>That's it. Open VS Code, open Copilot or Claude, and ask: <em>"Show me pods with more than 5 restarts across all production clusters."</em> The MCP server handles context switching, authentication, and data aggregation. The engineer doesn't know or care about kubeconfigs, IRSA chains, or which account hosts which cluster.</p>
+
+    <h2 id="what-you-get">What You Actually Get</h2>
+
+    <p>Here's why this architecture is worth the setup effort:</p>
+
+    <h3>Same Access for Everyone</h3>
+    <p>Every engineer sees the same eight clusters with the same permissions. No one has a "special" kubeconfig with extra access because they were the one who set up the cluster. No one is locked out because they forgot to update their local context after a cluster migration. The MCP server is the single source of truth for cluster access.</p>
+
+    <h3>Same Guardrails, Enforced Centrally</h3>
+    <p>The TOML config that blocks Secrets and kube-system is applied once, in the ConfigMap. When you decide that <code>networking.k8s.io/networkpolicies</code> should also be blocked, you update one ConfigMap and restart the pods. Every engineer gets the new restriction immediately. No Slack message asking everyone to update their local config. No one running an outdated version with weaker restrictions.</p>
+
+    <h3>Same Cluster Visibility</h3>
+    <p>When an incident happens, everyone sees the same state. There's no "works on my machine" for cluster access — no stale cached tokens, no expired contexts, no mismatched cluster endpoints. If engineer A sees CrashLoopBackOff in apps-production-us-east-1, engineer B sees the same thing.</p>
+
+    <h3>Zero Local Setup</h3>
+    <p>Onboarding a new DevOps engineer takes one step: add the MCP server URL to their VS Code settings. They don't need <code>aws configure</code>, they don't need <code>aws eks update-kubeconfig</code> for eight clusters, they don't need to install the MCP binary, and they don't need a TOML config file. They just need VPN access to the internal domain.</p>
+
+    <h3>Clean Offboarding</h3>
+    <p>When someone leaves the team, you revoke their VPN or network access. No credentials to rotate, no tokens to invalidate, no kubeconfig files to chase down on their laptop. The MCP server's credentials (IRSA) are tied to the pod, not to any individual engineer.</p>
+
+    <h3>Centralised Audit Trail</h3>
+    <p>Every query and operation flows through one service. You can log every MCP request at the ingress layer, correlate it with the engineer's VPN identity, and feed it into your existing observability stack. Try doing that when each engineer runs a local binary on their laptop.</p>
+
+    <h2 id="security-layers">The Security Model: Three Independent Layers</h2>
+
+    <p>This architecture gives you defense in depth with three independent security layers that work even if one of them fails:</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>What It Does</th>
+          <th>If It Fails</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. MCP Server Config</strong></td>
+          <td>TOML restrictions block resource types and namespaces; <code>--read-only</code> blocks all writes</td>
+          <td class="good">RBAC prevents the query from reaching the API server</td>
+        </tr>
+        <tr>
+          <td><strong>2. Kubernetes RBAC</strong></td>
+          <td>ClusterRole limits verbs to get/list/watch and excludes sensitive resources</td>
+          <td class="good">MCP config already blocked the request before it was sent</td>
+        </tr>
+        <tr>
+          <td><strong>3. IAM Permissions</strong></td>
+          <td>Target role only allows <code>eks:DescribeCluster</code> — no AWS resource access</td>
+          <td class="good">Even with IAM over-permission, RBAC restricts Kubernetes-level access</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>No single layer is sufficient. All three together mean that a misconfiguration in any one layer is caught by the other two.</p>
+
+    <h2 id="operational-tips">Operational Tips from Running This in Production</h2>
+
+    <ul>
+      <li><strong>Name your kubeconfig contexts clearly.</strong> Use <code>apps-production-eu-central-1</code>, not <code>arn:aws:eks:eu-central-1:222222222222:cluster/apps-production-eu-central-1</code>. The AI reads context names — clear names mean clear prompts. "Show me pods in apps-production-eu-central-1" is better than a 70-character ARN.</li>
+      <li><strong>Pin the MCP server image tag.</strong> Don't use <code>:latest</code> in production. Pin to a specific release (e.g., <code>:v0.0.58</code>) and upgrade deliberately after testing in a staging deployment first.</li>
+      <li><strong>Monitor the <code>/stats</code> endpoint.</strong> The MCP server exposes connection metrics. Wire it into Prometheus/Grafana to track active connections, request rates, and error rates.</li>
+      <li><strong>The AWS CLI must be in the container image.</strong> The kubeconfig uses <code>aws eks get-token</code> as an exec credential plugin. If the MCP server container image doesn't include the <code>aws</code> CLI, token generation will fail. Build a custom image or use an init container to install it.</li>
+      <li><strong>Set pod disruption budgets.</strong> With 2 replicas behind a Service, add a PDB with <code>minAvailable: 1</code> so rolling updates don't cause full outages for your team.</li>
+      <li><strong>Start with production read-only, sandbox read-write.</strong> Let engineers experiment with write operations in sandbox clusters while keeping production strictly read-only. When trust is established, consider selective writes (scale yes, delete no) for production.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>My take:</strong> The centralised MCP server isn't just a convenience — it's a fundamentally better security model. With local MCP servers, you're distributing kubeconfigs with eight-cluster access to every engineer's laptop. With a centralised server, credentials never leave the cluster. Engineers interact through a single URL, controlled by your network policies and ingress rules. You get the same access, the same guardrails, and the same visibility for everyone — and you manage it in one place. That's not just easier. That's how platform tooling should work.
+    </div>
+
+    <h2 id="reference">Reference</h2>
+    <ul>
+      <li>Part 1: <a href="/blog/kubernetes-mcp-server">Talk to Your Cluster: Kubernetes MCP Server in Practice</a></li>
+      <li>GitHub: <a href="https://github.com/containers/kubernetes-mcp-server" target="_blank" rel="noopener">containers/kubernetes-mcp-server</a></li>
+      <li>AWS Docs: <a href="https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html" target="_blank" rel="noopener">IAM Roles for Service Accounts (IRSA)</a></li>
+      <li>AWS Docs: <a href="https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html" target="_blank" rel="noopener">EKS Access Entries</a></li>
+      <li>MCP Spec: <a href="https://modelcontextprotocol.io/docs/concepts/transports" target="_blank" rel="noopener">MCP Transport Protocols</a></li>
+    </ul>
+
+  </article>
+
+  <div class="article-divider"></div>
+  <footer class="article-footer">
+    <div class="article-author">
+      <div class="author-avatar">R³</div>
+      <div>
+        <div class="author-name">Richie Richard Rajkumar</div>
+        <div class="author-role">Infrastructure Architect · Platform Leader · Berlin</div>
+      </div>
+    </div>
+    <a href="/blog" class="back-btn">← All articles</a>
+  </footer>
+
+</div><!-- /article-page -->
+
+<script src="/js/main.js"></script>
+</body>
+</html>

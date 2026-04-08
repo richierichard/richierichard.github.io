@@ -330,10 +330,22 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
       <div class="sidebar-section-label">// by topic</div>
       <div class="tag-filter-list">
         <button class="tag-filter-btn active" data-tag="all">
-          All posts <span class="tag-filter-count" id="count-all">1</span>
+          All posts <span class="tag-filter-count" id="count-all">3</span>
         </button>
         <button class="tag-filter-btn" data-tag="aws">
-          AWS <span class="tag-filter-count" id="count-aws">1</span>
+          AWS <span class="tag-filter-count" id="count-aws">2</span>
+        </button>
+        <button class="tag-filter-btn" data-tag="kubernetes">
+          Kubernetes <span class="tag-filter-count" id="count-kubernetes">2</span>
+        </button>
+        <button class="tag-filter-btn" data-tag="devops">
+          DevOps <span class="tag-filter-count" id="count-devops">3</span>
+        </button>
+        <button class="tag-filter-btn" data-tag="ai">
+          AI <span class="tag-filter-count" id="count-ai">2</span>
+        </button>
+        <button class="tag-filter-btn" data-tag="platform-engineering">
+          Platform Engineering <span class="tag-filter-count" id="count-platform-engineering">2</span>
         </button>
         <button class="tag-filter-btn" data-tag="s3">
           S3 <span class="tag-filter-count" id="count-s3">1</span>
@@ -341,25 +353,16 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
         <button class="tag-filter-btn" data-tag="infrastructure">
           Infrastructure <span class="tag-filter-count" id="count-infrastructure">1</span>
         </button>
-        <button class="tag-filter-btn" data-tag="devops">
-          DevOps <span class="tag-filter-count" id="count-devops">1</span>
-        </button>
-        <button class="tag-filter-btn" data-tag="kubernetes">
-          Kubernetes <span class="tag-filter-count" id="count-kubernetes">0</span>
-        </button>
         <button class="tag-filter-btn" data-tag="gitops">
           GitOps <span class="tag-filter-count" id="count-gitops">0</span>
-        </button>
-        <button class="tag-filter-btn" data-tag="platform-engineering">
-          Platform Engineering <span class="tag-filter-count" id="count-platform-engineering">0</span>
         </button>
       </div>
 
       <div class="sidebar-divider"></div>
 
       <div class="sidebar-stat">
-        <span class="sidebar-stat-number" id="visible-count">1</span>
-        <span class="sidebar-stat-label">article published</span>
+        <span class="sidebar-stat-number" id="visible-count">3</span>
+        <span class="sidebar-stat-label">articles published</span>
       </div>
 
     </aside>
@@ -372,7 +375,7 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
         <div class="blog-terminal">
           <div><span class="prompt">$ </span>git status</div>
           <div style="color:var(--muted);margin:0.2rem 0;">On branch <span style="color:var(--accent)">blog/drafts</span></div>
-          <div style="color:var(--muted);">2 articles in progress…</div>
+          <div style="color:var(--muted);">1 article in progress…</div>
           <div style="margin-top:0.4rem;"><span class="prompt">$ </span><span class="cursor"></span></div>
         </div>
         <div class="blog-more-text">
@@ -380,6 +383,53 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <p>Writing about Kubernetes cost optimisation, GitOps patterns, and platform engineering at scale. Check back soon.</p>
         </div>
       </div>
+
+      <!-- ARTICLE: Centralised MCP Server with IRSA -->
+      <a href="/blog/kubernetes-mcp-server-centralised" class="post-card reveal"
+         data-tags="kubernetes aws ai platform-engineering devops"
+         data-title="one mcp server eight clusters centralised ai access with irsa"
+         data-excerpt="deploy the kubernetes mcp server as a shared platform service in a centralised infra cluster using irsa for cross-cluster authentication zero local setup one url for every engineer">
+        <div>
+          <div class="post-tags">
+            <span class="post-tag">Kubernetes</span>
+            <span class="post-tag">AWS</span>
+            <span class="post-tag">AI</span>
+            <span class="post-tag">Platform Engineering</span>
+            <span class="post-tag">DevOps</span>
+          </div>
+          <div class="post-title">One MCP Server, Eight Clusters: Centralised AI Access with IRSA</div>
+          <div class="post-excerpt">Deploy the Kubernetes MCP Server once in your infra cluster, authenticate to all target clusters with IRSA, and give every DevOps engineer AI-powered cluster access with a single URL. No local kubeconfig, no local installs.</div>
+          <div class="post-meta">
+            <span>April 2026</span>
+            <span>·</span>
+            <span>12 min read</span>
+          </div>
+        </div>
+        <div class="post-arrow">→</div>
+      </a>
+
+      <!-- ARTICLE: Kubernetes MCP Server -->
+      <a href="/blog/kubernetes-mcp-server" class="post-card reveal"
+         data-tags="kubernetes ai devops platform-engineering"
+         data-title="talk to your cluster: kubernetes mcp server in practice"
+         data-excerpt="the kubernetes mcp server lets ai assistants like claude interact with your clusters using natural language setup real examples and production guardrails">
+        <div>
+          <div class="post-tags">
+            <span class="post-tag">Kubernetes</span>
+            <span class="post-tag">AI</span>
+            <span class="post-tag">DevOps</span>
+            <span class="post-tag">Platform Engineering</span>
+          </div>
+          <div class="post-title">Talk to Your Cluster: Kubernetes MCP Server in Practice</div>
+          <div class="post-excerpt">The Kubernetes MCP Server connects AI assistants directly to the Kubernetes API via the Model Context Protocol. Here's how to set it up, real conversation examples from incident triage, and the production guardrails you shouldn't skip.</div>
+          <div class="post-meta">
+            <span>April 2026</span>
+            <span>·</span>
+            <span>10 min read</span>
+          </div>
+        </div>
+        <div class="post-arrow">→</div>
+      </a>
 
       <!-- ARTICLE: S3 Regional Namespaces -->
       <a href="/blog/s3-regional-namespaces" class="post-card reveal"
