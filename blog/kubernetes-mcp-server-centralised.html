@@ -271,7 +271,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         <span class="article-meta-dot">·</span>
         <span>April 2026</span>
         <span class="article-meta-dot">·</span>
-        <span>12 min read</span>
+        <span>16 min read</span>
       </div>
     </header>
   </div>
@@ -876,11 +876,357 @@ data <span class="st">"aws_eks_cluster"</span> <span class="st">"infra"</span> {
       <strong>Important:</strong> The Ingress annotations for proxy buffering and timeouts are critical. SSE connections are long-lived — if your ingress controller buffers responses or times out after 60 seconds, the connection will drop mid-conversation. Disable buffering and set generous timeouts.
     </div>
 
+    <h2 id="securing">Securing the MCP Server: Authentication Before Access</h2>
+
+    <p>Right now, the Ingress exposes the MCP server with no authentication. Anyone on the internal network who discovers the URL gets full read access to all eight clusters. That's not acceptable — even behind a VPN, you need to know <em>who</em> is making requests and you need the ability to revoke access at the identity level, not just the network level.</p>
+
+    <p>There are two approaches depending on your setup: <strong>OAuth2 Proxy with an external identity provider</strong> (Keycloak, Okta, Google, etc.) or the <strong>MCP server's built-in authentication</strong> for teams without an SSO solution.</p>
+
+    <h3>Option A — OAuth2 Proxy + Keycloak (Recommended)</h3>
+
+    <p>If you're already running <strong>Keycloak</strong> in your infra cluster (and if you're managing eight clusters, you probably are), this is the strongest approach. OAuth2 Proxy sits in front of the MCP server as a reverse proxy, intercepts every request, and redirects unauthenticated users to Keycloak for login. Only authenticated users with valid tokens reach the MCP server.</p>
+
+    <p>The flow:</p>
+    <ol>
+      <li>Engineer's MCP client sends a request to <code>mcp.internal.company.com/sse</code></li>
+      <li>Nginx Ingress routes the request through OAuth2 Proxy (via <code>auth-url</code> / <code>auth-signin</code> annotations)</li>
+      <li>OAuth2 Proxy checks for a valid session cookie — if missing, redirects to Keycloak login</li>
+      <li>Engineer authenticates via Keycloak (SSO, MFA if configured)</li>
+      <li>Keycloak issues a token, OAuth2 Proxy sets a session cookie and forwards the request to the MCP server</li>
+      <li>Subsequent requests include the cookie — no re-authentication until the session expires</li>
+    </ol>
+
+    <h3>Step 1 — Create a Keycloak Client</h3>
+
+    <p>In your Keycloak admin console, create an OIDC client for the MCP server:</p>
+
+    <pre><span class="cm"># Keycloak client configuration</span>
+<span class="ky">Client ID</span>:         <span class="st">mcp-server</span>
+<span class="ky">Client Protocol</span>:   <span class="st">openid-connect</span>
+<span class="ky">Access Type</span>:       <span class="st">confidential</span>
+<span class="ky">Root URL</span>:          <span class="st">https://mcp.internal.company.com</span>
+<span class="ky">Valid Redirect URIs</span>: <span class="st">https://mcp.internal.company.com/oauth2/callback</span>
+<span class="ky">Web Origins</span>:       <span class="st">https://mcp.internal.company.com</span>
+
+<span class="cm"># Under the "Credentials" tab, copy the client secret</span>
+<span class="cm"># You'll need it for the OAuth2 Proxy configuration</span>
+
+<span class="cm"># Optional: Create a dedicated "mcp-users" group or role in Keycloak</span>
+<span class="cm"># to restrict who can access the MCP server</span></pre>
+
+    <h3>Step 2 — Deploy OAuth2 Proxy</h3>
+
+    <pre><span class="ky">apiVersion</span>: apps/v1
+<span class="ky">kind</span>: Deployment
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">oauth2-proxy-mcp</span>
+  <span class="ky">namespace</span>: <span class="st">platform-tools</span>
+<span class="ky">spec</span>:
+  <span class="ky">replicas</span>: <span class="nm">2</span>
+  <span class="ky">selector</span>:
+    <span class="ky">matchLabels</span>:
+      <span class="ky">app</span>: <span class="st">oauth2-proxy-mcp</span>
+  <span class="ky">template</span>:
+    <span class="ky">metadata</span>:
+      <span class="ky">labels</span>:
+        <span class="ky">app</span>: <span class="st">oauth2-proxy-mcp</span>
+    <span class="ky">spec</span>:
+      <span class="ky">containers</span>:
+        - <span class="ky">name</span>: <span class="st">oauth2-proxy</span>
+          <span class="ky">image</span>: <span class="st">quay.io/oauth2-proxy/oauth2-proxy:v7.7.1</span>
+          <span class="ky">args</span>:
+            - <span class="st">"--provider=keycloak-oidc"</span>
+            - <span class="st">"--client-id=mcp-server"</span>
+            - <span class="st">"--client-secret=$(CLIENT_SECRET)"</span>
+            - <span class="st">"--oidc-issuer-url=https://keycloak.internal.company.com/realms/platform"</span>
+            - <span class="st">"--redirect-url=https://mcp.internal.company.com/oauth2/callback"</span>
+            - <span class="st">"--upstream=http://kubernetes-mcp-server.platform-tools.svc:80"</span>
+            - <span class="st">"--http-address=0.0.0.0:4180"</span>
+            <span class="cm"># Cookie settings</span>
+            - <span class="st">"--cookie-secret=$(COOKIE_SECRET)"</span>
+            - <span class="st">"--cookie-secure=true"</span>
+            - <span class="st">"--cookie-name=_mcp_oauth2"</span>
+            - <span class="st">"--cookie-expire=8h"</span>
+            <span class="cm"># SSE compatibility — critical</span>
+            - <span class="st">"--pass-host-header=true"</span>
+            - <span class="st">"--reverse-proxy=true"</span>
+            - <span class="st">"--skip-provider-button=true"</span>
+            <span class="cm"># Access control</span>
+            - <span class="st">"--allowed-group=/mcp-users"</span>
+            - <span class="st">"--email-domain=*"</span>
+            <span class="cm"># Pass user identity to MCP server (for audit logs)</span>
+            - <span class="st">"--set-xauthrequest=true"</span>
+            - <span class="st">"--pass-access-token=true"</span>
+          <span class="ky">env</span>:
+            - <span class="ky">name</span>: <span class="st">CLIENT_SECRET</span>
+              <span class="ky">valueFrom</span>:
+                <span class="ky">secretKeyRef</span>:
+                  <span class="ky">name</span>: <span class="st">oauth2-proxy-mcp-secrets</span>
+                  <span class="ky">key</span>: <span class="st">client-secret</span>
+            - <span class="ky">name</span>: <span class="st">COOKIE_SECRET</span>
+              <span class="ky">valueFrom</span>:
+                <span class="ky">secretKeyRef</span>:
+                  <span class="ky">name</span>: <span class="st">oauth2-proxy-mcp-secrets</span>
+                  <span class="ky">key</span>: <span class="st">cookie-secret</span>
+          <span class="ky">ports</span>:
+            - <span class="ky">containerPort</span>: <span class="nm">4180</span>
+              <span class="ky">name</span>: <span class="st">http</span>
+          <span class="ky">resources</span>:
+            <span class="ky">requests</span>:
+              <span class="ky">cpu</span>: <span class="st">50m</span>
+              <span class="ky">memory</span>: <span class="st">64Mi</span>
+            <span class="ky">limits</span>:
+              <span class="ky">cpu</span>: <span class="st">100m</span>
+              <span class="ky">memory</span>: <span class="st">128Mi</span>
+---
+<span class="ky">apiVersion</span>: v1
+<span class="ky">kind</span>: Service
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">oauth2-proxy-mcp</span>
+  <span class="ky">namespace</span>: <span class="st">platform-tools</span>
+<span class="ky">spec</span>:
+  <span class="ky">selector</span>:
+    <span class="ky">app</span>: <span class="st">oauth2-proxy-mcp</span>
+  <span class="ky">ports</span>:
+    - <span class="ky">port</span>: <span class="nm">80</span>
+      <span class="ky">targetPort</span>: <span class="nm">4180</span>
+      <span class="ky">name</span>: <span class="st">http</span></pre>
+
+    <p>Key arguments to note:</p>
+    <ul>
+      <li><code>--provider=keycloak-oidc</code> — native Keycloak OIDC provider (supports group-based access control)</li>
+      <li><code>--allowed-group=/mcp-users</code> — only members of the <code>mcp-users</code> group in Keycloak can access the MCP server. Add/remove engineers from this group to grant/revoke access instantly</li>
+      <li><code>--reverse-proxy=true</code> and <code>--pass-host-header=true</code> — required for SSE connections to work correctly through the proxy</li>
+      <li><code>--set-xauthrequest=true</code> — forwards the authenticated user's email and groups to the upstream as <code>X-Auth-Request-Email</code> and <code>X-Auth-Request-Groups</code> headers, enabling identity-aware audit logging</li>
+      <li><code>--cookie-expire=8h</code> — session lasts a working day; engineers authenticate once in the morning</li>
+    </ul>
+
+    <h3>Step 3 — Generate the Secrets</h3>
+
+    <pre><span class="cm"># Generate a random cookie secret (16, 24, or 32 bytes, base64-encoded)</span>
+<span class="ky">$</span> openssl rand -base64 32 | head -c 32
+
+<span class="cm"># Create the Kubernetes Secret</span>
+<span class="ky">$</span> kubectl create secret generic oauth2-proxy-mcp-secrets \
+    --namespace platform-tools \
+    --from-literal=client-secret=<span class="st">&lt;keycloak-client-secret&gt;</span> \
+    --from-literal=cookie-secret=<span class="st">&lt;generated-cookie-secret&gt;</span></pre>
+
+    <h3>Step 4 — Update the Ingress</h3>
+
+    <p>Replace the bare Ingress with one that routes through OAuth2 Proxy using Nginx's <code>auth-url</code> / <code>auth-signin</code> annotations:</p>
+
+    <pre><span class="ky">apiVersion</span>: networking.k8s.io/v1
+<span class="ky">kind</span>: Ingress
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">kubernetes-mcp-server</span>
+  <span class="ky">namespace</span>: <span class="st">platform-tools</span>
+  <span class="ky">annotations</span>:
+    <span class="cm"># OAuth2 Proxy authentication</span>
+    <span class="ky">nginx.ingress.kubernetes.io/auth-url</span>: <span class="st">"http://oauth2-proxy-mcp.platform-tools.svc/oauth2/auth"</span>
+    <span class="ky">nginx.ingress.kubernetes.io/auth-signin</span>: <span class="st">"https://mcp.internal.company.com/oauth2/start?rd=$escaped_request_uri"</span>
+    <span class="ky">nginx.ingress.kubernetes.io/auth-response-headers</span>: <span class="st">"X-Auth-Request-Email,X-Auth-Request-Groups"</span>
+    <span class="cm"># SSE compatibility</span>
+    <span class="ky">nginx.ingress.kubernetes.io/proxy-read-timeout</span>: <span class="st">"3600"</span>
+    <span class="ky">nginx.ingress.kubernetes.io/proxy-send-timeout</span>: <span class="st">"3600"</span>
+    <span class="ky">nginx.ingress.kubernetes.io/proxy-buffering</span>: <span class="st">"off"</span>
+<span class="ky">spec</span>:
+  <span class="ky">ingressClassName</span>: <span class="st">nginx</span>
+  <span class="ky">tls</span>:
+    - <span class="ky">hosts</span>: [<span class="st">mcp.internal.company.com</span>]
+      <span class="ky">secretName</span>: <span class="st">mcp-tls</span>
+  <span class="ky">rules</span>:
+    - <span class="ky">host</span>: <span class="st">mcp.internal.company.com</span>
+      <span class="ky">http</span>:
+        <span class="ky">paths</span>:
+          - <span class="ky">path</span>: <span class="st">/oauth2</span>
+            <span class="ky">pathType</span>: <span class="st">Prefix</span>
+            <span class="ky">backend</span>:
+              <span class="ky">service</span>:
+                <span class="ky">name</span>: <span class="st">oauth2-proxy-mcp</span>
+                <span class="ky">port</span>:
+                  <span class="ky">number</span>: <span class="nm">80</span>
+          - <span class="ky">path</span>: <span class="st">/</span>
+            <span class="ky">pathType</span>: <span class="st">Prefix</span>
+            <span class="ky">backend</span>:
+              <span class="ky">service</span>:
+                <span class="ky">name</span>: <span class="st">kubernetes-mcp-server</span>
+                <span class="ky">port</span>:
+                  <span class="ky">number</span>: <span class="nm">80</span></pre>
+
+    <p>The three <code>auth-*</code> annotations are doing the heavy lifting:</p>
+    <ul>
+      <li><code>auth-url</code> — Nginx calls this endpoint for every incoming request. OAuth2 Proxy returns 202 (authenticated) or 401 (not authenticated)</li>
+      <li><code>auth-signin</code> — on 401, Nginx redirects the user here, which starts the Keycloak login flow</li>
+      <li><code>auth-response-headers</code> — forwards the authenticated user's email and groups to the MCP server as request headers, so you know who is making each query</li>
+    </ul>
+
+    <div class="callout">
+      <strong>SSE + OAuth2 Proxy:</strong> The <code>/oauth2</code> path must be routed to the OAuth2 Proxy service (not the MCP server) so the callback URL resolves correctly. The <code>/</code> path goes to the MCP server but is gated by the <code>auth-url</code> annotation. This split routing is what makes the pattern work — OAuth2 Proxy handles authentication, Nginx enforces it, and the MCP server only sees authenticated requests.
+    </div>
+
+    <p>With this in place, onboarding and offboarding become identity operations:</p>
+    <ul>
+      <li><strong>Grant access:</strong> Add the engineer to the <code>mcp-users</code> group in Keycloak</li>
+      <li><strong>Revoke access:</strong> Remove them from the group — immediate, no pod restart, no credential rotation</li>
+      <li><strong>Audit:</strong> Every request to the MCP server carries the user's email in <code>X-Auth-Request-Email</code> — log it at the Ingress or application layer</li>
+    </ul>
+
+    <h3>Option B — MCP Server Native OIDC Authentication (Token-Based)</h3>
+
+    <p>The kubernetes-mcp-server has built-in OIDC support for its HTTP transport. It validates bearer tokens directly — no proxy, no extra pods. This works with any OIDC-compliant provider, including Keycloak, Google, Azure AD, and GitHub.</p>
+
+    <p><strong>So why would you ever use OAuth2 Proxy (Option A) if native OIDC already supports Keycloak?</strong> The difference isn't the provider — it's the <em>authentication flow</em>:</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>Option A — OAuth2 Proxy (Session-Based)</th>
+          <th>Option B — Native OIDC (Token-Based)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>How engineers authenticate</td>
+          <td class="good">First request redirects to Keycloak login page in browser — one click, done</td>
+          <td>Run a CLI command to get a token, set it as an env var</td>
+        </tr>
+        <tr>
+          <td>Token management</td>
+          <td class="good">Fully automatic — OAuth2 Proxy manages token lifecycle behind a session cookie</td>
+          <td>Engineer's responsibility — re-run the command when the token expires</td>
+        </tr>
+        <tr>
+          <td>MCP client config</td>
+          <td class="good">Just a URL — no headers, no env vars</td>
+          <td>URL + <code>Authorization</code> header with <code>${env:MCP_TOKEN}</code></td>
+        </tr>
+        <tr>
+          <td>Group-based access control</td>
+          <td class="good"><code>--allowed-group=/mcp-users</code> built into OAuth2 Proxy</td>
+          <td>Requires validating group claims at the OIDC level</td>
+        </tr>
+        <tr>
+          <td>Infrastructure overhead</td>
+          <td>Extra Deployment + Service for OAuth2 Proxy</td>
+          <td class="good">Zero — just flags on the MCP server</td>
+        </tr>
+        <tr>
+          <td>Best for</td>
+          <td class="good">Teams that want "open VS Code and it works" UX</td>
+          <td class="good">Teams comfortable with CLI token management, or CI/CD pipelines</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The core issue: MCP clients (VS Code, Claude Desktop, CLI tools) connect via SSE — they make HTTP requests but <strong>cannot follow browser redirects</strong> to a Keycloak login page. With native OIDC, engineers must pre-obtain a token via CLI before the MCP client can connect. OAuth2 Proxy absorbs that complexity at the infrastructure layer so the client doesn't need to know about authentication at all.</p>
+
+    <div class="callout">
+      <strong>In short:</strong> Both options can use the same Keycloak instance. Option A gives engineers a seamless, cookie-based experience with zero client-side token management. Option B is simpler to deploy (no extra pods) but requires each engineer to obtain and refresh tokens manually. Pick based on your team's tolerance for CLI token workflows.
+    </div>
+
+    <p>When you start the server with <code>--port</code>, you can pass authentication flags directly. The <code>--oidc-audience</code> value is the <strong>Client ID</strong> you get when registering an application with your OIDC provider — the same identifier your provider uses to scope tokens to your application:</p>
+
+    <pre><span class="cm"># MCP server with built-in OIDC validation</span>
+<span class="ky">$</span> kubernetes-mcp-server \
+    --port <span class="nm">8080</span> \
+    --stateless \
+    --read-only \
+    --oidc-issuer-url <span class="st">https://accounts.google.com</span> \
+    --oidc-audience <span class="st">your-google-oauth-client-id.apps.googleusercontent.com</span> \
+    --kubeconfig /etc/kubeconfig/config \
+    --config /etc/mcp/config.toml</pre>
+
+    <p>With these flags, the MCP server validates the <code>Authorization: Bearer &lt;token&gt;</code> header on every request against the specified OIDC provider. It checks that the token's <code>aud</code> (audience) claim matches the <code>--oidc-audience</code> value — rejecting tokens issued for other applications. No separate proxy deployment needed.</p>
+
+    <p>This works with any OIDC-compliant provider. Here's where to find the Client ID for each:</p>
+
+    <pre><span class="cm"># Keycloak — from Keycloak Admin Console → Clients → Client ID field</span>
+--oidc-issuer-url <span class="st">https://keycloak.internal.company.com/realms/platform</span>
+--oidc-audience <span class="st">mcp-server</span>
+
+<span class="cm"># Google — from Google Cloud Console → APIs &amp; Services → Credentials → OAuth 2.0 Client ID</span>
+--oidc-issuer-url <span class="st">https://accounts.google.com</span>
+--oidc-audience <span class="st">123456789.apps.googleusercontent.com</span>
+
+<span class="cm"># Azure AD / Entra ID — from Azure Portal → App Registrations → Application (client) ID</span>
+--oidc-issuer-url <span class="st">https://login.microsoftonline.com/{tenant-id}/v2.0</span>
+--oidc-audience <span class="st">a1b2c3d4-e5f6-7890-abcd-ef1234567890</span>
+
+<span class="cm"># GitHub (via OIDC) — from GitHub Settings → Developer Settings → OAuth Apps → Client ID</span>
+--oidc-issuer-url <span class="st">https://token.actions.githubusercontent.com</span>
+--oidc-audience <span class="st">your-github-client-id</span></pre>
+
+    <p>The client configuration changes slightly — engineers pass a bearer token with their requests:</p>
+
+    <pre><span class="cm">// VS Code — .vscode/mcp.json</span>
+{
+  <span class="ky">"servers"</span>: {
+    <span class="st">"kubernetes"</span>: {
+      <span class="ky">"type"</span>: <span class="st">"sse"</span>,
+      <span class="ky">"url"</span>: <span class="st">"https://mcp.internal.company.com/sse"</span>,
+      <span class="ky">"headers"</span>: {
+        <span class="st">"Authorization"</span>: <span class="st">"Bearer ${env:MCP_TOKEN}"</span>
+      }
+    }
+  }
+}</pre>
+
+    <p>Engineers obtain a token from the OIDC provider via their CLI and set it as an environment variable. Here's the exact command for each provider:</p>
+
+    <pre><span class="cm"># Google — requires gcloud CLI, user must be logged in via `gcloud auth login`</span>
+<span class="ky">$</span> export MCP_TOKEN=$(gcloud auth print-identity-token \
+    --audiences=<span class="st">your-google-oauth-client-id.apps.googleusercontent.com</span>)
+
+<span class="cm"># Azure AD / Entra ID — requires az CLI, user must be logged in via `az login`</span>
+<span class="ky">$</span> export MCP_TOKEN=$(az account get-access-token \
+    --resource <span class="st">a1b2c3d4-e5f6-7890-abcd-ef1234567890</span> \
+    --query accessToken -o tsv)
+
+<span class="cm"># GitHub — using a GitHub App or Personal Access Token to get an OIDC token</span>
+<span class="cm"># In GitHub Actions workflows, the token is available automatically:</span>
+<span class="ky">$</span> export MCP_TOKEN=$ACTIONS_ID_TOKEN_REQUEST_TOKEN
+<span class="cm"># For local use, generate a PAT with the required scopes from</span>
+<span class="cm"># GitHub → Settings → Developer settings → Personal access tokens</span>
+
+<span class="cm"># Keycloak — using the Device Authorization Grant (browser-based, no password in terminal)</span>
+<span class="cm"># 1. Request a device code:</span>
+<span class="ky">$</span> curl -s -X POST \
+    <span class="st">https://keycloak.internal.company.com/realms/platform/protocol/openid-connect/auth/device</span> \
+    -d <span class="st">"client_id=mcp-server"</span>
+<span class="cm"># → Response (JSON):</span>
+<span class="cm"># {</span>
+<span class="cm">#   "device_code": "ot_eKKL9s5GbpT7JzPmH3...",   ← this is your DEVICE_CODE</span>
+<span class="cm">#   "user_code": "ABCD-EFGH",</span>
+<span class="cm">#   "verification_uri": "https://keycloak.internal.company.com/realms/platform/device",</span>
+<span class="cm">#   "expires_in": 600</span>
+<span class="cm"># }</span>
+<span class="cm"># Open verification_uri in your browser, enter the user_code, and authenticate.</span>
+<span class="cm">#</span>
+<span class="cm"># 2. After browser authentication completes, exchange the device_code for a token:</span>
+<span class="ky">$</span> export MCP_TOKEN=$(curl -s -X POST \
+    <span class="st">https://keycloak.internal.company.com/realms/platform/protocol/openid-connect/token</span> \
+    -d <span class="st">"grant_type=urn:ietf:params:oauth:grant-type:device_code"</span> \
+    -d <span class="st">"client_id=mcp-server"</span> \
+    -d <span class="st">"device_code=ot_eKKL9s5GbpT7JzPmH3..."</span> \
+    | jq -r .access_token)</pre>
+
+    <p>These tokens are short-lived (typically 5–60 minutes depending on provider configuration). The token is validated server-side on every request — expired or invalid tokens are rejected with a 401. For long sessions, engineers simply re-run the export command to refresh.</p>
+
+    <div class="callout">
+      <strong>Tip:</strong> You can wrap the token retrieval in a shell alias or a small script to make it seamless. For example: <code>alias mcp-login='export MCP_TOKEN=$(gcloud auth print-identity-token --audiences=...)'</code> — engineers run <code>mcp-login</code> once at the start of their day.
+    </div>
+
+    <div class="callout">
+      <strong>When to use which:</strong> Use <strong>OAuth2 Proxy</strong> (Option A) when you want a seamless, cookie-based experience where engineers authenticate once via browser and never think about tokens again — best for teams that prioritise zero-friction UX and group-based access control. Use <strong>native OIDC</strong> (Option B) when you want a simpler deployment with no extra infrastructure — engineers manage tokens via CLI, which also makes it the natural choice for CI/CD pipelines and automation that needs MCP server access.
+    </div>
+
     <h2 id="client-config">What Every Engineer Adds: One URL</h2>
 
     <p>This is the entire client-side setup for each DevOps engineer. No binary install. No kubeconfig. No TOML config. Just this:</p>
 
-    <h3>VS Code</h3>
+    <h3>VS Code (with OAuth2 Proxy — cookie-based, no token needed)</h3>
 
     <pre><span class="cm">// .vscode/mcp.json (or VS Code user settings)</span>
 {
@@ -916,7 +1262,7 @@ data <span class="st">"aws_eks_cluster"</span> <span class="st">"infra"</span> {
   }
 }</pre>
 
-    <p>That's it. Open VS Code, open Copilot or Claude, and ask: <em>"Show me pods with more than 5 restarts across all production clusters."</em> The MCP server handles context switching, authentication, and data aggregation. The engineer doesn't know or care about kubeconfigs, IRSA chains, or which account hosts which cluster.</p>
+    <p>That's it. Open VS Code, open Copilot or Claude, and ask: <em>"Show me pods with more than 5 restarts across all production clusters."</em> The first time, you'll be redirected to Keycloak to authenticate — after that, the session cookie handles it. The MCP server handles context switching, cluster authentication, and data aggregation. The engineer doesn't know or care about kubeconfigs, IRSA chains, or which account hosts which cluster.</p>
 
     <h2 id="what-you-get">What You Actually Get</h2>
 
@@ -932,17 +1278,17 @@ data <span class="st">"aws_eks_cluster"</span> <span class="st">"infra"</span> {
     <p>When an incident happens, everyone sees the same state. There's no "works on my machine" for cluster access — no stale cached tokens, no expired contexts, no mismatched cluster endpoints. If engineer A sees CrashLoopBackOff in apps-production-us-east-1, engineer B sees the same thing.</p>
 
     <h3>Zero Local Setup</h3>
-    <p>Onboarding a new DevOps engineer takes one step: add the MCP server URL to their VS Code settings. They don't need <code>aws configure</code>, they don't need <code>aws eks update-kubeconfig</code> for eight clusters, they don't need to install the MCP binary, and they don't need a TOML config file. They just need VPN access to the internal domain.</p>
+    <p>Onboarding a new DevOps engineer takes two steps: add them to the <code>mcp-users</code> group in Keycloak, and share the MCP server URL. They don't need <code>aws configure</code>, they don't need <code>aws eks update-kubeconfig</code> for eight clusters, they don't need to install the MCP binary, and they don't need a TOML config file. They authenticate via SSO like every other internal tool.</p>
 
     <h3>Clean Offboarding</h3>
-    <p>When someone leaves the team, you revoke their VPN or network access. No credentials to rotate, no tokens to invalidate, no kubeconfig files to chase down on their laptop. The MCP server's credentials (IRSA) are tied to the pod, not to any individual engineer.</p>
+    <p>When someone leaves the team, remove them from the <code>mcp-users</code> group in Keycloak — access is revoked immediately, no pod restart required. No credentials to rotate, no tokens to invalidate, no kubeconfig files to chase down on their laptop. The MCP server's credentials (IRSA) are tied to the pod, not to any individual engineer.</p>
 
     <h3>Centralised Audit Trail</h3>
     <p>Every query and operation flows through one service. You can log every MCP request at the ingress layer, correlate it with the engineer's VPN identity, and feed it into your existing observability stack. Try doing that when each engineer runs a local binary on their laptop.</p>
 
-    <h2 id="security-layers">The Security Model: Three Independent Layers</h2>
+    <h2 id="security-layers">The Security Model: Four Independent Layers</h2>
 
-    <p>This architecture gives you defense in depth with three independent security layers that work even if one of them fails:</p>
+    <p>With authentication in place, the architecture now has four independent security layers. Each one works even if the others fail:</p>
 
     <table class="compare-table">
       <thead>
@@ -954,24 +1300,29 @@ data <span class="st">"aws_eks_cluster"</span> <span class="st">"infra"</span> {
       </thead>
       <tbody>
         <tr>
-          <td><strong>1. MCP Server Config</strong></td>
+          <td><strong>1. Authentication</strong></td>
+          <td>OAuth2 Proxy + Keycloak (or native OIDC) verifies user identity; only <code>mcp-users</code> group members can connect</td>
+          <td class="good">MCP config and RBAC still block sensitive data and writes</td>
+        </tr>
+        <tr>
+          <td><strong>2. MCP Server Config</strong></td>
           <td>TOML restrictions block resource types and namespaces; <code>--read-only</code> blocks all writes</td>
           <td class="good">RBAC prevents the query from reaching the API server</td>
         </tr>
         <tr>
-          <td><strong>2. Kubernetes RBAC</strong></td>
+          <td><strong>3. Kubernetes RBAC</strong></td>
           <td>ClusterRole limits verbs to get/list/watch and excludes sensitive resources</td>
           <td class="good">MCP config already blocked the request before it was sent</td>
         </tr>
         <tr>
-          <td><strong>3. IAM Permissions</strong></td>
+          <td><strong>4. IAM Permissions</strong></td>
           <td>Target role only allows <code>eks:DescribeCluster</code> — no AWS resource access</td>
           <td class="good">Even with IAM over-permission, RBAC restricts Kubernetes-level access</td>
         </tr>
       </tbody>
     </table>
 
-    <p>No single layer is sufficient. All three together mean that a misconfiguration in any one layer is caught by the other two.</p>
+    <p>No single layer is sufficient. All four together mean that a misconfiguration in any one layer is caught by the others. And with Keycloak in the picture, every request carries a verified user identity — you can answer "who queried production pod logs at 3 AM?" from your Ingress access logs.</p>
 
     <h2 id="operational-tips">Operational Tips from Running This in Production</h2>
 
@@ -985,7 +1336,7 @@ data <span class="st">"aws_eks_cluster"</span> <span class="st">"infra"</span> {
     </ul>
 
     <div class="callout">
-      <strong>My take:</strong> The centralised MCP server isn't just a convenience — it's a fundamentally better security model. With local MCP servers, you're distributing kubeconfigs with eight-cluster access to every engineer's laptop. With a centralised server, credentials never leave the cluster. Engineers interact through a single URL, controlled by your network policies and ingress rules. You get the same access, the same guardrails, and the same visibility for everyone — and you manage it in one place. That's not just easier. That's how platform tooling should work.
+      <strong>My take:</strong> The centralised MCP server isn't just a convenience — it's a fundamentally better security model. With local MCP servers, you're distributing kubeconfigs with eight-cluster access to every engineer's laptop. With a centralised server, credentials never leave the cluster. Engineers authenticate through Keycloak like any other internal tool, access is managed via group membership, and every query is traceable to a specific person. You get the same access, the same guardrails, and the same visibility for everyone — and you manage it in one place. That's not just easier. That's how platform tooling should work.
     </div>
 
     <h2 id="reference">Reference</h2>
@@ -995,6 +1346,8 @@ data <span class="st">"aws_eks_cluster"</span> <span class="st">"infra"</span> {
       <li>AWS Docs: <a href="https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html" target="_blank" rel="noopener">IAM Roles for Service Accounts (IRSA)</a></li>
       <li>AWS Docs: <a href="https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html" target="_blank" rel="noopener">EKS Access Entries</a></li>
       <li>MCP Spec: <a href="https://modelcontextprotocol.io/docs/concepts/transports" target="_blank" rel="noopener">MCP Transport Protocols</a></li>
+      <li>OAuth2 Proxy: <a href="https://oauth2-proxy.github.io/oauth2-proxy/" target="_blank" rel="noopener">oauth2-proxy.github.io</a></li>
+      <li>OAuth2 Proxy Keycloak Provider: <a href="https://oauth2-proxy.github.io/oauth2-proxy/configuration/providers/keycloak_oidc" target="_blank" rel="noopener">Keycloak OIDC Configuration</a></li>
     </ul>
 
   </article>
