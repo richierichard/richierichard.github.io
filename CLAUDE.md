@@ -20,7 +20,8 @@ richierichard.github.io/
 ├── blog/
 │   ├── s3-regional-namespaces.html         # Article: AWS S3 Account-Regional Namespaces (March 2026)
 │   ├── kubernetes-mcp-server.html          # Article: Kubernetes MCP Server in Practice (April 2026)
-│   └── kubernetes-mcp-server-centralised.html # Article: Centralised MCP Server with IRSA (April 2026)
+│   ├── kubernetes-mcp-server-centralised.html # Article: Centralised MCP Server with IRSA (April 2026)
+│   └── s3-files-filesystem.html            # Article: S3 Files — S3 Buckets as File Systems (April 2026)
 ├── CNAME                    # GitHub Pages artefact (no longer used by Vercel)
 └── README.md
 ```
@@ -142,6 +143,7 @@ Each article is a standalone HTML file in the `blog/` directory with:
 | `s3-regional-namespaces` | AWS S3 Bucket Naming Just Changed Forever | March 2026 | AWS, S3, Infrastructure, DevOps |
 | `kubernetes-mcp-server` | Talk to Your Cluster: Kubernetes MCP Server in Practice | April 2026 | Kubernetes, AI, DevOps, Platform Engineering |
 | `kubernetes-mcp-server-centralised` | One MCP Server, Eight Clusters: Centralised AI Access with IRSA | April 2026 | Kubernetes, AWS, AI, Platform Engineering, DevOps |
+| `s3-files-filesystem` | S3 Files: Your Buckets Are File Systems Now | April 2026 | AWS, S3, Infrastructure, DevOps |
 
 ## favicon.svg
 - SVG favicon, transparent background, green R³ in Courier New bold

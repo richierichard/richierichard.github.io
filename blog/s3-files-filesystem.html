@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S3 Files: Your Buckets Are File Systems Now — Richie Richard Rajkumar</title>
+
+<meta name="description" content="AWS S3 Files turns any general purpose bucket into a mountable NFS file system. Here's what it actually means for your infrastructure, how to mount it on EC2, EKS, and Lambda, and where it fits alongside EFS and FSx.">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://www.richierichard.com/blog/s3-files-filesystem">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.richierichard.com/blog/s3-files-filesystem">
+<meta property="og:title" content="S3 Files: Your Buckets Are File Systems Now — Richie Richard Rajkumar">
+<meta property="og:description" content="AWS S3 Files turns any S3 bucket into a mountable NFS file system. Mount it on EC2, EKS, Lambda. Here's what changed and what it means for your architecture.">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+
+<style>
+/* ── ARTICLE PAGE ── */
+.article-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 7rem 2rem 5rem;
+  position: relative;
+  z-index: 1;
+}
+.article-top { max-width: 960px; }
+
+.article-intro {
+  max-width: 960px;
+  margin-bottom: 2.5rem;
+  color: var(--text);
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+.article-intro p { margin-bottom: 1.25rem; }
+.article-intro code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+
+.article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  margin-bottom: 2.5rem;
+  transition: color 0.2s;
+}
+.article-back:hover { color: var(--accent); }
+
+.article-header { margin-bottom: 2.5rem; }
+.article-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.article-tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.2);
+  letter-spacing: 0.04em;
+}
+body.light .article-tag { border-color: rgba(2,132,199,0.25); }
+
+.article-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.article-title span { color: var(--accent); }
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.article-meta-dot { opacity: 0.3; }
+
+.article-hero {
+  width: 100%;
+  max-width: 960px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+}
+
+.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 2.5rem 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 6rem;
+}
+.article-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 1.75rem 0 0.5rem;
+}
+.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.article-body li { margin-bottom: 0.4rem; color: var(--text); }
+.article-body strong { color: var(--text); font-weight: 700; }
+.article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+.article-body pre {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.article-body code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+.article-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 1em;
+}
+.article-body pre .cm { color: var(--muted); }
+.article-body pre .ky { color: var(--accent); }
+.article-body pre .st { color: #f9a8d4; }
+.article-body pre .nm { color: #fde68a; }
+
+.callout {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+.callout strong { color: var(--accent); }
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
+}
+.compare-table th {
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.compare-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .good { color: var(--accent); font-weight: 700; }
+.compare-table .bad  { color: #f87171; }
+
+.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+
+.article-footer {
+  max-width: 960px;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.article-author { display: flex; align-items: center; gap: 0.85rem; }
+.author-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
+  flex-shrink: 0;
+}
+.author-name { font-weight: 700; font-size: 0.9rem; }
+.author-role { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--accent); color: var(--accent);
+  font-weight: 700; font-size: 0.85rem; text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #000; }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
+    <span class="nav-logo-tag">build · scale · secure</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Light</span>
+  </button>
+</nav>
+
+<div class="article-page">
+
+  <div class="article-top">
+    <a href="/blog" class="article-back">← Back to Blog</a>
+    <header class="article-header">
+      <div class="article-tags">
+        <span class="article-tag">AWS</span>
+        <span class="article-tag">S3</span>
+        <span class="article-tag">Infrastructure</span>
+        <span class="article-tag">DevOps</span>
+      </div>
+      <h1 class="article-title">S3 Files: Your Buckets Are <span>File Systems</span> Now</h1>
+      <div class="article-meta">
+        <span>Richie Richard Rajkumar</span>
+        <span class="article-meta-dot">·</span>
+        <span>April 2026</span>
+        <span class="article-meta-dot">·</span>
+        <span>10 min read</span>
+      </div>
+    </header>
+  </div>
+
+  <div class="article-hero">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 360" width="760" height="360" style="width:100%;height:auto;display:block;">
+      <defs>
+        <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0a0c10"/>
+          <stop offset="100%" stop-color="#12151c"/>
+        </linearGradient>
+      </defs>
+      <rect width="760" height="360" fill="url(#bg-grad)"/>
+
+      <!-- TITLE -->
+      <text x="380" y="28" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">AMAZON S3 FILES — OBJECT STORE MEETS FILE SYSTEM</text>
+
+      <!-- LEFT: S3 Bucket (Object Store) -->
+      <text x="160" y="60" font-family="'Fira Code',monospace" font-size="9" fill="#7a8099" text-anchor="middle" letter-spacing="1">S3 BUCKET</text>
+
+      <rect x="60" y="72" width="200" height="140" rx="10" fill="rgba(251,191,36,0.05)" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="6 3"/>
+
+      <!-- Objects -->
+      <rect x="80" y="88" width="160" height="20" rx="4" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.8"/>
+      <text x="160" y="102" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">data/training/model.bin</text>
+
+      <rect x="80" y="116" width="160" height="20" rx="4" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.8"/>
+      <text x="160" y="130" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">config/app.yaml</text>
+
+      <rect x="80" y="144" width="160" height="20" rx="4" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.8"/>
+      <text x="160" y="158" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">logs/2026-04-09.jsonl</text>
+
+      <rect x="80" y="172" width="160" height="20" rx="4" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.8"/>
+      <text x="160" y="186" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">assets/banner.png</text>
+
+      <!-- CENTRE: S3 Files layer -->
+      <rect x="290" y="72" width="180" height="140" rx="10" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="380" y="96" font-family="'Nunito',sans-serif" font-size="12" fill="#38bdf8" text-anchor="middle" font-weight="800">S3 Files</text>
+      <text x="380" y="112" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">NFS v4.1+ Mount</text>
+      <text x="380" y="126" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">~1ms latency (active data)</text>
+
+      <!-- File tree -->
+      <text x="316" y="148" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8">/mnt/s3/</text>
+      <text x="326" y="162" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8">├── data/</text>
+      <text x="326" y="176" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8">├── config/</text>
+      <text x="326" y="190" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8">├── logs/</text>
+      <text x="326" y="204" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8">└── assets/</text>
+
+      <!-- Arrows: S3 ↔ S3 Files -->
+      <line x1="260" y1="130" x2="290" y2="130" stroke="#fbbf24" stroke-width="1.2" opacity="0.7"/>
+      <polygon points="288,126 296,130 288,134" fill="#fbbf24" opacity="0.7"/>
+      <line x1="290" y1="150" x2="260" y2="150" stroke="#38bdf8" stroke-width="1.2" opacity="0.7"/>
+      <polygon points="262,146 254,150 262,154" fill="#38bdf8" opacity="0.7"/>
+      <text x="275" y="118" font-family="'Fira Code',monospace" font-size="6" fill="#7a8099" text-anchor="middle">auto</text>
+      <text x="275" y="166" font-family="'Fira Code',monospace" font-size="6" fill="#7a8099" text-anchor="middle">sync</text>
+
+      <!-- RIGHT: Compute resources -->
+      <text x="600" y="60" font-family="'Fira Code',monospace" font-size="9" fill="#7a8099" text-anchor="middle" letter-spacing="1">COMPUTE</text>
+
+      <rect x="520" y="78" width="160" height="28" rx="6" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.8"/>
+      <text x="600" y="97" font-family="'Fira Code',monospace" font-size="8" fill="#a78bfa" text-anchor="middle">EC2 Instances</text>
+
+      <rect x="520" y="116" width="160" height="28" rx="6" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.8"/>
+      <text x="600" y="135" font-family="'Fira Code',monospace" font-size="8" fill="#a78bfa" text-anchor="middle">EKS / ECS Pods</text>
+
+      <rect x="520" y="154" width="160" height="28" rx="6" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.8"/>
+      <text x="600" y="173" font-family="'Fira Code',monospace" font-size="8" fill="#a78bfa" text-anchor="middle">Lambda Functions</text>
+
+      <rect x="520" y="192" width="160" height="28" rx="6" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.8"/>
+      <text x="600" y="211" font-family="'Fira Code',monospace" font-size="8" fill="#a78bfa" text-anchor="middle">ML Training Jobs</text>
+
+      <!-- Arrows: S3 Files → Compute -->
+      <line x1="470" y1="92" x2="520" y2="92" stroke="#a78bfa" stroke-width="0.8" opacity="0.6"/>
+      <line x1="470" y1="130" x2="520" y2="130" stroke="#a78bfa" stroke-width="0.8" opacity="0.6"/>
+      <line x1="470" y1="140" x2="520" y2="168" stroke="#a78bfa" stroke-width="0.8" opacity="0.6"/>
+      <line x1="470" y1="150" x2="520" y2="206" stroke="#a78bfa" stroke-width="0.8" opacity="0.6"/>
+
+      <!-- BOTTOM: Before/After comparison -->
+      <text x="380" y="248" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">WHAT CHANGED</text>
+
+      <rect x="40" y="264" width="320" height="40" rx="6" fill="rgba(248,113,113,0.06)" stroke="#f87171" stroke-width="0.8"/>
+      <text x="200" y="280" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">BEFORE: S3 (objects) + EFS (files) + sync scripts</text>
+      <text x="200" y="296" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">Two storage systems, manual data movement</text>
+
+      <rect x="400" y="264" width="320" height="40" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="560" y="280" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8" text-anchor="middle">AFTER: S3 Files — one bucket, two access patterns</text>
+      <text x="560" y="296" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8" text-anchor="middle">Object API + NFS mount, automatic sync</text>
+
+      <!-- Bottom tagline -->
+      <text x="380" y="336" font-family="'Nunito',sans-serif" font-size="12" fill="#38bdf8" text-anchor="middle" font-weight="700">One Bucket · Two Access Patterns · No Data Movement</text>
+      <text x="380" y="352" font-family="'Fira Code',monospace" font-size="8" fill="#7a8099" text-anchor="middle">mount -t s3files fs-xxx:/ /mnt/s3 — NFS v4.1+ · ~1ms · All Regions</text>
+    </svg>
+  </div><!-- /article-hero -->
+
+  <div class="article-intro">
+    <p>For as long as S3 has existed, there's been a tradeoff: you get cheap, durable, infinitely scalable object storage — but you can't <code>cd</code> into it. You can't <code>vim</code> a config file. You can't mount it and let your application read from a path. If your workload needed a file system, you reached for EFS or FSx, copied the data over, and built sync logic to keep them in sync. That era just ended.</p>
+    <p><strong>Amazon S3 Files</strong>, launched in April 2026, turns any general purpose S3 bucket into a mountable NFS v4.1+ file system. You <code>mount</code> it on EC2, EKS pods, ECS containers, or Lambda functions — and your S3 objects appear as files and directories. Writes to the file system sync back to S3 automatically. Changes to S3 objects appear in the mount within seconds. One bucket, two access patterns, no data movement.</p>
+  </div>
+
+  <article class="article-body">
+
+    <h2 id="what-changed">What Actually Changed</h2>
+
+    <p>S3 Files adds a file system layer on top of any general purpose S3 bucket. Under the hood, it uses EFS infrastructure to provide NFS access with ~1ms latencies for active data. The key mechanics:</p>
+
+    <ul>
+      <li><strong>NFS v4.1+ protocol</strong> — standard POSIX file operations: create, read, update, delete, rename, chmod, chown</li>
+      <li><strong>Bidirectional sync</strong> — writes on the file system export back to S3 within minutes; changes on S3 appear in the file system within seconds</li>
+      <li><strong>High-performance storage tier</strong> — frequently accessed files and metadata are cached on low-latency storage; cold files are served directly from S3</li>
+      <li><strong>Byte-range reads</strong> — only the requested bytes are transferred from S3, not the entire object</li>
+      <li><strong>Multi-attach</strong> — multiple compute resources can mount the same file system concurrently with NFS close-to-open consistency</li>
+      <li><strong>Available in all commercial AWS regions</strong> — no waitlist, no preview</li>
+    </ul>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>Before S3 Files</th>
+          <th>With S3 Files</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Reading S3 data from an app</td>
+          <td class="bad">SDK calls, download to local disk, or S3 FUSE mount (slow, limited)</td>
+          <td class="good"><code>cat /mnt/s3/config/app.yaml</code></td>
+        </tr>
+        <tr>
+          <td>Editing a file in S3</td>
+          <td class="bad">Download → edit → re-upload entire object</td>
+          <td class="good"><code>echo "new_value" >> /mnt/s3/config/app.yaml</code></td>
+        </tr>
+        <tr>
+          <td>Sharing data across compute</td>
+          <td class="bad">Copy to EFS, build sync scripts, manage two storage systems</td>
+          <td class="good">Multiple EC2/EKS/Lambda mount the same S3 file system</td>
+        </tr>
+        <tr>
+          <td>ML training data pipeline</td>
+          <td class="bad">S3 → copy to FSx for Lustre → train → copy results back to S3</td>
+          <td class="good">Mount S3 bucket directly, train, results appear in S3 automatically</td>
+        </tr>
+        <tr>
+          <td>Latency for active data</td>
+          <td class="bad">S3 GET: ~10-50ms first byte</td>
+          <td class="good">~1ms from high-performance storage tier</td>
+        </tr>
+        <tr>
+          <td>POSIX permissions</td>
+          <td class="bad">Not applicable — S3 uses IAM policies</td>
+          <td class="good">UID/GID-based permissions stored as object metadata</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>This is not S3 Mountpoint.</strong> <a href="https://github.com/awslabs/mountpoint-s3">Mountpoint for S3</a> is an open-source FUSE client that provides read-heavy, sequential access to S3. S3 Files is a fully managed NFS file system with write support, sub-millisecond latency, concurrent multi-attach, and automatic bidirectional sync. They solve different problems.
+    </div>
+
+    <h2 id="how-it-works">How It Works: Three Steps</h2>
+
+    <h3>Step 1 — Create the S3 File System</h3>
+
+    <p>You can create a file system from the S3 console, CLI, or IaC. The file system is attached to an existing general purpose bucket:</p>
+
+    <pre><span class="cm"># Create the file system</span>
+<span class="ky">$</span> aws s3 create-file-system \
+    --bucket-name <span class="st">ml-training-data-prod</span>
+
+<span class="cm"># Output:</span>
+<span class="cm"># {</span>
+<span class="cm">#   "FileSystemId": "fs-0aa860d05df9afdfe",</span>
+<span class="cm">#   "BucketName": "ml-training-data-prod",</span>
+<span class="cm">#   "Status": "CREATING"</span>
+<span class="cm"># }</span></pre>
+
+    <h3>Step 2 — Create a Mount Target</h3>
+
+    <p>A mount target is a network endpoint in your VPC — it's how your compute resources reach the file system. You need one per availability zone:</p>
+
+    <pre><span class="cm"># Create mount target in your subnet</span>
+<span class="ky">$</span> aws s3 create-mount-target \
+    --file-system-id <span class="st">fs-0aa860d05df9afdfe</span> \
+    --subnet-id <span class="st">subnet-0a1b2c3d4e5f67890</span> \
+    --security-groups <span class="st">sg-0abcdef1234567890</span>
+
+<span class="cm"># The security group must allow NFS traffic (TCP 2049) from your compute resources</span></pre>
+
+    <h3>Step 3 — Mount and Use</h3>
+
+    <pre><span class="cm"># Install or update the EFS utils (required for the s3files mount type)</span>
+<span class="ky">$</span> sudo yum install -y amazon-efs-utils
+
+<span class="cm"># Create the mount point and mount</span>
+<span class="ky">$</span> sudo mkdir -p /mnt/s3
+<span class="ky">$</span> sudo mount -t s3files <span class="nm">fs-0aa860d05df9afdfe</span>:/ /mnt/s3
+
+<span class="cm"># That's it. Your S3 objects are now files.</span>
+<span class="ky">$</span> ls /mnt/s3/
+config/  data/  logs/  assets/
+
+<span class="ky">$</span> cat /mnt/s3/config/app.yaml
+<span class="st">database:
+  host: prod-db.internal
+  port: 5432</span>
+
+<span class="cm"># Write a file — it syncs to S3 automatically within minutes</span>
+<span class="ky">$</span> echo <span class="st">"deployment: v2.14.0"</span> > /mnt/s3/config/deploy.yaml
+
+<span class="cm"># Verify it's in S3</span>
+<span class="ky">$</span> aws s3 ls s3://ml-training-data-prod/config/deploy.yaml
+<span class="nm">2026-04-09 14:32:07         22 deploy.yaml</span></pre>
+
+    <h2 id="mounting-on-eks">Mounting on EKS: PersistentVolume with the EFS CSI Driver</h2>
+
+    <p>For Kubernetes workloads, you mount S3 Files using the existing <strong>EFS CSI driver</strong> — because S3 Files uses EFS infrastructure under the hood. If you're already running EFS volumes in EKS, you already have the driver installed.</p>
+
+    <h3>Static Provisioning with a PersistentVolume</h3>
+
+    <pre><span class="ky">apiVersion</span>: v1
+<span class="ky">kind</span>: PersistentVolume
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">s3-files-training-data</span>
+<span class="ky">spec</span>:
+  <span class="ky">capacity</span>:
+    <span class="ky">storage</span>: <span class="st">100Gi</span>  <span class="cm"># Required field but not enforced — S3 is effectively unlimited</span>
+  <span class="ky">accessModes</span>:
+    - <span class="st">ReadWriteMany</span>  <span class="cm"># Multiple pods can mount concurrently</span>
+  <span class="ky">persistentVolumeReclaimPolicy</span>: <span class="st">Retain</span>
+  <span class="ky">csi</span>:
+    <span class="ky">driver</span>: <span class="st">efs.csi.aws.com</span>
+    <span class="ky">volumeHandle</span>: <span class="st">fs-0aa860d05df9afdfe</span>  <span class="cm"># Your S3 file system ID</span>
+---
+<span class="ky">apiVersion</span>: v1
+<span class="ky">kind</span>: PersistentVolumeClaim
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">training-data-claim</span>
+  <span class="ky">namespace</span>: <span class="st">ml-pipelines</span>
+<span class="ky">spec</span>:
+  <span class="ky">accessModes</span>:
+    - <span class="st">ReadWriteMany</span>
+  <span class="ky">resources</span>:
+    <span class="ky">requests</span>:
+      <span class="ky">storage</span>: <span class="st">100Gi</span>
+  <span class="ky">storageClassName</span>: <span class="st">""</span>
+  <span class="ky">volumeName</span>: <span class="st">s3-files-training-data</span></pre>
+
+    <h3>Using It in a Pod</h3>
+
+    <pre><span class="ky">apiVersion</span>: v1
+<span class="ky">kind</span>: Pod
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">training-job</span>
+  <span class="ky">namespace</span>: <span class="st">ml-pipelines</span>
+<span class="ky">spec</span>:
+  <span class="ky">containers</span>:
+    - <span class="ky">name</span>: <span class="st">trainer</span>
+      <span class="ky">image</span>: <span class="st">ml-team/model-trainer:v3.2</span>
+      <span class="ky">command</span>: [<span class="st">"python"</span>, <span class="st">"train.py"</span>, <span class="st">"--data-dir=/data"</span>]
+      <span class="ky">volumeMounts</span>:
+        - <span class="ky">name</span>: <span class="st">training-data</span>
+          <span class="ky">mountPath</span>: <span class="st">/data</span>
+  <span class="ky">volumes</span>:
+    - <span class="ky">name</span>: <span class="st">training-data</span>
+      <span class="ky">persistentVolumeClaim</span>:
+        <span class="ky">claimName</span>: <span class="st">training-data-claim</span></pre>
+
+    <p>The training job reads from <code>/data</code> as if it were a local directory. The data lives in S3, served through the S3 Files layer. When the job writes checkpoints or results back to <code>/data/output/</code>, those files appear in the S3 bucket automatically.</p>
+
+    <div class="callout">
+      <strong>ReadWriteMany is the key.</strong> Multiple pods across different nodes can mount the same S3 file system concurrently. This is what makes it viable for distributed ML training, shared config management, and multi-pod pipelines — without the EBS single-attach limitation or the need to run a separate EFS file system.
+    </div>
+
+    <h2 id="terraform">Terraform: Full Example</h2>
+
+    <pre><span class="ky">resource</span> <span class="st">"aws_s3_file_system"</span> <span class="st">"training_data"</span> {
+  bucket_name = <span class="st">"ml-training-data-prod"</span>
+
+  tags = {
+    Environment = <span class="st">"production"</span>
+    Team        = <span class="st">"ml-platform"</span>
+  }
+}
+
+<span class="ky">resource</span> <span class="st">"aws_s3_mount_target"</span> <span class="st">"az_a"</span> {
+  file_system_id  = aws_s3_file_system.training_data.id
+  subnet_id       = <span class="st">"subnet-0a1b2c3d4e5f67890"</span>  <span class="cm"># AZ-a subnet</span>
+  security_groups = [aws_security_group.s3_files_nfs.id]
+}
+
+<span class="ky">resource</span> <span class="st">"aws_s3_mount_target"</span> <span class="st">"az_b"</span> {
+  file_system_id  = aws_s3_file_system.training_data.id
+  subnet_id       = <span class="st">"subnet-0b2c3d4e5f6789012"</span>  <span class="cm"># AZ-b subnet</span>
+  security_groups = [aws_security_group.s3_files_nfs.id]
+}
+
+<span class="ky">resource</span> <span class="st">"aws_security_group"</span> <span class="st">"s3_files_nfs"</span> {
+  name_prefix = <span class="st">"s3-files-nfs-"</span>
+  vpc_id      = var.vpc_id
+
+  ingress {
+    from_port       = <span class="nm">2049</span>
+    to_port         = <span class="nm">2049</span>
+    protocol        = <span class="st">"tcp"</span>
+    security_groups = [var.compute_security_group_id]  <span class="cm"># Allow from EC2/EKS nodes</span>
+  }
+}
+
+<span class="ky">output</span> <span class="st">"file_system_id"</span> {
+  value = aws_s3_file_system.training_data.id
+}</pre>
+
+    <h2 id="lambda">Lambda: Mount S3 as a File System in a Function</h2>
+
+    <p>Lambda functions can mount S3 Files just like they can mount EFS today. This is particularly powerful for functions that process files — instead of downloading from S3 into <code>/tmp</code> (capped at 10 GB), the function reads directly from the mount:</p>
+
+    <pre><span class="cm"># Terraform — Lambda with S3 Files mount</span>
+
+<span class="ky">resource</span> <span class="st">"aws_lambda_function"</span> <span class="st">"processor"</span> {
+  function_name = <span class="st">"data-processor"</span>
+  role          = aws_iam_role.lambda_role.arn
+  handler       = <span class="st">"index.handler"</span>
+  runtime       = <span class="st">"python3.12"</span>
+  timeout       = <span class="nm">300</span>
+
+  vpc_config {
+    subnet_ids         = var.private_subnet_ids
+    security_group_ids = [aws_security_group.lambda_sg.id]
+  }
+
+  file_system_config {
+    arn              = aws_s3_file_system.training_data.arn
+    local_mount_path = <span class="st">"/mnt/data"</span>
+  }
+}</pre>
+
+    <pre><span class="cm"># Lambda function code — reads directly from the mounted file system</span>
+<span class="ky">import</span> json
+<span class="ky">import</span> os
+
+<span class="ky">def</span> handler(event, context):
+    <span class="cm"># No S3 SDK calls needed — just read from the mount</span>
+    config_path = <span class="st">"/mnt/data/config/app.yaml"</span>
+
+    <span class="ky">with</span> open(config_path, <span class="st">"r"</span>) <span class="ky">as</span> f:
+        config = f.read()
+
+    <span class="cm"># Process files in a directory — standard Python, no boto3</span>
+    data_files = os.listdir(<span class="st">"/mnt/data/incoming/"</span>)
+
+    <span class="ky">for</span> filename <span class="ky">in</span> data_files:
+        filepath = os.path.join(<span class="st">"/mnt/data/incoming"</span>, filename)
+        <span class="ky">with</span> open(filepath, <span class="st">"r"</span>) <span class="ky">as</span> f:
+            data = json.load(f)
+            <span class="cm"># process data...</span>
+
+        <span class="cm"># Move processed files — standard file operations</span>
+        os.rename(filepath, filepath.replace(<span class="st">"/incoming/"</span>, <span class="st">"/processed/"</span>))
+
+    <span class="ky">return</span> {<span class="st">"processed"</span>: len(data_files)}</pre>
+
+    <p>No <code>boto3</code>, no <code>s3.get_object()</code>, no streaming response bodies, no temp files. Just <code>open()</code> and <code>read()</code>. The Lambda function reads and writes to S3 through standard file I/O.</p>
+
+    <h2 id="use-cases">Where This Changes the Architecture</h2>
+
+    <h3>1. ML Training Pipelines</h3>
+    <p>The classic pain: data lives in S3, but training frameworks (PyTorch, TensorFlow) expect a file path. Previously you'd copy to FSx for Lustre, train, then copy results back. With S3 Files, mount the bucket directly. The training job reads data from the mount at ~1ms latency. Checkpoints and model outputs write back to S3 automatically. No copy step, no FSx management, no sync scripts.</p>
+
+    <h3>2. Shared Config Across a Cluster</h3>
+    <p>Config files, feature flags, model weights — things that multiple pods or instances need to read. Instead of baking them into images or using a sidecar that polls S3, mount the bucket. Update the file in S3, it appears in the mount within seconds across all nodes.</p>
+
+    <h3>3. Log Processing and ETL</h3>
+    <p>Lambda functions that process incoming files no longer need to download from S3 to <code>/tmp</code>. Mount the bucket, read from <code>/mnt/data/incoming/</code>, write processed results to <code>/mnt/data/output/</code>. The files move from one S3 prefix to another — through standard file operations, not SDK calls.</p>
+
+    <h3>4. AI Agents and Tool-Using LLMs</h3>
+    <p>AI agents that interact with file-based tools (Python scripts, shell commands, code interpreters) can now access S3 data through a file system interface. The agent doesn't need S3-specific tooling — it uses standard file operations. Mount the bucket into the agent's sandbox and it can read, write, and organise files naturally.</p>
+
+    <h2 id="what-to-watch">What to Watch Out For</h2>
+
+    <ul>
+      <li><strong>Sync is not instant.</strong> File system → S3 sync takes minutes, not milliseconds. If your workflow depends on a file appearing in S3 immediately after writing, you'll need to account for this delay. S3 → file system sync is faster (seconds) but still not real-time.</li>
+      <li><strong>Close-to-open consistency.</strong> Changes are visible to other clients after the file is closed. If pod A writes to a file and pod B reads it, pod B sees the update only after pod A closes the file. This is standard NFS semantics, but it matters for concurrent workloads.</li>
+      <li><strong>General purpose buckets only.</strong> S3 Files works with general purpose buckets — not directory buckets (S3 Express One Zone). If your data is in Express One Zone for latency reasons, you can't use S3 Files on it.</li>
+      <li><strong>Cost is additive.</strong> You pay for S3 storage + S3 Files high-performance storage + S3 requests during sync + NFS I/O. For read-heavy, sequential workloads where latency doesn't matter, plain S3 with Mountpoint may still be cheaper.</li>
+      <li><strong>Security groups matter.</strong> The mount target needs a security group that allows TCP 2049 (NFS) from your compute resources. If your EKS nodes are in a different security group than your EC2 instances, both groups need ingress rules.</li>
+      <li><strong>EFS utils required.</strong> The <code>amazon-efs-utils</code> package must be installed on your instances or baked into your AMI. AWS-provided AMIs have it preinstalled, but custom images may not.</li>
+    </ul>
+
+    <h2 id="s3-files-vs">S3 Files vs EFS vs FSx vs Mountpoint: When to Use What</h2>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Best For</th>
+          <th>Protocol</th>
+          <th>Latency</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>S3 Files</strong></td>
+          <td class="good">Data that lives in S3 and needs file system access — ML, shared config, Lambda processing</td>
+          <td>NFS v4.1+</td>
+          <td>~1ms (active)</td>
+        </tr>
+        <tr>
+          <td><strong>EFS</strong></td>
+          <td>File-native workloads that don't need S3 as the source of truth — CMS, web content, home directories</td>
+          <td>NFS v4.1</td>
+          <td>~0.5ms</td>
+        </tr>
+        <tr>
+          <td><strong>FSx for Lustre</strong></td>
+          <td>HPC, GPU clusters, massive parallel I/O (linked to S3 but purpose-built for throughput)</td>
+          <td>Lustre</td>
+          <td>sub-ms</td>
+        </tr>
+        <tr>
+          <td><strong>Mountpoint for S3</strong></td>
+          <td>Read-heavy, sequential access to S3 — data lakes, analytics, large file reads (no write support)</td>
+          <td>FUSE</td>
+          <td>~10-50ms</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>The decision tree is simple:</strong> If your data is in S3 and your compute needs a file path to access it with low latency and write support → S3 Files. If your data is file-native and never needs to be in S3 → EFS. If you need extreme parallel throughput for HPC → FSx for Lustre. If you just need cheap, read-only sequential access to S3 → Mountpoint.
+    </div>
+
+    <h2 id="takeaways">Key Takeaways</h2>
+
+    <ol>
+      <li><strong>S3 Files makes any general purpose bucket mountable as an NFS v4.1+ file system</strong> — from EC2, EKS, ECS, and Lambda</li>
+      <li><strong>Bidirectional sync is automatic</strong> — writes on the file system appear in S3 within minutes, S3 changes appear in the file system within seconds</li>
+      <li><strong>~1ms latency for active data</strong> via a high-performance storage tier, with cold data served directly from S3</li>
+      <li><strong>Multi-attach with ReadWriteMany</strong> — multiple pods, instances, or functions can mount the same file system concurrently</li>
+      <li><strong>Uses the EFS CSI driver in EKS</strong> — if you already run EFS volumes, the driver is already installed</li>
+      <li><strong>This is not Mountpoint for S3</strong> — Mountpoint is read-heavy FUSE; S3 Files is a full read/write NFS file system with sub-millisecond latency</li>
+      <li><strong>Available in all commercial regions today</strong> — no preview, no waitlist</li>
+    </ol>
+
+    <h2 id="reference">Reference</h2>
+    <ul>
+      <li>AWS announcement: <a href="https://aws.amazon.com/blogs/aws/launching-s3-files-making-s3-buckets-accessible-as-file-systems/" target="_blank" rel="noopener">Launching S3 Files, making S3 buckets accessible as file systems</a> — AWS Blog, April 2026</li>
+      <li>Related: <a href="/blog/s3-regional-namespaces">AWS S3 Bucket Naming Just Changed Forever</a> — our earlier deep-dive on S3 account-regional namespaces</li>
+    </ul>
+
+  </article>
+
+  <div class="article-divider"></div>
+  <footer class="article-footer">
+    <div class="article-author">
+      <div class="author-avatar">R³</div>
+      <div>
+        <div class="author-name">Richie Richard Rajkumar</div>
+        <div class="author-role">Infrastructure Architect · Platform Leader · Berlin</div>
+      </div>
+    </div>
+    <a href="/blog" class="back-btn">← All articles</a>
+  </footer>
+
+</div><!-- /article-page -->
+
+<script src="/js/main.js"></script>
+</body>
+</html>
