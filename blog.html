@@ -331,28 +331,34 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
       <div class="sidebar-section-label">// by topic</div>
       <div class="tag-filter-list">
         <button class="tag-filter-btn active" data-tag="all">
-          All posts <span class="tag-filter-count" id="count-all">4</span>
+          All posts <span class="tag-filter-count" id="count-all">5</span>
         </button>
         <button class="tag-filter-btn" data-tag="aws">
-          AWS <span class="tag-filter-count" id="count-aws">3</span>
+          AWS <span class="tag-filter-count" id="count-aws">4</span>
         </button>
         <button class="tag-filter-btn" data-tag="kubernetes">
-          Kubernetes <span class="tag-filter-count" id="count-kubernetes">2</span>
+          Kubernetes <span class="tag-filter-count" id="count-kubernetes">3</span>
         </button>
         <button class="tag-filter-btn" data-tag="devops">
-          DevOps <span class="tag-filter-count" id="count-devops">4</span>
+          DevOps <span class="tag-filter-count" id="count-devops">5</span>
         </button>
         <button class="tag-filter-btn" data-tag="ai">
           AI <span class="tag-filter-count" id="count-ai">2</span>
         </button>
         <button class="tag-filter-btn" data-tag="platform-engineering">
-          Platform Engineering <span class="tag-filter-count" id="count-platform-engineering">2</span>
+          Platform Engineering <span class="tag-filter-count" id="count-platform-engineering">3</span>
         </button>
         <button class="tag-filter-btn" data-tag="s3">
           S3 <span class="tag-filter-count" id="count-s3">2</span>
         </button>
         <button class="tag-filter-btn" data-tag="infrastructure">
-          Infrastructure <span class="tag-filter-count" id="count-infrastructure">2</span>
+          Infrastructure <span class="tag-filter-count" id="count-infrastructure">3</span>
+        </button>
+        <button class="tag-filter-btn" data-tag="finops">
+          FinOps <span class="tag-filter-count" id="count-finops">1</span>
+        </button>
+        <button class="tag-filter-btn" data-tag="cost-engineering">
+          Cost Engineering <span class="tag-filter-count" id="count-cost-engineering">1</span>
         </button>
         <button class="tag-filter-btn" data-tag="gitops">
           GitOps <span class="tag-filter-count" id="count-gitops">0</span>
@@ -362,7 +368,7 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
       <div class="sidebar-divider"></div>
 
       <div class="sidebar-stat">
-        <span class="sidebar-stat-number" id="visible-count">4</span>
+        <span class="sidebar-stat-number" id="visible-count">5</span>
         <span class="sidebar-stat-label">articles published</span>
       </div>
 
@@ -384,6 +390,32 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <p>Writing about Kubernetes cost optimisation, GitOps patterns, and platform engineering at scale. Check back soon.</p>
         </div>
       </div>
+
+      <!-- ARTICLE: EKS Spot Instances -->
+      <a href="/blog/eks-spot-instances" class="post-card reveal"
+         data-tags="kubernetes aws finops cost-engineering devops infrastructure platform-engineering"
+         data-title="eks spot instances a practical guide to cutting your kubernetes compute costs"
+         data-excerpt="run eks workloads on ec2 spot instances and save up to 90 percent on compute hybrid on-demand plus spot strategies full spot clusters cluster autoscaler karpenter interruption handling best practices">
+        <div>
+          <div class="post-tags">
+            <span class="post-tag">Kubernetes</span>
+            <span class="post-tag">AWS</span>
+            <span class="post-tag">FinOps</span>
+            <span class="post-tag">Cost Engineering</span>
+            <span class="post-tag">DevOps</span>
+            <span class="post-tag">Infrastructure</span>
+            <span class="post-tag">Platform Engineering</span>
+          </div>
+          <div class="post-title">EKS Spot Instances: A Practical Guide to Cutting Your Kubernetes Compute Costs</div>
+          <div class="post-excerpt">Run EKS workloads on EC2 Spot Instances and save up to 90% on compute. Covers hybrid on-demand + spot strategies, full spot clusters, Cluster Autoscaler, Karpenter, interruption handling, and production best practices.</div>
+          <div class="post-meta">
+            <span>April 2026</span>
+            <span>·</span>
+            <span>14 min read</span>
+          </div>
+        </div>
+        <div class="post-arrow">→</div>
+      </a>
 
       <!-- ARTICLE: S3 Files -->
       <a href="/blog/s3-files-filesystem" class="post-card reveal"
