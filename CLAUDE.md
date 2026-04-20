@@ -21,7 +21,8 @@ richierichard.github.io/
 │   ├── s3-regional-namespaces.html         # Article: AWS S3 Account-Regional Namespaces (March 2026)
 │   ├── kubernetes-mcp-server.html          # Article: Kubernetes MCP Server in Practice (April 2026)
 │   ├── kubernetes-mcp-server-centralised.html # Article: Centralised MCP Server with IRSA (April 2026)
-│   └── s3-files-filesystem.html            # Article: S3 Files — S3 Buckets as File Systems (April 2026)
+│   ├── s3-files-filesystem.html            # Article: S3 Files — S3 Buckets as File Systems (April 2026)
+│   └── eks-spot-instances.html             # Article: EKS Spot Instances Cost Optimisation (April 2026)
 ├── CNAME                    # GitHub Pages artefact (no longer used by Vercel)
 └── README.md
 ```
@@ -90,7 +91,7 @@ Full blog listing with client-side search and tag filtering.
 - Tag filter buttons with post counts (e.g., `AWS (2)`, `Kubernetes (2)`)
 - Active tag highlighted; "All posts" is default
 - "Articles published" stat counter
-- Tags: AWS, Kubernetes, DevOps, AI, Platform Engineering, S3, Infrastructure, GitOps
+- Tags: AWS, Cost Engineering, DevOps, FinOps, GitOps, Infrastructure, Kubernetes, Platform Engineering, S3 (alphabetical order)
 
 **Post cards:**
 - Each card is an `<a>` with `data-tags`, `data-title`, `data-excerpt` attributes for filtering
@@ -144,6 +145,7 @@ Each article is a standalone HTML file in the `blog/` directory with:
 | `kubernetes-mcp-server` | Talk to Your Cluster: Kubernetes MCP Server in Practice | April 2026 | Kubernetes, AI, DevOps, Platform Engineering |
 | `kubernetes-mcp-server-centralised` | One MCP Server, Eight Clusters: Centralised AI Access with IRSA | April 2026 | Kubernetes, AWS, AI, Platform Engineering, DevOps |
 | `s3-files-filesystem` | S3 Files: Your Buckets Are File Systems Now | April 2026 | AWS, S3, Infrastructure, DevOps |
+| `eks-spot-instances` | EKS Spot Instances: A Practical Guide to Cutting Your Kubernetes Compute Costs | April 2026 | Kubernetes, AWS, FinOps, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
 
 ## favicon.svg
 - SVG favicon, transparent background, green R³ in Courier New bold

@@ -12,7 +12,12 @@ Live at: **[www.richierichard.com](https://www.richierichard.com)**
 |-----|------|-------------|
 | `/` | `index.html` | Homepage — hero, skills, experience, projects, contact |
 | `/about` | `about.html` | Detailed about page — bio, certifications, education |
-| `/blog` | `blog.html` | Blog — coming soon |
+| `/blog` | `blog.html` | Blog listing — search, tag filters, post cards |
+| `/blog/s3-regional-namespaces` | `blog/s3-regional-namespaces.html` | Article: AWS S3 Bucket Naming Just Changed Forever |
+| `/blog/kubernetes-mcp-server` | `blog/kubernetes-mcp-server.html` | Article: Kubernetes MCP Server in Practice |
+| `/blog/kubernetes-mcp-server-centralised` | `blog/kubernetes-mcp-server-centralised.html` | Article: Centralised MCP Server with IRSA |
+| `/blog/s3-files-filesystem` | `blog/s3-files-filesystem.html` | Article: S3 Files — S3 Buckets as File Systems |
+| `/blog/eks-spot-instances` | `blog/eks-spot-instances.html` | Article: EKS Spot Instances Cost Optimisation |
 
 ---
 
@@ -31,12 +36,19 @@ Live at: **[www.richierichard.com](https://www.richierichard.com)**
 richierichard.github.io/
 ├── index.html               # Homepage
 ├── about.html               # About page
-├── blog.html                # Blog coming soon page
+├── blog.html                # Blog listing page
 ├── favicon.svg              # SVG favicon — green R³ on transparent background
+├── vercel.json              # Vercel config — clean URLs + redirects
 ├── css/
 │   └── style.css            # All shared styles
 ├── js/
 │   └── main.js              # Network animation, scroll reveal, theme toggle, contact form
+├── blog/
+│   ├── s3-regional-namespaces.html
+│   ├── kubernetes-mcp-server.html
+│   ├── kubernetes-mcp-server-centralised.html
+│   ├── s3-files-filesystem.html
+│   └── eks-spot-instances.html
 ├── CNAME                    # Legacy GitHub Pages file (no longer active)
 └── README.md
 ```
