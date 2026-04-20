@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EKS Spot Instances: A Practical Guide to Cutting Your Kubernetes Compute Costs — Richie Richard Rajkumar</title>
+
+<meta name="description" content="Run EKS workloads on EC2 Spot Instances and save up to 90% on compute. Covers hybrid on-demand + spot strategies, full spot clusters, Cluster Autoscaler, Karpenter, interruption handling, and best practices.">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://www.richierichard.com/blog/eks-spot-instances">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.richierichard.com/blog/eks-spot-instances">
+<meta property="og:title" content="EKS Spot Instances: A Practical Guide to Cutting Your Kubernetes Compute Costs — Richie Richard Rajkumar">
+<meta property="og:description" content="Run EKS workloads on EC2 Spot Instances and save up to 90% on compute. Hybrid strategies, full spot clusters, Cluster Autoscaler, Karpenter, and production best practices.">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+
+<style>
+/* ── ARTICLE PAGE ── */
+.article-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 7rem 2rem 5rem;
+  position: relative;
+  z-index: 1;
+}
+.article-top { max-width: 960px; }
+
+.article-intro {
+  max-width: 960px;
+  margin-bottom: 2.5rem;
+  color: var(--text);
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+.article-intro p { margin-bottom: 1.25rem; }
+.article-intro code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+
+.article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  margin-bottom: 2.5rem;
+  transition: color 0.2s;
+}
+.article-back:hover { color: var(--accent); }
+
+.article-header { margin-bottom: 2.5rem; }
+.article-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.article-tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.2);
+  letter-spacing: 0.04em;
+}
+body.light .article-tag { border-color: rgba(2,132,199,0.25); }
+
+.article-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.article-title span { color: var(--accent); }
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.article-meta-dot { opacity: 0.3; }
+
+.article-hero {
+  width: 100%;
+  max-width: 960px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+}
+
+.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 2.5rem 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 6rem;
+}
+.article-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 1.75rem 0 0.5rem;
+}
+.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.article-body li { margin-bottom: 0.4rem; color: var(--text); }
+.article-body strong { color: var(--text); font-weight: 700; }
+.article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+.article-body pre {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.article-body code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+.article-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 1em;
+}
+.article-body pre .cm { color: var(--muted); }
+.article-body pre .ky { color: var(--accent); }
+.article-body pre .st { color: #f9a8d4; }
+.article-body pre .nm { color: #fde68a; }
+
+.callout {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+.callout strong { color: var(--accent); }
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
+}
+.compare-table th {
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.compare-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .good { color: var(--accent); font-weight: 700; }
+.compare-table .bad  { color: #f87171; }
+
+.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+
+.article-footer {
+  max-width: 960px;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.article-author { display: flex; align-items: center; gap: 0.85rem; }
+.author-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
+  flex-shrink: 0;
+}
+.author-name { font-weight: 700; font-size: 0.9rem; }
+.author-role { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--accent); color: var(--accent);
+  font-weight: 700; font-size: 0.85rem; text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #000; }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
+    <span class="nav-logo-tag">build · scale · secure</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Light</span>
+  </button>
+</nav>
+
+<div class="article-page">
+
+  <div class="article-top">
+    <a href="/blog" class="article-back">← Back to Blog</a>
+    <header class="article-header">
+      <div class="article-tags">
+        <span class="article-tag">Kubernetes</span>
+        <span class="article-tag">AWS</span>
+        <span class="article-tag">FinOps</span>
+        <span class="article-tag">Cost Engineering</span>
+        <span class="article-tag">DevOps</span>
+        <span class="article-tag">Infrastructure</span>
+        <span class="article-tag">Platform Engineering</span>
+      </div>
+      <h1 class="article-title">EKS Spot Instances: A Practical Guide to <span>Cutting Your Kubernetes Compute Costs</span></h1>
+      <div class="article-meta">
+        <span>Richie Richard Rajkumar</span>
+        <span class="article-meta-dot">·</span>
+        <span>April 2026</span>
+        <span class="article-meta-dot">·</span>
+        <span>14 min read</span>
+      </div>
+    </header>
+  </div>
+
+  <div class="article-hero">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" width="760" height="420" style="width:100%;height:auto;display:block;">
+      <defs>
+        <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0a0c10"/>
+          <stop offset="100%" stop-color="#12151c"/>
+        </linearGradient>
+      </defs>
+      <rect width="760" height="420" fill="url(#bg-grad)"/>
+
+      <!-- TITLE -->
+      <text x="380" y="28" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">EKS NODE STRATEGY — ON-DEMAND + SPOT INSTANCES</text>
+
+      <!-- EKS CLUSTER BOX -->
+      <rect x="40" y="42" width="680" height="340" rx="12" fill="rgba(56,189,248,0.03)" stroke="#38bdf8" stroke-width="1" stroke-dasharray="6 3"/>
+      <text x="380" y="64" font-family="'Nunito',sans-serif" font-size="13" fill="#38bdf8" text-anchor="middle" font-weight="800">EKS Cluster</text>
+
+      <!-- LEFT: On-Demand Node Group -->
+      <text x="175" y="88" font-family="'Fira Code',monospace" font-size="9" fill="#7a8099" text-anchor="middle" letter-spacing="1">ON-DEMAND NODE GROUP</text>
+      <rect x="60" y="98" width="230" height="160" rx="10" fill="rgba(74,222,128,0.05)" stroke="#4ade80" stroke-width="1.2"/>
+
+      <!-- On-Demand Nodes -->
+      <rect x="78" y="114" width="90" height="56" rx="6" fill="#1a1e28" stroke="#4ade80" stroke-width="0.8"/>
+      <text x="123" y="132" font-family="'Fira Code',monospace" font-size="7" fill="#4ade80" text-anchor="middle">m5.xlarge</text>
+      <text x="123" y="146" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">4 vCPU · 16 GiB</text>
+      <text x="123" y="160" font-family="'Fira Code',monospace" font-size="6" fill="#4ade80" text-anchor="middle">● STABLE</text>
+
+      <rect x="182" y="114" width="90" height="56" rx="6" fill="#1a1e28" stroke="#4ade80" stroke-width="0.8"/>
+      <text x="227" y="132" font-family="'Fira Code',monospace" font-size="7" fill="#4ade80" text-anchor="middle">m5.xlarge</text>
+      <text x="227" y="146" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">4 vCPU · 16 GiB</text>
+      <text x="227" y="160" font-family="'Fira Code',monospace" font-size="6" fill="#4ade80" text-anchor="middle">● STABLE</text>
+
+      <!-- Pods on On-Demand -->
+      <rect x="78" y="182" width="194" height="22" rx="4" fill="rgba(74,222,128,0.08)" stroke="#4ade80" stroke-width="0.6"/>
+      <text x="175" y="197" font-family="'Fira Code',monospace" font-size="7" fill="#4ade80" text-anchor="middle">Databases · Stateful Sets · Core APIs</text>
+
+      <rect x="78" y="210" width="194" height="22" rx="4" fill="rgba(74,222,128,0.08)" stroke="#4ade80" stroke-width="0.6"/>
+      <text x="175" y="225" font-family="'Fira Code',monospace" font-size="7" fill="#4ade80" text-anchor="middle">Controllers · Monitoring · Ingress</text>
+
+      <!-- On-Demand cost label -->
+      <text x="175" y="250" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">$0.192/hr per node</text>
+
+      <!-- RIGHT: Spot Node Group -->
+      <text x="540" y="88" font-family="'Fira Code',monospace" font-size="9" fill="#7a8099" text-anchor="middle" letter-spacing="1">SPOT NODE GROUP</text>
+      <rect x="410" y="98" width="290" height="160" rx="10" fill="rgba(251,191,36,0.05)" stroke="#fbbf24" stroke-width="1.2"/>
+
+      <!-- Spot Nodes -->
+      <rect x="424" y="114" width="80" height="56" rx="6" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.8"/>
+      <text x="464" y="132" font-family="'Fira Code',monospace" font-size="7" fill="#fbbf24" text-anchor="middle">m5.xlarge</text>
+      <text x="464" y="146" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">4v · 16G</text>
+      <text x="464" y="160" font-family="'Fira Code',monospace" font-size="6" fill="#fbbf24" text-anchor="middle">● SPOT</text>
+
+      <rect x="514" y="114" width="80" height="56" rx="6" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.8"/>
+      <text x="554" y="132" font-family="'Fira Code',monospace" font-size="7" fill="#fbbf24" text-anchor="middle">c5.xlarge</text>
+      <text x="554" y="146" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">4v · 8G</text>
+      <text x="554" y="160" font-family="'Fira Code',monospace" font-size="6" fill="#fbbf24" text-anchor="middle">● SPOT</text>
+
+      <rect x="604" y="114" width="80" height="56" rx="6" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.8"/>
+      <text x="644" y="132" font-family="'Fira Code',monospace" font-size="7" fill="#fbbf24" text-anchor="middle">r5.xlarge</text>
+      <text x="644" y="146" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">4v · 32G</text>
+      <text x="644" y="160" font-family="'Fira Code',monospace" font-size="6" fill="#fbbf24" text-anchor="middle">● SPOT</text>
+
+      <!-- Pods on Spot -->
+      <rect x="424" y="182" width="262" height="22" rx="4" fill="rgba(251,191,36,0.08)" stroke="#fbbf24" stroke-width="0.6"/>
+      <text x="555" y="197" font-family="'Fira Code',monospace" font-size="7" fill="#fbbf24" text-anchor="middle">Stateless APIs · Workers · Batch Jobs</text>
+
+      <rect x="424" y="210" width="262" height="22" rx="4" fill="rgba(251,191,36,0.08)" stroke="#fbbf24" stroke-width="0.6"/>
+      <text x="555" y="225" font-family="'Fira Code',monospace" font-size="7" fill="#fbbf24" text-anchor="middle">CI/CD Runners · Dev/Staging Workloads</text>
+
+      <!-- Spot cost label -->
+      <text x="555" y="250" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">$0.058/hr per node (avg ~70% savings)</text>
+
+      <!-- BOTTOM: Autoscaler Layer -->
+      <rect x="80" y="278" width="600" height="44" rx="8" fill="rgba(167,139,250,0.06)" stroke="#a78bfa" stroke-width="1"/>
+      <text x="380" y="296" font-family="'Nunito',sans-serif" font-size="11" fill="#a78bfa" text-anchor="middle" font-weight="700">Autoscaler Layer</text>
+      <text x="380" y="312" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">Cluster Autoscaler (ASG-based) · Karpenter (provisioner-based) · EKS Auto Mode</text>
+
+      <!-- Interruption handling -->
+      <rect x="80" y="332" width="600" height="36" rx="8" fill="rgba(248,113,113,0.05)" stroke="#f87171" stroke-width="0.8"/>
+      <text x="380" y="350" font-family="'Fira Code',monospace" font-size="8" fill="#f87171" text-anchor="middle">⚠ 2-min Spot Interruption Notice → Cordon → Drain → Reschedule</text>
+      <text x="380" y="362" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">AWS Node Termination Handler (CAS) · Native Interruption Handling (Karpenter)</text>
+
+      <!-- Bottom tagline -->
+      <text x="380" y="396" font-family="'Nunito',sans-serif" font-size="12" fill="#38bdf8" text-anchor="middle" font-weight="700">Stable Base · Elastic Spot · Graceful Interruptions</text>
+      <text x="380" y="412" font-family="'Fira Code',monospace" font-size="8" fill="#7a8099" text-anchor="middle">On-Demand for what must run · Spot for what can move · Up to 90% savings</text>
+    </svg>
+  </div><!-- /article-hero -->
+
+  <div class="article-intro">
+    <p>Your EKS cluster is probably running entirely on on-demand EC2 instances. That's fine for reliability — but you're paying full price for every node, including the ones running stateless workers, batch jobs, and dev workloads that could tolerate interruption. EC2 Spot Instances offer the same compute at up to 90% off the on-demand price. The catch: AWS can reclaim them with a two-minute warning when it needs the capacity back.</p>
+    <p>This isn't a theoretical exercise. Teams running production EKS clusters routinely save 50–70% on compute by moving interruptible workloads to Spot. The key is knowing <em>which</em> workloads to move, <em>how</em> to configure your autoscaler, and <em>what</em> happens when instances get reclaimed. This guide covers two strategies — hybrid (on-demand base + spot for spikes) and full spot — with configurations for both Cluster Autoscaler and Karpenter.</p>
+  </div>
+
+  <article class="article-body">
+
+    <h2 id="what-are-spot-instances">What Are Spot Instances</h2>
+
+    <p>EC2 Spot Instances are spare compute capacity that AWS sells at a steep discount — typically 60–90% cheaper than on-demand pricing. The tradeoff is simple: when AWS needs that capacity back (because on-demand or Reserved Instance demand in that pool increases), your Spot Instance gets a <strong>two-minute interruption notice</strong>, and then it's terminated.</p>
+
+    <p>A few things that matter for Kubernetes:</p>
+
+    <ul>
+      <li><strong>Same hardware, same performance.</strong> A Spot <code>m5.xlarge</code> is identical to an on-demand <code>m5.xlarge</code> — same CPU, memory, network, and storage. You're not getting degraded instances.</li>
+      <li><strong>Price varies by instance type, AZ, and time.</strong> A <code>c5.xlarge</code> in <code>us-east-1a</code> might be $0.05/hr right now and $0.08/hr tomorrow. Diversifying across instance types and availability zones is how you reduce interruption risk.</li>
+      <li><strong>Interruption rates vary widely.</strong> Popular instance types in constrained AZs get interrupted more often. Less common instance families (like <code>m5a</code>, <code>m6i</code>, <code>c5a</code>) typically have lower interruption rates because fewer people request them.</li>
+      <li><strong>Capacity pools are independent.</strong> Each combination of instance type + AZ is a separate capacity pool. Spreading across 10–15 pools gives you much better availability than concentrating on one or two.</li>
+    </ul>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>On-Demand</th>
+          <th>Spot</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Pricing</td>
+          <td class="bad">Full price ($0.192/hr for m5.xlarge)</td>
+          <td class="good">Up to 90% discount (~$0.058/hr)</td>
+        </tr>
+        <tr>
+          <td>Availability</td>
+          <td class="good">Guaranteed — always available</td>
+          <td>Subject to capacity — can be reclaimed</td>
+        </tr>
+        <tr>
+          <td>Interruption</td>
+          <td class="good">None — runs until you stop it</td>
+          <td class="bad">2-minute warning before termination</td>
+        </tr>
+        <tr>
+          <td>Best for</td>
+          <td>Databases, controllers, stateful workloads</td>
+          <td class="good">Stateless APIs, workers, batch, CI/CD, dev/staging</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="option-1-hybrid">Option 1: Hybrid — On-Demand Base + Spot for Spikes</h2>
+
+    <p>This is the most common production strategy. You run a stable base of on-demand nodes for workloads that cannot tolerate interruption — databases, stateful services, cluster-critical controllers, monitoring. Then you add Spot nodes for everything else: stateless API replicas, background workers, batch processing, CI/CD runners, and dev/staging environments.</p>
+
+    <p>The mental model is simple:</p>
+
+    <ul>
+      <li><strong>On-demand nodes</strong> handle your constant baseline load — the pods that must always be running, no matter what.</li>
+      <li><strong>Spot nodes</strong> handle spike load and interruptible workloads — the pods that can be rescheduled if a node disappears.</li>
+    </ul>
+
+    <p>You separate these using <strong>taints, tolerations, and node selectors</strong>. On-demand nodes run normally. Spot nodes get a taint so that only pods that explicitly opt in get scheduled there.</p>
+
+    <h3>With Cluster Autoscaler</h3>
+
+    <p>Cluster Autoscaler works with Auto Scaling Groups (ASGs). You create separate ASGs for on-demand and Spot, and the autoscaler scales each independently based on pending pods.</p>
+
+    <p><strong>On-demand node group:</strong></p>
+
+    <pre><span class="cm"># Auto Scaling Group for on-demand nodes</span>
+<span class="cm"># Instance type: fixed (e.g., m5.xlarge)</span>
+<span class="cm"># Min/Max: sized for your baseline workload</span>
+
+<span class="ky">Node Group</span>: on-demand-base
+  <span class="ky">Instance Type</span>:  <span class="st">m5.xlarge</span>
+  <span class="ky">Capacity Type</span>:  <span class="st">ON_DEMAND</span>
+  <span class="ky">Min Size</span>:       <span class="nm">2</span>
+  <span class="ky">Max Size</span>:       <span class="nm">10</span>
+  <span class="ky">Labels</span>:
+    <span class="ky">lifecycle</span>: <span class="st">on-demand</span>
+    <span class="ky">intent</span>:    <span class="st">base-workloads</span></pre>
+
+    <p><strong>Spot node group</strong> — use <strong>multiple instance types</strong> for diversification:</p>
+
+    <pre><span class="cm"># Auto Scaling Group for spot nodes</span>
+<span class="cm"># Mixed instance types with capacity-optimized allocation</span>
+
+<span class="ky">Node Group</span>: spot-burst
+  <span class="ky">Instance Types</span>: <span class="st">m5.xlarge, m5a.xlarge, m5d.xlarge, m6i.xlarge,</span>
+                   <span class="st">c5.xlarge, c5a.xlarge, c5d.xlarge, c6i.xlarge,</span>
+                   <span class="st">r5.xlarge, r5a.xlarge</span>
+  <span class="ky">Capacity Type</span>:  <span class="st">SPOT</span>
+  <span class="ky">Min Size</span>:       <span class="nm">0</span>
+  <span class="ky">Max Size</span>:       <span class="nm">50</span>
+  <span class="ky">Allocation Strategy</span>: <span class="st">capacity-optimized</span>
+  <span class="ky">Labels</span>:
+    <span class="ky">lifecycle</span>: <span class="st">spot</span>
+    <span class="ky">intent</span>:    <span class="st">burst-workloads</span>
+  <span class="ky">Taints</span>:
+    - <span class="ky">key</span>:    <span class="st">lifecycle</span>
+      <span class="ky">value</span>:  <span class="st">spot</span>
+      <span class="ky">effect</span>: <span class="st">NoSchedule</span></pre>
+
+    <p>Cluster Autoscaler needs to know how to expand Spot ASGs. Use the <code>--expander=least-waste</code> strategy — it picks the ASG that will have the least idle resources after the pending pods are scheduled:</p>
+
+    <pre><span class="cm"># Cluster Autoscaler deployment args</span>
+<span class="ky">args</span>:
+  - --cloud-provider=<span class="st">aws</span>
+  - --node-group-auto-discovery=<span class="st">asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster</span>
+  - --expander=<span class="st">least-waste</span>
+  - --skip-nodes-with-local-storage=<span class="st">false</span>
+  - --balance-similar-node-groups=<span class="st">true</span>   <span class="cm"># Spreads across AZs</span>
+  - --skip-nodes-with-system-pods=<span class="st">false</span></pre>
+
+    <div class="callout">
+      <strong>Why capacity-optimized?</strong> The <code>capacity-optimized</code> allocation strategy tells AWS to launch Spot Instances from the pools with the most available spare capacity — not the cheapest pools. This significantly reduces interruption rates because pools with more capacity are less likely to be reclaimed. The old <code>lowest-price</code> strategy saved a few extra cents but led to much higher interruption rates.
+    </div>
+
+    <h3>With Karpenter</h3>
+
+    <p>Karpenter doesn't use ASGs. It evaluates pending pods in real time, computes the cheapest instance type that fits, and provisions individual EC2 instances directly. This is fundamentally different from Cluster Autoscaler — there are no pre-defined node groups to scale. Karpenter decides the instance type, AZ, and purchase option at launch time.</p>
+
+    <p><strong>On-demand NodePool</strong> for stable workloads:</p>
+
+    <pre><span class="ky">apiVersion</span>: karpenter.sh/v1
+<span class="ky">kind</span>: NodePool
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">on-demand-base</span>
+<span class="ky">spec</span>:
+  <span class="ky">template</span>:
+    <span class="ky">metadata</span>:
+      <span class="ky">labels</span>:
+        <span class="ky">lifecycle</span>: <span class="st">on-demand</span>
+        <span class="ky">intent</span>: <span class="st">base-workloads</span>
+    <span class="ky">spec</span>:
+      <span class="ky">requirements</span>:
+        - <span class="ky">key</span>: <span class="st">karpenter.sh/capacity-type</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"on-demand"</span>]
+        - <span class="ky">key</span>: <span class="st">node.kubernetes.io/instance-type</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"m5.xlarge"</span>, <span class="st">"m5.2xlarge"</span>, <span class="st">"m6i.xlarge"</span>, <span class="st">"m6i.2xlarge"</span>]
+        - <span class="ky">key</span>: <span class="st">topology.kubernetes.io/zone</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"eu-central-1a"</span>, <span class="st">"eu-central-1b"</span>, <span class="st">"eu-central-1c"</span>]
+      <span class="ky">nodeClassRef</span>:
+        <span class="ky">group</span>: <span class="st">karpenter.k8s.aws</span>
+        <span class="ky">kind</span>: <span class="st">EC2NodeClass</span>
+        <span class="ky">name</span>: <span class="st">default</span>
+  <span class="ky">limits</span>:
+    <span class="ky">cpu</span>: <span class="st">"100"</span>
+    <span class="ky">memory</span>: <span class="st">400Gi</span></pre>
+
+    <p><strong>Spot NodePool</strong> for burst and interruptible workloads:</p>
+
+    <pre><span class="ky">apiVersion</span>: karpenter.sh/v1
+<span class="ky">kind</span>: NodePool
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">spot-burst</span>
+<span class="ky">spec</span>:
+  <span class="ky">template</span>:
+    <span class="ky">metadata</span>:
+      <span class="ky">labels</span>:
+        <span class="ky">lifecycle</span>: <span class="st">spot</span>
+        <span class="ky">intent</span>: <span class="st">burst-workloads</span>
+    <span class="ky">spec</span>:
+      <span class="ky">taints</span>:
+        - <span class="ky">key</span>: <span class="st">lifecycle</span>
+          <span class="ky">value</span>: <span class="st">spot</span>
+          <span class="ky">effect</span>: <span class="st">NoSchedule</span>
+      <span class="ky">requirements</span>:
+        - <span class="ky">key</span>: <span class="st">karpenter.sh/capacity-type</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"spot"</span>]
+        - <span class="ky">key</span>: <span class="st">node.kubernetes.io/instance-type</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>:
+            - <span class="st">"m5.xlarge"</span>
+            - <span class="st">"m5a.xlarge"</span>
+            - <span class="st">"m6i.xlarge"</span>
+            - <span class="st">"c5.xlarge"</span>
+            - <span class="st">"c5a.xlarge"</span>
+            - <span class="st">"c6i.xlarge"</span>
+            - <span class="st">"r5.xlarge"</span>
+            - <span class="st">"r5a.xlarge"</span>
+        - <span class="ky">key</span>: <span class="st">topology.kubernetes.io/zone</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"eu-central-1a"</span>, <span class="st">"eu-central-1b"</span>, <span class="st">"eu-central-1c"</span>]
+      <span class="ky">nodeClassRef</span>:
+        <span class="ky">group</span>: <span class="st">karpenter.k8s.aws</span>
+        <span class="ky">kind</span>: <span class="st">EC2NodeClass</span>
+        <span class="ky">name</span>: <span class="st">default</span>
+  <span class="ky">disruption</span>:
+    <span class="ky">consolidationPolicy</span>: <span class="st">WhenEmptyOrUnderutilized</span>
+    <span class="ky">consolidateAfter</span>: <span class="st">30s</span>
+  <span class="ky">limits</span>:
+    <span class="ky">cpu</span>: <span class="st">"500"</span>
+    <span class="ky">memory</span>: <span class="st">2000Gi</span></pre>
+
+    <p>Now, your pod specs just need the right toleration and node selector:</p>
+
+    <pre><span class="cm"># Pod that opts into spot nodes</span>
+<span class="ky">spec</span>:
+  <span class="ky">tolerations</span>:
+    - <span class="ky">key</span>: <span class="st">lifecycle</span>
+      <span class="ky">value</span>: <span class="st">spot</span>
+      <span class="ky">operator</span>: <span class="st">Equal</span>
+      <span class="ky">effect</span>: <span class="st">NoSchedule</span>
+  <span class="ky">nodeSelector</span>:
+    <span class="ky">lifecycle</span>: <span class="st">spot</span></pre>
+
+    <div class="callout">
+      <strong>Karpenter's advantage here:</strong> Cluster Autoscaler scales ASGs — it picks <em>which group</em> to scale, not which instance type. Karpenter evaluates the pending pod's resource requests and picks the optimal instance type, AZ, and purchase option at launch time. This means tighter bin-packing, less waste, and faster scaling (30–60 seconds vs 3–5 minutes with CAS).
+    </div>
+
+    <h2 id="option-2-full-spot">Option 2: Running a Full Spot Cluster</h2>
+
+    <p>If your entire workload is stateless and can handle interruptions — CI/CD pipelines, dev/staging environments, batch processing, load testing — you can run the entire cluster on Spot. No on-demand nodes at all (except the EKS-managed control plane, which is always on-demand and managed by AWS).</p>
+
+    <p>This is where the savings are most dramatic. A cluster that costs $15,000/month on on-demand can drop to $3,000–$5,000/month on Spot.</p>
+
+    <p>The rules for full Spot:</p>
+
+    <ul>
+      <li><strong>Diversify aggressively.</strong> Use at least 10–15 different instance types across all available AZs. The more pools you spread across, the less likely you are to lose all your capacity at once.</li>
+      <li><strong>Every pod needs a PodDisruptionBudget.</strong> No exceptions. If a node gets reclaimed, Kubernetes needs to know how many pods can be down simultaneously.</li>
+      <li><strong>Run enough replicas.</strong> If you have a single-replica deployment on Spot, you will have downtime during interruptions. Two replicas minimum, spread across nodes.</li>
+      <li><strong>No local state.</strong> Nothing on the node that you can't lose. Logs go to CloudWatch or a logging stack. State goes to RDS, ElastiCache, or S3.</li>
+    </ul>
+
+    <h3>With Cluster Autoscaler</h3>
+
+    <p>For a full Spot cluster, create multiple ASGs — one per instance family — and let Cluster Autoscaler manage them all:</p>
+
+    <pre><span class="cm"># Multiple Spot ASGs for maximum diversification</span>
+<span class="cm"># Cluster Autoscaler discovers them via tags</span>
+
+<span class="ky">Node Group</span>: spot-m5-family
+  <span class="ky">Instance Types</span>: <span class="st">m5.xlarge, m5.2xlarge, m5a.xlarge, m5a.2xlarge</span>
+  <span class="ky">Capacity Type</span>:  <span class="st">SPOT</span>
+  <span class="ky">Allocation</span>:     <span class="st">capacity-optimized</span>
+  <span class="ky">Min</span>: <span class="nm">0</span>  <span class="ky">Max</span>: <span class="nm">30</span>
+
+<span class="ky">Node Group</span>: spot-c5-family
+  <span class="ky">Instance Types</span>: <span class="st">c5.xlarge, c5.2xlarge, c5a.xlarge, c5a.2xlarge</span>
+  <span class="ky">Capacity Type</span>:  <span class="st">SPOT</span>
+  <span class="ky">Allocation</span>:     <span class="st">capacity-optimized</span>
+  <span class="ky">Min</span>: <span class="nm">0</span>  <span class="ky">Max</span>: <span class="nm">30</span>
+
+<span class="ky">Node Group</span>: spot-m6i-family
+  <span class="ky">Instance Types</span>: <span class="st">m6i.xlarge, m6i.2xlarge, m6g.xlarge, m6g.2xlarge</span>
+  <span class="ky">Capacity Type</span>:  <span class="st">SPOT</span>
+  <span class="ky">Allocation</span>:     <span class="st">capacity-optimized</span>
+  <span class="ky">Min</span>: <span class="nm">0</span>  <span class="ky">Max</span>: <span class="nm">30</span></pre>
+
+    <pre><span class="cm"># Cluster Autoscaler config for full-spot</span>
+<span class="ky">args</span>:
+  - --cloud-provider=<span class="st">aws</span>
+  - --node-group-auto-discovery=<span class="st">asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster</span>
+  - --expander=<span class="st">least-waste</span>
+  - --balance-similar-node-groups=<span class="st">true</span>
+  - --skip-nodes-with-local-storage=<span class="st">false</span>
+  - --skip-nodes-with-system-pods=<span class="st">false</span>
+  - --max-graceful-termination-sec=<span class="st">120</span>  <span class="cm"># Match the 2-min Spot warning</span></pre>
+
+    <h3>With Karpenter</h3>
+
+    <p>Karpenter makes full Spot much simpler — you don't need to manage multiple ASGs. A single NodePool can handle the entire cluster:</p>
+
+    <pre><span class="ky">apiVersion</span>: karpenter.sh/v1
+<span class="ky">kind</span>: NodePool
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">full-spot</span>
+<span class="ky">spec</span>:
+  <span class="ky">template</span>:
+    <span class="ky">metadata</span>:
+      <span class="ky">labels</span>:
+        <span class="ky">lifecycle</span>: <span class="st">spot</span>
+    <span class="ky">spec</span>:
+      <span class="ky">requirements</span>:
+        - <span class="ky">key</span>: <span class="st">karpenter.sh/capacity-type</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"spot"</span>]
+        - <span class="ky">key</span>: <span class="st">kubernetes.io/arch</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"amd64"</span>]
+        - <span class="ky">key</span>: <span class="st">node.kubernetes.io/instance-type</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>:
+            - <span class="st">"m5.xlarge"</span>
+            - <span class="st">"m5a.xlarge"</span>
+            - <span class="st">"m5.2xlarge"</span>
+            - <span class="st">"m6i.xlarge"</span>
+            - <span class="st">"m6i.2xlarge"</span>
+            - <span class="st">"c5.xlarge"</span>
+            - <span class="st">"c5a.xlarge"</span>
+            - <span class="st">"c5.2xlarge"</span>
+            - <span class="st">"c6i.xlarge"</span>
+            - <span class="st">"r5.xlarge"</span>
+            - <span class="st">"r5a.xlarge"</span>
+            - <span class="st">"r5.2xlarge"</span>
+        - <span class="ky">key</span>: <span class="st">topology.kubernetes.io/zone</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"eu-central-1a"</span>, <span class="st">"eu-central-1b"</span>, <span class="st">"eu-central-1c"</span>]
+      <span class="ky">nodeClassRef</span>:
+        <span class="ky">group</span>: <span class="st">karpenter.k8s.aws</span>
+        <span class="ky">kind</span>: <span class="st">EC2NodeClass</span>
+        <span class="ky">name</span>: <span class="st">default</span>
+  <span class="ky">disruption</span>:
+    <span class="ky">consolidationPolicy</span>: <span class="st">WhenEmptyOrUnderutilized</span>
+    <span class="ky">consolidateAfter</span>: <span class="st">30s</span>
+  <span class="ky">limits</span>:
+    <span class="ky">cpu</span>: <span class="st">"1000"</span>
+    <span class="ky">memory</span>: <span class="st">4000Gi</span></pre>
+
+    <p>Karpenter automatically applies the <code>capacity-optimized</code> allocation strategy for Spot — it evaluates available capacity across all the instance types and AZs you've listed and picks the combination with the deepest pool. No ASG configuration needed.</p>
+
+    <h2 id="handling-interruptions">Handling Spot Interruptions</h2>
+
+    <p>When AWS needs capacity back, your Spot Instance gets a two-minute warning. What happens next depends on your autoscaler.</p>
+
+    <h3>Cluster Autoscaler: AWS Node Termination Handler</h3>
+
+    <p>Cluster Autoscaler has no built-in awareness of Spot interruptions. You need the <strong>AWS Node Termination Handler (NTH)</strong> — a DaemonSet that runs on every node, watches for EC2 interruption events, and gracefully drains the node before it's terminated.</p>
+
+    <p>NTH can operate in two modes:</p>
+
+    <ul>
+      <li><strong>Instance Metadata Service (IMDS) mode</strong> — the DaemonSet polls the instance metadata endpoint for interruption notices. Simpler to set up, but only detects Spot interruptions and scheduled events.</li>
+      <li><strong>Queue mode</strong> — uses an SQS queue that receives EventBridge events for Spot interruptions, rebalance recommendations, scheduled maintenance, and instance state changes. More comprehensive and the recommended approach for production.</li>
+    </ul>
+
+    <p>The interruption flow with NTH:</p>
+
+    <pre><span class="cm"># What happens during a Spot interruption with NTH:</span>
+
+<span class="nm">1.</span> AWS sends 2-minute interruption notice
+<span class="nm">2.</span> NTH detects the notice (via IMDS poll or SQS event)
+<span class="nm">3.</span> NTH <span class="ky">cordons</span> the node      → no new pods scheduled
+<span class="nm">4.</span> NTH <span class="ky">drains</span> the node       → existing pods get SIGTERM
+<span class="nm">5.</span> Pods respect their <span class="st">terminationGracePeriodSeconds</span>
+<span class="nm">6.</span> Pods become <span class="st">Pending</span>       → Cluster Autoscaler provisions a new node
+<span class="nm">7.</span> Scheduler places pods on the new node</pre>
+
+    <div class="callout">
+      <strong>Set terminationGracePeriodSeconds wisely.</strong> Your pods need to shut down within the two-minute window. If your pod takes 90 seconds to drain connections, that leaves only 30 seconds for the node drain to begin and the SIGTERM to propagate. Keep it under 90 seconds as a rule of thumb.
+    </div>
+
+    <h3>Karpenter: Native Interruption Handling</h3>
+
+    <p>Karpenter handles Spot interruptions natively — no separate DaemonSet needed. It watches for EC2 interruption warnings, rebalance recommendations, and instance health events through the EC2 API and EventBridge. When an interruption is detected, Karpenter:</p>
+
+    <ol>
+      <li>Cordons the affected node</li>
+      <li>Pre-provisions a replacement node <em>before</em> draining — so there's capacity ready</li>
+      <li>Drains the old node once the replacement is ready</li>
+      <li>Deletes the old node object from the cluster</li>
+    </ol>
+
+    <p>This is a significant improvement over the NTH + CAS flow. With Karpenter, the replacement node is already launching while the old node is being drained. With CAS + NTH, the replacement only starts provisioning after the pods become Pending — adding 3–5 minutes of delay.</p>
+
+    <pre><span class="cm"># Karpenter interruption handling — no configuration needed</span>
+<span class="cm"># These capabilities are built in when you deploy Karpenter:</span>
+
+<span class="st">✓</span> Spot Instance interruption warnings    <span class="cm">(2-min notice)</span>
+<span class="st">✓</span> EC2 rebalance recommendations           <span class="cm">(early warning)</span>
+<span class="st">✓</span> Scheduled change health events          <span class="cm">(maintenance)</span>
+<span class="st">✓</span> Instance state change notifications     <span class="cm">(stopped/terminated)</span>
+
+<span class="cm"># Karpenter requires these IAM permissions for interruption handling:</span>
+<span class="ky">ec2:DescribeInstanceStatus</span>
+<span class="ky">sqs:ReceiveMessage</span>         <span class="cm"># If using SQS-based events</span>
+<span class="ky">sqs:DeleteMessage</span>
+<span class="ky">events:PutRule</span>             <span class="cm"># EventBridge rules</span>
+<span class="ky">events:PutTargets</span></pre>
+
+    <h2 id="best-practices">Best Practices for Production</h2>
+
+    <h3>1. Pod Disruption Budgets — Non-Negotiable</h3>
+
+    <p>A PodDisruptionBudget (PDB) tells Kubernetes how many pods in a deployment can be down simultaneously. Without PDBs, a Spot interruption could take down all replicas of a service at once if they're on the same node.</p>
+
+    <pre><span class="ky">apiVersion</span>: policy/v1
+<span class="ky">kind</span>: PodDisruptionBudget
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">api-pdb</span>
+<span class="ky">spec</span>:
+  <span class="ky">minAvailable</span>: <span class="st">"50%"</span>   <span class="cm"># At least half must stay running</span>
+  <span class="ky">selector</span>:
+    <span class="ky">matchLabels</span>:
+      <span class="ky">app</span>: <span class="st">api</span></pre>
+
+    <h3>2. Topology Spread Constraints — Don't Put All Eggs on One Node</h3>
+
+    <p>Spread your pod replicas across nodes and AZs. If one Spot node gets reclaimed, only a fraction of your replicas are affected:</p>
+
+    <pre><span class="ky">spec</span>:
+  <span class="ky">topologySpreadConstraints</span>:
+    - <span class="ky">maxSkew</span>: <span class="nm">1</span>
+      <span class="ky">topologyKey</span>: <span class="st">kubernetes.io/hostname</span>
+      <span class="ky">whenUnsatisfiable</span>: <span class="st">DoNotSchedule</span>
+      <span class="ky">labelSelector</span>:
+        <span class="ky">matchLabels</span>:
+          <span class="ky">app</span>: <span class="st">api</span>
+    - <span class="ky">maxSkew</span>: <span class="nm">1</span>
+      <span class="ky">topologyKey</span>: <span class="st">topology.kubernetes.io/zone</span>
+      <span class="ky">whenUnsatisfiable</span>: <span class="st">ScheduleAnyway</span>
+      <span class="ky">labelSelector</span>:
+        <span class="ky">matchLabels</span>:
+          <span class="ky">app</span>: <span class="st">api</span></pre>
+
+    <h3>3. Instance Diversification — The Single Most Important Thing</h3>
+
+    <p>This cannot be overstated: <strong>the more instance types and AZs you use, the lower your interruption rate.</strong> A single instance type in a single AZ is a single point of failure. Spread across 10+ instance types and all available AZs.</p>
+
+    <p>Good instance families to mix for general-purpose Kubernetes workloads:</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Family</th>
+          <th>Type</th>
+          <th>Typical Spot Discount</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>m5 / m5a / m5d</code></td>
+          <td>General purpose</td>
+          <td class="good">60–75%</td>
+          <td>Balanced CPU/memory, good baseline</td>
+        </tr>
+        <tr>
+          <td><code>m6i / m6a</code></td>
+          <td>General purpose (newer)</td>
+          <td class="good">65–80%</td>
+          <td>Better price-performance than m5</td>
+        </tr>
+        <tr>
+          <td><code>c5 / c5a / c5d</code></td>
+          <td>Compute optimized</td>
+          <td class="good">60–70%</td>
+          <td>Good for CPU-bound workloads</td>
+        </tr>
+        <tr>
+          <td><code>c6i / c6a</code></td>
+          <td>Compute optimized (newer)</td>
+          <td class="good">65–80%</td>
+          <td>Lower interruption rates (newer generation)</td>
+        </tr>
+        <tr>
+          <td><code>r5 / r5a</code></td>
+          <td>Memory optimized</td>
+          <td class="good">60–75%</td>
+          <td>For memory-heavy workloads</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>4. Capacity-Optimized Allocation — Always</h3>
+
+    <p>Whether you're using Cluster Autoscaler with ASGs or Karpenter, always use the <code>capacity-optimized</code> allocation strategy. It launches instances from pools with the most spare capacity, which directly reduces interruption rates. Karpenter does this by default. For CAS, set it on your ASG's Spot allocation strategy.</p>
+
+    <h3>5. Set Resource Requests Accurately</h3>
+
+    <p>Both autoscalers make scaling decisions based on pod resource requests. If your requests are inflated, you'll overprovision (wasting money). If they're too low, nodes will be overcommitted and pods will get OOMKilled or throttled. Use tools like the Vertical Pod Autoscaler (VPA) in recommendation mode to right-size your requests.</p>
+
+    <h3>6. Use Spot-Friendly Architectures</h3>
+
+    <ul>
+      <li><strong>Stateless services with multiple replicas</strong> — if one pod dies, the others absorb the traffic</li>
+      <li><strong>Queue-based workers</strong> — if a worker dies mid-job, the message goes back to the queue and another worker picks it up</li>
+      <li><strong>Checkpointing for long-running jobs</strong> — ML training saves checkpoints to S3; if interrupted, it resumes from the last checkpoint</li>
+      <li><strong>Graceful shutdown handlers</strong> — trap SIGTERM, finish in-flight requests, close connections cleanly</li>
+    </ul>
+
+    <h2 id="cluster-autoscaler-vs-karpenter">Cluster Autoscaler vs Karpenter: Which Should You Use</h2>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>Cluster Autoscaler</th>
+          <th>Karpenter</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Scaling model</td>
+          <td>Scales ASGs up/down</td>
+          <td class="good">Provisions individual instances directly</td>
+        </tr>
+        <tr>
+          <td>Instance type selection</td>
+          <td>Fixed per ASG — you pre-define the types</td>
+          <td class="good">Dynamic — picks optimal type per pod at launch</td>
+        </tr>
+        <tr>
+          <td>Time to new node</td>
+          <td class="bad">3–5 minutes (ASG → EC2 → register → ready)</td>
+          <td class="good">30–60 seconds (direct EC2 fleet API call)</td>
+        </tr>
+        <tr>
+          <td>Spot interruption handling</td>
+          <td class="bad">Requires AWS Node Termination Handler (separate DaemonSet)</td>
+          <td class="good">Native — built-in, pre-provisions replacement</td>
+        </tr>
+        <tr>
+          <td>Bin packing</td>
+          <td>Picks which ASG to scale, not which instance fits best</td>
+          <td class="good">Right-sizes instance to pending pod needs</td>
+        </tr>
+        <tr>
+          <td>Consolidation</td>
+          <td>Scale-down only (removes underused nodes)</td>
+          <td class="good">Active consolidation — replaces nodes with cheaper/smaller ones</td>
+        </tr>
+        <tr>
+          <td>Operational complexity</td>
+          <td class="bad">Manage multiple ASGs, launch templates, NTH</td>
+          <td class="good">NodePool + EC2NodeClass — less infrastructure to manage</td>
+        </tr>
+        <tr>
+          <td>Maturity</td>
+          <td class="good">Battle-tested, widely deployed since 2018</td>
+          <td>GA since 2023, rapidly adopted, AWS-maintained</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>If you're starting fresh,</strong> use Karpenter. It's simpler to configure, faster to scale, handles interruptions natively, and produces tighter bin-packing. If you're already running Cluster Autoscaler and it's working, there's no rush to migrate — but Spot is where Karpenter's advantages are most pronounced.
+    </div>
+
+    <h2 id="eks-auto-mode">A Note on EKS Auto Mode</h2>
+
+    <p>Since December 2024, <strong>EKS Auto Mode</strong> runs Karpenter as a managed, off-cluster component. You don't install, configure, or upgrade Karpenter yourself — AWS manages it as part of the EKS control plane. Spot Instance support, interruption handling, and consolidation all work out of the box.</p>
+
+    <p>If you're setting up a new cluster and want Spot with minimal operational overhead, EKS Auto Mode is worth evaluating. You define your NodePool and EC2NodeClass resources the same way, but AWS handles the Karpenter lifecycle. The tradeoff is less customisation and visibility into the autoscaler internals — but for most teams, the defaults are good enough.</p>
+
+    <p>We'll cover EKS Auto Mode in depth in a dedicated article.</p>
+
+    <h2 id="real-world-numbers">What the Numbers Look Like</h2>
+
+    <p>Here's a realistic before-and-after for a mid-size production EKS cluster:</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Before (All On-Demand)</th>
+          <th>After (Hybrid Spot)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Monthly compute spend</td>
+          <td class="bad">$18,000</td>
+          <td class="good">$7,200</td>
+        </tr>
+        <tr>
+          <td>On-demand nodes</td>
+          <td>25 × m5.xlarge</td>
+          <td>8 × m5.xlarge (baseline)</td>
+        </tr>
+        <tr>
+          <td>Spot nodes</td>
+          <td class="bad">0</td>
+          <td class="good">17 × mixed (m5, c5, m6i, r5)</td>
+        </tr>
+        <tr>
+          <td>Avg interruptions/week</td>
+          <td>0</td>
+          <td>2–4 (handled gracefully)</td>
+        </tr>
+        <tr>
+          <td>Service availability</td>
+          <td>99.95%</td>
+          <td class="good">99.93% (negligible difference)</td>
+        </tr>
+        <tr>
+          <td>Annual savings</td>
+          <td>—</td>
+          <td class="good">~$130,000</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The 0.02% availability difference comes from the brief window during interruption handling — pods are in-flight between old and new nodes. With proper PDBs, topology spread, and multiple replicas, users don't notice it.</p>
+
+    <h2 id="takeaways">Key Takeaways</h2>
+
+    <ol>
+      <li><strong>Spot Instances offer 60–90% savings</strong> on EC2 compute — same hardware, same performance, with the caveat that AWS can reclaim capacity with a 2-minute notice</li>
+      <li><strong>Hybrid is the safe starting point:</strong> on-demand nodes for databases, controllers, and stateful workloads; Spot nodes for stateless APIs, workers, batch jobs, and dev/staging</li>
+      <li><strong>Full Spot works for fully stateless environments</strong> — CI/CD, dev/staging, batch processing, load testing — where every pod can tolerate interruption</li>
+      <li><strong>Instance diversification is the single most important practice</strong> — spread across 10+ instance types and all available AZs to minimize interruption risk</li>
+      <li><strong>Always use capacity-optimized allocation</strong> — it selects Spot pools with the most spare capacity, reducing interruptions</li>
+      <li><strong>Karpenter handles Spot better than Cluster Autoscaler</strong> — native interruption handling, faster scaling, tighter bin-packing, and active consolidation. CAS works but needs the Node Termination Handler as a separate component</li>
+      <li><strong>PodDisruptionBudgets and topology spread constraints are mandatory</strong> — they ensure graceful handling when nodes disappear</li>
+      <li><strong>EKS Auto Mode manages Karpenter for you</strong> — if you want Spot with minimal ops overhead, it's the simplest path</li>
+    </ol>
+
+    <h2 id="reference">Reference</h2>
+    <ul>
+      <li>AWS guide: <a href="https://aws.amazon.com/blogs/compute/run-your-kubernetes-workloads-on-amazon-ec2-spot-instances-with-amazon-eks/" target="_blank" rel="noopener">Run your Kubernetes Workloads on Amazon EC2 Spot Instances with Amazon EKS</a> — AWS Compute Blog</li>
+      <li>AWS containers: <a href="https://aws.amazon.com/blogs/containers/using-amazon-ec2-spot-instances-with-karpenter/" target="_blank" rel="noopener">Using Amazon EC2 Spot Instances with Karpenter</a> — AWS Containers Blog</li>
+      <li>Karpenter docs: <a href="https://karpenter.sh/docs/" target="_blank" rel="noopener">karpenter.sh</a></li>
+      <li>AWS Node Termination Handler: <a href="https://github.com/aws/aws-node-termination-handler" target="_blank" rel="noopener">github.com/aws/aws-node-termination-handler</a></li>
+      <li>EC2 Spot Instance Advisor: <a href="https://aws.amazon.com/ec2/spot/instance-advisor/" target="_blank" rel="noopener">aws.amazon.com/ec2/spot/instance-advisor</a> — check interruption rates by instance type</li>
+    </ul>
+
+  </article>
+
+  <div class="article-divider"></div>
+  <footer class="article-footer">
+    <div class="article-author">
+      <div class="author-avatar">R³</div>
+      <div>
+        <div class="author-name">Richie Richard Rajkumar</div>
+        <div class="author-role">Infrastructure Architect · Platform Leader · Berlin</div>
+      </div>
+    </div>
+    <a href="/blog" class="back-btn">← All articles</a>
+  </footer>
+
+</div><!-- /article-page -->
+
+<script src="/js/main.js"></script>
+</body>
+</html>
