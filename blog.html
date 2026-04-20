@@ -331,19 +331,19 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
       <div class="sidebar-section-label">// by topic</div>
       <div class="tag-filter-list">
         <button class="tag-filter-btn active" data-tag="all">
-          All posts <span class="tag-filter-count" id="count-all">5</span>
+          All posts <span class="tag-filter-count" id="count-all">6</span>
         </button>
         <button class="tag-filter-btn" data-tag="ai">
           AI <span class="tag-filter-count" id="count-ai">2</span>
         </button>
         <button class="tag-filter-btn" data-tag="aws">
-          AWS <span class="tag-filter-count" id="count-aws">4</span>
+          AWS <span class="tag-filter-count" id="count-aws">5</span>
         </button>
         <button class="tag-filter-btn" data-tag="cost-engineering">
-          Cost Engineering <span class="tag-filter-count" id="count-cost-engineering">1</span>
+          Cost Engineering <span class="tag-filter-count" id="count-cost-engineering">2</span>
         </button>
         <button class="tag-filter-btn" data-tag="devops">
-          DevOps <span class="tag-filter-count" id="count-devops">5</span>
+          DevOps <span class="tag-filter-count" id="count-devops">6</span>
         </button>
         <button class="tag-filter-btn" data-tag="finops">
           FinOps <span class="tag-filter-count" id="count-finops">1</span>
@@ -352,13 +352,13 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           GitOps <span class="tag-filter-count" id="count-gitops">0</span>
         </button>
         <button class="tag-filter-btn" data-tag="infrastructure">
-          Infrastructure <span class="tag-filter-count" id="count-infrastructure">3</span>
+          Infrastructure <span class="tag-filter-count" id="count-infrastructure">4</span>
         </button>
         <button class="tag-filter-btn" data-tag="kubernetes">
-          Kubernetes <span class="tag-filter-count" id="count-kubernetes">3</span>
+          Kubernetes <span class="tag-filter-count" id="count-kubernetes">4</span>
         </button>
         <button class="tag-filter-btn" data-tag="platform-engineering">
-          Platform Engineering <span class="tag-filter-count" id="count-platform-engineering">3</span>
+          Platform Engineering <span class="tag-filter-count" id="count-platform-engineering">4</span>
         </button>
         <button class="tag-filter-btn" data-tag="s3">
           S3 <span class="tag-filter-count" id="count-s3">2</span>
@@ -368,7 +368,7 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
       <div class="sidebar-divider"></div>
 
       <div class="sidebar-stat">
-        <span class="sidebar-stat-number" id="visible-count">5</span>
+        <span class="sidebar-stat-number" id="visible-count">6</span>
         <span class="sidebar-stat-label">articles published</span>
       </div>
 
@@ -390,6 +390,31 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <p>Writing about Kubernetes cost optimisation, GitOps patterns, and platform engineering at scale. Check back soon.</p>
         </div>
       </div>
+
+      <!-- ARTICLE: KEDA on EKS -->
+      <a href="/blog/eks-scaling-with-keda" class="post-card reveal"
+         data-tags="kubernetes aws cost-engineering devops infrastructure platform-engineering"
+         data-title="keda on eks event-driven scaling with sqs queue depth"
+         data-excerpt="stop scaling kubernetes workers on cpu use keda to scale pods based on sqs queue depth from zero to hundreds with eks pod identity scaledobjects scaledjobs and production hardening">
+        <div>
+          <div class="post-tags">
+            <span class="post-tag">Kubernetes</span>
+            <span class="post-tag">AWS</span>
+            <span class="post-tag">Cost Engineering</span>
+            <span class="post-tag">DevOps</span>
+            <span class="post-tag">Infrastructure</span>
+            <span class="post-tag">Platform Engineering</span>
+          </div>
+          <div class="post-title">KEDA on EKS: Event-Driven Scaling with SQS Queue Depth</div>
+          <div class="post-excerpt">Stop scaling Kubernetes workers on CPU. Use KEDA to scale pods based on SQS queue depth — from zero to hundreds, with EKS Pod Identity, ScaledObjects, ScaledJobs, and production hardening tips.</div>
+          <div class="post-meta">
+            <span>May 2026</span>
+            <span>·</span>
+            <span>12 min read</span>
+          </div>
+        </div>
+        <div class="post-arrow">→</div>
+      </a>
 
       <!-- ARTICLE: EKS Spot Instances -->
       <a href="/blog/eks-spot-instances" class="post-card reveal"

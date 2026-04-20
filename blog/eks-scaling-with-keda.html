@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KEDA on EKS: Event-Driven Scaling with SQS Queue Depth — Richie Richard Rajkumar</title>
+
+<meta name="description" content="Stop scaling Kubernetes workers on CPU. Use KEDA to scale pods based on SQS queue depth — from zero to hundreds, with EKS Pod Identity, ScaledObjects, ScaledJobs, and production hardening tips.">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://www.richierichard.com/blog/eks-scaling-with-keda">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.richierichard.com/blog/eks-scaling-with-keda">
+<meta property="og:title" content="KEDA on EKS: Event-Driven Scaling with SQS Queue Depth — Richie Richard Rajkumar">
+<meta property="og:description" content="Stop scaling Kubernetes workers on CPU. Use KEDA to scale pods based on SQS queue depth — scale to zero, respond to demand instantly, and cut idle compute costs.">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+
+<style>
+/* ── ARTICLE PAGE ── */
+.article-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 7rem 2rem 5rem;
+  position: relative;
+  z-index: 1;
+}
+.article-top { max-width: 960px; }
+
+.article-intro {
+  max-width: 960px;
+  margin-bottom: 2.5rem;
+  color: var(--text);
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+.article-intro p { margin-bottom: 1.25rem; }
+.article-intro code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+
+.article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  margin-bottom: 2.5rem;
+  transition: color 0.2s;
+}
+.article-back:hover { color: var(--accent); }
+
+.article-header { margin-bottom: 2.5rem; }
+.article-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.article-tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.2);
+  letter-spacing: 0.04em;
+}
+body.light .article-tag { border-color: rgba(2,132,199,0.25); }
+
+.article-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.article-title span { color: var(--accent); }
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.article-meta-dot { opacity: 0.3; }
+
+.article-hero {
+  width: 100%;
+  max-width: 960px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+}
+
+.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 2.5rem 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 6rem;
+}
+.article-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 1.75rem 0 0.5rem;
+}
+.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.article-body li { margin-bottom: 0.4rem; color: var(--text); }
+.article-body strong { color: var(--text); font-weight: 700; }
+.article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+.article-body pre {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.article-body code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+.article-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 1em;
+}
+.article-body pre .cm { color: var(--muted); }
+.article-body pre .ky { color: var(--accent); }
+.article-body pre .st { color: #f9a8d4; }
+.article-body pre .nm { color: #fde68a; }
+
+.callout {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+.callout strong { color: var(--accent); }
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
+}
+.compare-table th {
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.compare-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .good { color: var(--accent); font-weight: 700; }
+.compare-table .bad  { color: #f87171; }
+
+.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+
+.article-footer {
+  max-width: 960px;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.article-author { display: flex; align-items: center; gap: 0.85rem; }
+.author-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
+  flex-shrink: 0;
+}
+.author-name { font-weight: 700; font-size: 0.9rem; }
+.author-role { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--accent); color: var(--accent);
+  font-weight: 700; font-size: 0.85rem; text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #000; }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
+    <span class="nav-logo-tag">build · scale · secure</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Light</span>
+  </button>
+</nav>
+
+<div class="article-page">
+
+  <div class="article-top">
+    <a href="/blog" class="article-back">← Back to Blog</a>
+    <header class="article-header">
+      <div class="article-tags">
+        <span class="article-tag">Kubernetes</span>
+        <span class="article-tag">AWS</span>
+        <span class="article-tag">Cost Engineering</span>
+        <span class="article-tag">DevOps</span>
+        <span class="article-tag">Infrastructure</span>
+        <span class="article-tag">Platform Engineering</span>
+      </div>
+      <h1 class="article-title">KEDA on EKS: <span>Event-Driven Scaling with SQS Queue Depth</span></h1>
+      <div class="article-meta">
+        <span>Richie Richard Rajkumar</span>
+        <span class="article-meta-dot">·</span>
+        <span>May 2026</span>
+        <span class="article-meta-dot">·</span>
+        <span>12 min read</span>
+      </div>
+    </header>
+  </div>
+
+  <div class="article-hero">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" width="760" height="420" style="width:100%;height:auto;display:block;">
+      <defs>
+        <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0a0c10"/>
+          <stop offset="100%" stop-color="#12151c"/>
+        </linearGradient>
+      </defs>
+      <rect width="760" height="420" fill="url(#bg-grad)"/>
+
+      <!-- TITLE -->
+      <text x="380" y="28" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">KEDA EVENT-DRIVEN SCALING — SQS → KUBERNETES PODS</text>
+
+      <!-- SQS QUEUE (LEFT) -->
+      <rect x="40" y="70" width="200" height="280" rx="12" fill="rgba(251,191,36,0.04)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="6 3"/>
+      <text x="140" y="95" font-family="'Nunito',sans-serif" font-size="12" fill="#fbbf24" text-anchor="middle" font-weight="800">SQS Queue</text>
+
+      <!-- Queue messages -->
+      <rect x="60" y="112" width="160" height="24" rx="5" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.7"/>
+      <text x="140" y="128" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">msg-0041 ● pending</text>
+      <rect x="60" y="142" width="160" height="24" rx="5" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.7"/>
+      <text x="140" y="158" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">msg-0042 ● pending</text>
+      <rect x="60" y="172" width="160" height="24" rx="5" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.7"/>
+      <text x="140" y="188" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">msg-0043 ● pending</text>
+      <rect x="60" y="202" width="160" height="24" rx="5" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.7"/>
+      <text x="140" y="218" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">msg-0044 ● in-flight</text>
+      <rect x="60" y="232" width="160" height="24" rx="5" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.7"/>
+      <text x="140" y="248" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">msg-0045 ● in-flight</text>
+      <rect x="60" y="262" width="160" height="24" rx="5" fill="rgba(251,191,36,0.06)" stroke="#fbbf24" stroke-width="0.4" stroke-dasharray="3 2"/>
+      <text x="140" y="278" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">... more messages</text>
+
+      <!-- Queue depth label -->
+      <text x="140" y="310" font-family="'Fira Code',monospace" font-size="8" fill="#fbbf24" text-anchor="middle">ApproximateMessageCount</text>
+      <text x="140" y="326" font-family="'Nunito',sans-serif" font-size="18" fill="#fbbf24" text-anchor="middle" font-weight="900">50</text>
+      <text x="140" y="342" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">queueLength: 10 → 5 pods</text>
+
+      <!-- KEDA (CENTER) -->
+      <rect x="280" y="100" width="180" height="220" rx="12" fill="rgba(167,139,250,0.05)" stroke="#a78bfa" stroke-width="1.2"/>
+      <text x="370" y="128" font-family="'Nunito',sans-serif" font-size="13" fill="#a78bfa" text-anchor="middle" font-weight="800">KEDA</text>
+      <text x="370" y="145" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">ScaledObject Controller</text>
+
+      <!-- KEDA internals -->
+      <rect x="298" y="160" width="144" height="28" rx="6" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.7"/>
+      <text x="370" y="178" font-family="'Fira Code',monospace" font-size="7.5" fill="#a78bfa" text-anchor="middle">Poll SQS every 30s</text>
+
+      <rect x="298" y="196" width="144" height="28" rx="6" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.7"/>
+      <text x="370" y="214" font-family="'Fira Code',monospace" font-size="7.5" fill="#a78bfa" text-anchor="middle">Compute desired replicas</text>
+
+      <rect x="298" y="232" width="144" height="28" rx="6" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.7"/>
+      <text x="370" y="250" font-family="'Fira Code',monospace" font-size="7.5" fill="#a78bfa" text-anchor="middle">Scale Deployment 0→N</text>
+
+      <!-- TriggerAuth label -->
+      <rect x="298" y="272" width="144" height="24" rx="6" fill="rgba(74,222,128,0.08)" stroke="#4ade80" stroke-width="0.6"/>
+      <text x="370" y="288" font-family="'Fira Code',monospace" font-size="7" fill="#4ade80" text-anchor="middle">TriggerAuth: Pod Identity</text>
+
+      <!-- EKS CLUSTER (RIGHT) -->
+      <rect x="500" y="70" width="230" height="280" rx="12" fill="rgba(56,189,248,0.03)" stroke="#38bdf8" stroke-width="1" stroke-dasharray="6 3"/>
+      <text x="615" y="95" font-family="'Nunito',sans-serif" font-size="12" fill="#38bdf8" text-anchor="middle" font-weight="800">EKS Worker Pods</text>
+
+      <!-- Worker pods -->
+      <rect x="520" y="112" width="190" height="34" rx="6" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="615" y="126" font-family="'Fira Code',monospace" font-size="7" fill="#38bdf8" text-anchor="middle">sqs-worker-0</text>
+      <text x="615" y="139" font-family="'Fira Code',monospace" font-size="6.5" fill="#4ade80" text-anchor="middle">● Running — processing msg-0044</text>
+
+      <rect x="520" y="152" width="190" height="34" rx="6" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="615" y="166" font-family="'Fira Code',monospace" font-size="7" fill="#38bdf8" text-anchor="middle">sqs-worker-1</text>
+      <text x="615" y="179" font-family="'Fira Code',monospace" font-size="6.5" fill="#4ade80" text-anchor="middle">● Running — processing msg-0045</text>
+
+      <rect x="520" y="192" width="190" height="34" rx="6" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="615" y="206" font-family="'Fira Code',monospace" font-size="7" fill="#38bdf8" text-anchor="middle">sqs-worker-2</text>
+      <text x="615" y="219" font-family="'Fira Code',monospace" font-size="6.5" fill="#fbbf24" text-anchor="middle">● Scaling up...</text>
+
+      <rect x="520" y="232" width="190" height="34" rx="6" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="615" y="246" font-family="'Fira Code',monospace" font-size="7" fill="#38bdf8" text-anchor="middle">sqs-worker-3</text>
+      <text x="615" y="259" font-family="'Fira Code',monospace" font-size="6.5" fill="#fbbf24" text-anchor="middle">● Scaling up...</text>
+
+      <rect x="520" y="272" width="190" height="34" rx="6" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="615" y="286" font-family="'Fira Code',monospace" font-size="7" fill="#38bdf8" text-anchor="middle">sqs-worker-4</text>
+      <text x="615" y="299" font-family="'Fira Code',monospace" font-size="6.5" fill="#fbbf24" text-anchor="middle">● Scaling up...</text>
+
+      <!-- Scale to zero label -->
+      <rect x="520" y="316" width="190" height="22" rx="4" fill="rgba(74,222,128,0.06)" stroke="#4ade80" stroke-width="0.5"/>
+      <text x="615" y="331" font-family="'Fira Code',monospace" font-size="7" fill="#4ade80" text-anchor="middle">Queue empty → scale to 0 pods</text>
+
+      <!-- Arrows: SQS → KEDA -->
+      <line x1="240" y1="200" x2="278" y2="200" stroke="#fbbf24" stroke-width="1.2" marker-end="url(#arrow-yellow)"/>
+      <text x="260" y="192" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">poll</text>
+
+      <!-- Arrows: KEDA → EKS -->
+      <line x1="460" y1="240" x2="498" y2="240" stroke="#a78bfa" stroke-width="1.2" marker-end="url(#arrow-purple)"/>
+      <text x="480" y="232" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">scale</text>
+
+      <!-- Arrow markers -->
+      <defs>
+        <marker id="arrow-yellow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#fbbf24"/>
+        </marker>
+        <marker id="arrow-purple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#a78bfa"/>
+        </marker>
+      </defs>
+
+      <!-- Bottom: HPA vs KEDA -->
+      <rect x="60" y="362" width="300" height="36" rx="8" fill="rgba(248,113,113,0.05)" stroke="#f87171" stroke-width="0.8"/>
+      <text x="210" y="378" font-family="'Fira Code',monospace" font-size="8" fill="#f87171" text-anchor="middle">HPA: CPU/Memory → slow, can't scale to 0</text>
+      <text x="210" y="392" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">Reactive to symptoms, not demand</text>
+
+      <rect x="400" y="362" width="320" height="36" rx="8" fill="rgba(74,222,128,0.06)" stroke="#4ade80" stroke-width="0.8"/>
+      <text x="560" y="378" font-family="'Fira Code',monospace" font-size="8" fill="#4ade80" text-anchor="middle">KEDA: Queue Depth → instant, scales to 0</text>
+      <text x="560" y="392" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">Reactive to actual work, not resource usage</text>
+
+      <!-- Bottom tagline -->
+      <text x="380" y="415" font-family="'Fira Code',monospace" font-size="8" fill="#7a8099" text-anchor="middle">No messages → No pods → No cost</text>
+    </svg>
+  </div><!-- /article-hero -->
+
+  <div class="article-intro">
+    <p>Your SQS worker pods are probably scaled with HPA based on CPU utilisation. That means they're always running — even when the queue is empty. You're paying for idle compute around the clock because HPA has no concept of "there's no work to do." It watches resource usage, not incoming demand. When the queue is empty but CPU sits at 30% from background processes, HPA happily keeps all your pods alive.</p>
+    <p>KEDA (Kubernetes Event-Driven Autoscaling) fixes this by reading the queue depth directly from SQS. Zero messages in the queue means zero worker pods. Fifty messages means five pods. It scales based on actual demand, not the side effects of demand. This guide walks through setting up KEDA on EKS with SQS, from installation through production hardening — including <code>ScaledObject</code> for persistent workers, <code>ScaledJob</code> for one-shot tasks, and the IAM configuration that makes it all work securely.</p>
+  </div>
+
+  <article class="article-body">
+
+    <h2 id="why-hpa-falls-short">Why HPA Falls Short for Queue Workers</h2>
+
+    <p>The Horizontal Pod Autoscaler scales pods based on observed resource metrics — CPU utilisation, memory consumption, or custom metrics you push into the metrics API. For request-serving workloads like web APIs, this works fine: more traffic means more CPU, which triggers more pods.</p>
+
+    <p>Queue workers are different. The relationship between resource usage and actual demand is indirect and delayed:</p>
+
+    <ul>
+      <li><strong>Empty queue, pods still running.</strong> HPA's minimum replica count keeps pods alive even when there's nothing to process. You can't set <code>minReplicas: 0</code> — HPA doesn't support scale-to-zero.</li>
+      <li><strong>Queue backlog building, CPU still low.</strong> If messages arrive faster than workers process them, the queue grows. But if each message is lightweight (an API call, a database update), CPU stays low and HPA doesn't react.</li>
+      <li><strong>Slow response to spikes.</strong> HPA evaluates metrics on a fixed interval (default 15 seconds), then waits for a stabilisation window before scaling. By the time new pods are running, you've already missed your SLA.</li>
+      <li><strong>No awareness of queue state.</strong> HPA doesn't know how many messages are waiting, how many are in-flight, or whether the Dead Letter Queue is growing. It only sees what the pod is doing, not what the pod <em>should</em> be doing.</li>
+    </ul>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>HPA</th>
+          <th>KEDA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Scaling signal</td>
+          <td class="bad">CPU / Memory (resource usage)</td>
+          <td class="good">Queue depth (actual demand)</td>
+        </tr>
+        <tr>
+          <td>Scale to zero</td>
+          <td class="bad">Not supported — minimum 1 replica</td>
+          <td class="good">Native — 0 pods when queue is empty</td>
+        </tr>
+        <tr>
+          <td>Response time</td>
+          <td class="bad">30–90 seconds (metric collection + stabilisation)</td>
+          <td class="good">Polling interval (default 30s, configurable to 5s)</td>
+        </tr>
+        <tr>
+          <td>Queue awareness</td>
+          <td class="bad">None — blind to queue state</td>
+          <td class="good">Reads ApproximateMessageCount + in-flight</td>
+        </tr>
+        <tr>
+          <td>Event sources</td>
+          <td>CPU, memory, custom metrics API</td>
+          <td class="good">60+ scalers: SQS, Kafka, RabbitMQ, Prometheus, cron, etc.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="what-is-keda">What KEDA Actually Does</h2>
+
+    <p>KEDA is a lightweight Kubernetes operator that extends the Kubernetes autoscaling primitives. It runs as a set of pods in your cluster (operator, metrics server, admission webhooks) and watches for two custom resources: <code>ScaledObject</code> and <code>ScaledJob</code>.</p>
+
+    <p>The core loop is simple:</p>
+
+    <ol>
+      <li><strong>Poll the event source.</strong> KEDA queries SQS (or Kafka, RabbitMQ, Prometheus, etc.) at a configurable interval to get the current metric value — for SQS, that's <code>ApproximateNumberOfMessages</code> plus optionally <code>ApproximateNumberOfMessagesNotVisible</code> (in-flight messages).</li>
+      <li><strong>Compute desired replicas.</strong> KEDA divides the metric value by your configured threshold. If the queue has 50 messages and <code>queueLength</code> is 10, KEDA wants 5 pods.</li>
+      <li><strong>Scale the target.</strong> For a <code>ScaledObject</code>, KEDA manages an HPA under the hood (yes, it creates a real HPA object) and sets the desired replica count. For scale-to-zero specifically, KEDA handles that directly because HPA can't go below 1.</li>
+    </ol>
+
+    <div class="callout">
+      <strong>KEDA doesn't replace HPA — it wraps it.</strong> When replicas are between 1 and <code>maxReplicaCount</code>, KEDA delegates to a standard HPA with external metrics. The 0↔1 transition is handled by KEDA's own controller. This means KEDA plays nicely with existing HPA behaviours like scale-down stabilisation windows.
+    </div>
+
+    <h2 id="installing-keda">Installing KEDA on EKS</h2>
+
+    <p>KEDA installs via Helm into its own namespace. Three pods: the operator, the metrics API server, and an admission webhook.</p>
+
+    <pre><span class="cm"># Add the KEDA Helm repo and install</span>
+<span class="ky">$</span> helm repo add kedacore https://kedacore.github.io/charts
+<span class="ky">$</span> helm repo update
+
+<span class="ky">$</span> helm install keda kedacore/keda \
+    --namespace keda \
+    --create-namespace \
+    --version <span class="st">2.16.1</span></pre>
+
+    <p>Verify the installation:</p>
+
+    <pre><span class="ky">$</span> kubectl get pods -n keda
+<span class="st">NAME                                      READY   STATUS    AGE</span>
+keda-admission-webhooks-7f4d8b5c9-x2k4m   1/1     Running   45s
+keda-operator-5c8f7d6b4-j9n2p             1/1     Running   45s
+keda-operator-metrics-apiserver-6d9-r8t5   1/1     Running   45s</pre>
+
+    <p>That's it. KEDA is now watching for <code>ScaledObject</code> and <code>ScaledJob</code> resources in all namespaces.</p>
+
+    <h2 id="iam-and-auth">IAM and Authentication with EKS Pod Identity</h2>
+
+    <p>KEDA needs to read from your SQS queue. On EKS, the cleanest way to grant this access is <strong>EKS Pod Identity</strong> (or IRSA if you're on an older setup). No long-lived credentials, no access keys mounted as secrets.</p>
+
+    <h3>Step 1: Create the IAM Policy</h3>
+
+    <p>KEDA only needs read access to query queue attributes — it never sends or deletes messages. Your worker pods handle that separately.</p>
+
+    <pre><span class="cm"># IAM policy for KEDA's SQS scaler</span>
+{
+  <span class="st">"Version"</span>: <span class="st">"2012-10-17"</span>,
+  <span class="st">"Statement"</span>: [
+    {
+      <span class="st">"Effect"</span>: <span class="st">"Allow"</span>,
+      <span class="st">"Action"</span>: [
+        <span class="st">"sqs:GetQueueAttributes"</span>,
+        <span class="st">"sqs:GetQueueUrl"</span>
+      ],
+      <span class="st">"Resource"</span>: <span class="st">"arn:aws:sqs:eu-central-1:123456789012:order-processing-queue"</span>
+    }
+  ]
+}</pre>
+
+    <h3>Step 2: Create the IAM Role and Pod Identity Association</h3>
+
+    <pre><span class="cm"># Create the IAM role with EKS Pod Identity trust</span>
+<span class="ky">$</span> aws iam create-role \
+    --role-name <span class="st">keda-sqs-scaler-role</span> \
+    --assume-role-policy-document file://trust-policy.json
+
+<span class="ky">$</span> aws iam attach-role-policy \
+    --role-name <span class="st">keda-sqs-scaler-role</span> \
+    --policy-arn <span class="st">arn:aws:iam::123456789012:policy/keda-sqs-read</span>
+
+<span class="cm"># Associate with the KEDA operator's service account</span>
+<span class="ky">$</span> aws eks create-pod-identity-association \
+    --cluster-name <span class="st">production</span> \
+    --namespace <span class="st">keda</span> \
+    --service-account <span class="st">keda-operator</span> \
+    --role-arn <span class="st">arn:aws:iam::123456789012:role/keda-sqs-scaler-role</span></pre>
+
+    <h3>Step 3: Create the TriggerAuthentication</h3>
+
+    <p>This tells KEDA how to authenticate when polling SQS. With Pod Identity, the config is minimal:</p>
+
+    <pre><span class="ky">apiVersion</span>: keda.sh/v1alpha1
+<span class="ky">kind</span>: TriggerAuthentication
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">keda-aws-credentials</span>
+  <span class="ky">namespace</span>: <span class="st">default</span>
+<span class="ky">spec</span>:
+  <span class="ky">podIdentity</span>:
+    <span class="ky">provider</span>: <span class="st">aws</span></pre>
+
+    <div class="callout">
+      <strong>Why Pod Identity over mounted secrets?</strong> With Pod Identity (or IRSA), there are no credentials to rotate, no secrets to manage, and no risk of keys leaking into logs or error messages. The IAM role is assumed automatically via the EKS token exchange. If you're still using <code>AWS_ACCESS_KEY_ID</code> / <code>AWS_SECRET_ACCESS_KEY</code> in a Kubernetes Secret, this is your sign to migrate.
+    </div>
+
+    <h2 id="scaled-object">Configuring the ScaledObject</h2>
+
+    <p>The <code>ScaledObject</code> is the core resource that connects your SQS queue to your worker Deployment. It tells KEDA: "watch this queue, and scale this Deployment based on the message count."</p>
+
+    <h3>The Worker Deployment</h3>
+
+    <p>First, your worker Deployment. Set <code>replicas: 0</code> — KEDA manages the replica count from here.</p>
+
+    <pre><span class="ky">apiVersion</span>: apps/v1
+<span class="ky">kind</span>: Deployment
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">sqs-worker</span>
+<span class="ky">spec</span>:
+  <span class="ky">replicas</span>: <span class="nm">0</span>          <span class="cm"># KEDA controls this</span>
+  <span class="ky">selector</span>:
+    <span class="ky">matchLabels</span>:
+      <span class="ky">app</span>: <span class="st">sqs-worker</span>
+  <span class="ky">template</span>:
+    <span class="ky">metadata</span>:
+      <span class="ky">labels</span>:
+        <span class="ky">app</span>: <span class="st">sqs-worker</span>
+    <span class="ky">spec</span>:
+      <span class="ky">serviceAccountName</span>: <span class="st">sqs-worker-sa</span>
+      <span class="ky">containers</span>:
+        - <span class="ky">name</span>: <span class="st">worker</span>
+          <span class="ky">image</span>: <span class="st">my-registry/sqs-worker:latest</span>
+          <span class="ky">resources</span>:
+            <span class="ky">requests</span>:
+              <span class="ky">cpu</span>: <span class="st">"250m"</span>
+              <span class="ky">memory</span>: <span class="st">"256Mi"</span>
+            <span class="ky">limits</span>:
+              <span class="ky">memory</span>: <span class="st">"512Mi"</span>
+          <span class="ky">env</span>:
+            - <span class="ky">name</span>: <span class="st">QUEUE_URL</span>
+              <span class="ky">value</span>: <span class="st">"https://sqs.eu-central-1.amazonaws.com/123456789012/order-processing-queue"</span></pre>
+
+    <h3>The ScaledObject</h3>
+
+    <pre><span class="ky">apiVersion</span>: keda.sh/v1alpha1
+<span class="ky">kind</span>: ScaledObject
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">sqs-worker-scaler</span>
+  <span class="ky">namespace</span>: <span class="st">default</span>
+<span class="ky">spec</span>:
+  <span class="ky">scaleTargetRef</span>:
+    <span class="ky">name</span>: <span class="st">sqs-worker</span>             <span class="cm"># Target Deployment</span>
+  <span class="ky">minReplicaCount</span>: <span class="nm">0</span>               <span class="cm"># Scale to zero when idle</span>
+  <span class="ky">maxReplicaCount</span>: <span class="nm">20</span>              <span class="cm"># Upper bound</span>
+  <span class="ky">cooldownPeriod</span>: <span class="nm">300</span>              <span class="cm"># Wait 5 min before scaling to 0</span>
+  <span class="ky">pollingInterval</span>: <span class="nm">30</span>              <span class="cm"># Check SQS every 30 seconds</span>
+  <span class="ky">triggers</span>:
+    - <span class="ky">type</span>: <span class="st">aws-sqs-queue</span>
+      <span class="ky">authenticationRef</span>:
+        <span class="ky">name</span>: <span class="st">keda-aws-credentials</span>
+      <span class="ky">metadata</span>:
+        <span class="ky">queueURL</span>: <span class="st">"https://sqs.eu-central-1.amazonaws.com/123456789012/order-processing-queue"</span>
+        <span class="ky">queueLength</span>: <span class="st">"10"</span>         <span class="cm"># 1 pod per 10 messages</span>
+        <span class="ky">awsRegion</span>: <span class="st">"eu-central-1"</span>
+        <span class="ky">scaleOnInFlight</span>: <span class="st">"true"</span>   <span class="cm"># Count in-flight messages too</span></pre>
+
+    <p>Here's what each field does:</p>
+
+    <ul>
+      <li><strong><code>queueLength: "10"</code></strong> — the threshold. KEDA divides the total message count by this value to compute desired replicas. 50 messages ÷ 10 = 5 pods.</li>
+      <li><strong><code>scaleOnInFlight: "true"</code></strong> — includes messages currently being processed (visibility timeout) in the count. Without this, KEDA only counts messages waiting in the queue, which can cause under-scaling if processing is slow.</li>
+      <li><strong><code>cooldownPeriod: 300</code></strong> — after the last trigger activation, KEDA waits 5 minutes before scaling to zero. This prevents flapping if messages arrive in bursts.</li>
+      <li><strong><code>pollingInterval: 30</code></strong> — how often KEDA checks SQS. Lower values mean faster response but more API calls. 30 seconds is a good default; drop to 10–15 for latency-sensitive workloads.</li>
+    </ul>
+
+    <h2 id="scaled-job">ScaledJob for One-Shot Tasks</h2>
+
+    <p>A <code>ScaledObject</code> scales a Deployment — long-lived pods that continuously poll the queue. But some workloads are better modelled as one-shot Jobs: video encoding, report generation, image processing, ETL pipelines. Each message triggers a Job, the Job processes it, and the Job completes.</p>
+
+    <p><code>ScaledJob</code> creates Kubernetes Jobs based on queue depth instead of scaling a Deployment:</p>
+
+    <pre><span class="ky">apiVersion</span>: keda.sh/v1alpha1
+<span class="ky">kind</span>: ScaledJob
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">video-encoder-job</span>
+<span class="ky">spec</span>:
+  <span class="ky">jobTargetRef</span>:
+    <span class="ky">template</span>:
+      <span class="ky">spec</span>:
+        <span class="ky">serviceAccountName</span>: <span class="st">encoder-sa</span>
+        <span class="ky">containers</span>:
+          - <span class="ky">name</span>: <span class="st">encoder</span>
+            <span class="ky">image</span>: <span class="st">my-registry/video-encoder:latest</span>
+            <span class="ky">resources</span>:
+              <span class="ky">requests</span>:
+                <span class="ky">cpu</span>: <span class="st">"1"</span>
+                <span class="ky">memory</span>: <span class="st">"2Gi"</span>
+        <span class="ky">restartPolicy</span>: <span class="st">Never</span>
+    <span class="ky">backoffLimit</span>: <span class="nm">3</span>
+  <span class="ky">pollingInterval</span>: <span class="nm">15</span>
+  <span class="ky">maxReplicaCount</span>: <span class="nm">10</span>
+  <span class="ky">successfulJobsHistoryLimit</span>: <span class="nm">5</span>
+  <span class="ky">failedJobsHistoryLimit</span>: <span class="nm">5</span>
+  <span class="ky">triggers</span>:
+    - <span class="ky">type</span>: <span class="st">aws-sqs-queue</span>
+      <span class="ky">authenticationRef</span>:
+        <span class="ky">name</span>: <span class="st">keda-aws-credentials</span>
+      <span class="ky">metadata</span>:
+        <span class="ky">queueURL</span>: <span class="st">"https://sqs.eu-central-1.amazonaws.com/123456789012/video-encode-queue"</span>
+        <span class="ky">queueLength</span>: <span class="st">"1"</span>          <span class="cm"># 1 Job per message</span>
+        <span class="ky">awsRegion</span>: <span class="st">"eu-central-1"</span></pre>
+
+    <div class="callout">
+      <strong>ScaledObject vs ScaledJob — when to use which:</strong> Use <code>ScaledObject</code> when your workers poll the queue continuously and process messages in a loop (most microservice workers). Use <code>ScaledJob</code> when each message represents a discrete unit of work that runs to completion — especially long-running tasks where you want Kubernetes Job semantics (retries, backoff, completion tracking).
+    </div>
+
+    <h2 id="production-hardening">Production Hardening</h2>
+
+    <h3>1. Don't Always Scale to Zero</h3>
+
+    <p>Scale-to-zero is KEDA's headline feature, but it's not always what you want. When KEDA scales from 0 to 1, there's a cold-start delay: the pod needs to be scheduled, pulled (if not cached), started, and begin polling. Depending on your image size and node availability, this can be 15–45 seconds.</p>
+
+    <p>For latency-sensitive queues where messages need processing within seconds, set <code>minReplicaCount: 1</code> to keep one warm pod running. The cost of one idle pod is almost always less than the cost of missed SLAs.</p>
+
+    <pre><span class="ky">spec</span>:
+  <span class="ky">minReplicaCount</span>: <span class="nm">1</span>    <span class="cm"># Keep one warm pod for latency-sensitive queues</span>
+  <span class="ky">maxReplicaCount</span>: <span class="nm">20</span></pre>
+
+    <h3>2. Monitor KEDA Metrics</h3>
+
+    <p>KEDA exposes Prometheus metrics that you should be watching:</p>
+
+    <pre><span class="cm"># Key KEDA metrics for SQS scalers</span>
+<span class="ky">keda_scaler_metrics_value</span>           <span class="cm"># Current queue depth as seen by KEDA</span>
+<span class="ky">keda_scaler_errors_total</span>            <span class="cm"># Authentication or API failures</span>
+<span class="ky">keda_scaled_object_is_active</span>        <span class="cm"># Whether the scaler is currently active (1) or idle (0)</span>
+<span class="ky">keda_resource_registered_count</span>      <span class="cm"># Number of ScaledObjects/ScaledJobs being managed</span></pre>
+
+    <p>Compare <code>keda_scaler_metrics_value</code> against the actual SQS <code>ApproximateNumberOfMessages</code> CloudWatch metric. If they diverge, you have an authentication issue or KEDA can't reach the queue.</p>
+
+    <h3>3. Alert on Dead Letter Queue Growth</h3>
+
+    <p>If messages keep failing and landing in the DLQ, your workers will process them, fail, and KEDA will keep scaling up to handle the growing queue — which generates more failures. This is a runaway loop.</p>
+
+    <p>Set a CloudWatch alarm on the DLQ's <code>ApproximateNumberOfMessages</code>. Any growth above zero should page someone. DLQ messages mean something is broken — either the message format changed, a downstream dependency is down, or your worker has a bug.</p>
+
+    <h3>4. Set Sensible Cooldown and Polling Intervals</h3>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Default</th>
+          <th>Recommendation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>pollingInterval</code></td>
+          <td>30s</td>
+          <td class="good">10–30s depending on latency requirements</td>
+        </tr>
+        <tr>
+          <td><code>cooldownPeriod</code></td>
+          <td>300s</td>
+          <td class="good">300s for bursty queues, 60s for steady-state</td>
+        </tr>
+        <tr>
+          <td><code>queueLength</code></td>
+          <td>5</td>
+          <td class="good">Match to your worker's throughput (messages/min)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The <code>queueLength</code> threshold is the most important tuning parameter. If your worker processes 10 messages per minute and you set <code>queueLength: "10"</code>, each pod handles roughly one minute's worth of backlog. If you set it to <code>"1"</code>, you get one pod per message — great for heavy tasks, wasteful for lightweight ones.</p>
+
+    <h3>5. Use KEDA with Karpenter for Maximum Efficiency</h3>
+
+    <p>KEDA and Karpenter are complementary. KEDA scales pods based on queue depth. Karpenter scales nodes based on pending pods. Together, they create a fully event-driven scaling pipeline:</p>
+
+    <pre><span class="cm"># The full event-driven pipeline:</span>
+
+<span class="nm">1.</span> Messages arrive in SQS
+<span class="nm">2.</span> KEDA detects queue growth, increases Deployment replicas
+<span class="nm">3.</span> New pods go <span class="st">Pending</span> (no node capacity)
+<span class="nm">4.</span> Karpenter provisions a right-sized Spot instance in <span class="st">30–60s</span>
+<span class="nm">5.</span> Pods start processing messages
+<span class="nm">6.</span> Queue drains → KEDA scales pods to 0
+<span class="nm">7.</span> Karpenter consolidates empty nodes → terminates idle instances
+
+<span class="cm"># Result: pay only for compute when there's actual work to do</span></pre>
+
+    <div class="callout">
+      <strong>This is where the real savings happen.</strong> KEDA alone eliminates idle pods. KEDA + Karpenter eliminates idle pods <em>and</em> idle nodes. If your queue is empty for 8 hours overnight, you pay for zero worker compute during those hours — not just zero pods, but zero nodes.
+    </div>
+
+    <h2 id="beyond-sqs">Beyond SQS: Other Event Sources</h2>
+
+    <p>SQS is one of 60+ event sources KEDA supports. The same pattern applies to any async workload:</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Event Source</th>
+          <th>Scaler Type</th>
+          <th>Scaling Metric</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Apache Kafka</td>
+          <td><code>apache-kafka</code></td>
+          <td class="good">Consumer group lag (unprocessed messages)</td>
+        </tr>
+        <tr>
+          <td>RabbitMQ</td>
+          <td><code>rabbitmq</code></td>
+          <td class="good">Queue length or message rate</td>
+        </tr>
+        <tr>
+          <td>Amazon Kinesis</td>
+          <td><code>aws-kinesis-stream</code></td>
+          <td class="good">Shard iterator age (how far behind)</td>
+        </tr>
+        <tr>
+          <td>Prometheus</td>
+          <td><code>prometheus</code></td>
+          <td class="good">Any PromQL query result</td>
+        </tr>
+        <tr>
+          <td>Cron</td>
+          <td><code>cron</code></td>
+          <td class="good">Time-based schedule (scale up at 9am, down at 6pm)</td>
+        </tr>
+        <tr>
+          <td>Azure Service Bus</td>
+          <td><code>azure-servicebus</code></td>
+          <td class="good">Queue / topic message count</td>
+        </tr>
+        <tr>
+          <td>Google Cloud Pub/Sub</td>
+          <td><code>gcp-pubsub</code></td>
+          <td class="good">Subscription message count</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>You can even combine multiple triggers on a single <code>ScaledObject</code>. For example, scale a deployment based on both SQS queue depth and a Prometheus metric for request latency — KEDA uses the trigger that produces the highest replica count.</p>
+
+    <h2 id="cost-impact">What the Numbers Look Like</h2>
+
+    <p>Here's a realistic before-and-after for a team running SQS workers on EKS:</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Before (HPA)</th>
+          <th>After (KEDA + Karpenter)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Worker pods running 24/7</td>
+          <td class="bad">12 pods (HPA min)</td>
+          <td class="good">0 pods overnight, 1–15 during business hours</td>
+        </tr>
+        <tr>
+          <td>Monthly compute cost (workers)</td>
+          <td class="bad">$2,800</td>
+          <td class="good">$680</td>
+        </tr>
+        <tr>
+          <td>Queue processing latency (p99)</td>
+          <td>4.2 seconds</td>
+          <td class="good">2.8 seconds (faster scale-up response)</td>
+        </tr>
+        <tr>
+          <td>Cold start (0→1 pod)</td>
+          <td>N/A (always running)</td>
+          <td>~25 seconds</td>
+        </tr>
+        <tr>
+          <td>Annual savings</td>
+          <td>—</td>
+          <td class="good">~$25,000</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The savings scale linearly with the number of queue-based services you run. If you have 10 worker Deployments all running idle overnight, the numbers add up fast.</p>
+
+    <h2 id="takeaways">Key Takeaways</h2>
+
+    <ol>
+      <li><strong>HPA can't scale queue workers effectively</strong> — it watches CPU/memory, not queue depth. Workers stay running even when there's nothing to process.</li>
+      <li><strong>KEDA scales pods based on actual demand</strong> — it reads <code>ApproximateNumberOfMessages</code> directly from SQS and computes the exact number of pods needed.</li>
+      <li><strong>Scale-to-zero eliminates idle compute</strong> — when the queue is empty, your worker pods don't exist. No pods, no cost.</li>
+      <li><strong>Use EKS Pod Identity for authentication</strong> — no long-lived credentials, no secrets to rotate. KEDA's <code>TriggerAuthentication</code> with <code>podIdentity: aws</code> is the cleanest setup.</li>
+      <li><strong>ScaledObject for persistent workers, ScaledJob for one-shot tasks</strong> — match the KEDA resource to your workload pattern.</li>
+      <li><strong>Don't blindly scale to zero</strong> — latency-sensitive queues should keep <code>minReplicaCount: 1</code> to avoid cold starts.</li>
+      <li><strong>Pair KEDA with Karpenter</strong> — KEDA scales pods, Karpenter scales nodes. Together they create a fully event-driven pipeline where you only pay for compute when there's actual work.</li>
+      <li><strong>Monitor and alert</strong> — watch <code>keda_scaler_metrics_value</code> for drift and alarm on DLQ growth to prevent runaway scaling loops.</li>
+    </ol>
+
+    <h2 id="reference">Reference</h2>
+    <ul>
+      <li>KEDA docs: <a href="https://keda.sh/docs/" target="_blank" rel="noopener">keda.sh</a> — official documentation for all scalers and configuration</li>
+      <li>KEDA SQS scaler: <a href="https://keda.sh/docs/latest/scalers/aws-sqs/" target="_blank" rel="noopener">keda.sh/docs/latest/scalers/aws-sqs</a> — SQS-specific parameters and examples</li>
+      <li>EKS Pod Identity: <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html" target="_blank" rel="noopener">EKS Pod Identity documentation</a></li>
+      <li>Karpenter: <a href="https://karpenter.sh/docs/" target="_blank" rel="noopener">karpenter.sh</a> — node autoscaling to complement KEDA's pod scaling</li>
+      <li>KEDA GitHub: <a href="https://github.com/kedacore/keda" target="_blank" rel="noopener">github.com/kedacore/keda</a></li>
+    </ul>
+
+  </article>
+
+  <div class="article-divider"></div>
+  <footer class="article-footer">
+    <div class="article-author">
+      <div class="author-avatar">R³</div>
+      <div>
+        <div class="author-name">Richie Richard Rajkumar</div>
+        <div class="author-role">Infrastructure Architect · Platform Leader · Berlin</div>
+      </div>
+    </div>
+    <a href="/blog" class="back-btn">← All articles</a>
+  </footer>
+
+</div><!-- /article-page -->
+
+<script src="/js/main.js"></script>
+</body>
+</html>
