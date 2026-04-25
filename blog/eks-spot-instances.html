@@ -488,100 +488,9 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <h3>With Karpenter</h3>
 
-    <p>Karpenter doesn't use ASGs. It evaluates pending pods in real time, computes the cheapest instance type that fits, and provisions individual EC2 instances directly. This is fundamentally different from Cluster Autoscaler — there are no pre-defined node groups to scale. Karpenter decides the instance type, AZ, and purchase option at launch time.</p>
+    <p><a href="/blog/eks-scaling-with-karpenter">Karpenter</a> doesn't use ASGs. It evaluates pending pods in real time, computes the cheapest instance type that fits, and provisions individual EC2 instances directly — no pre-defined node groups to scale. For the hybrid strategy, you create two NodePools: one constrained to <code>on-demand</code> for stable workloads, one constrained to <code>spot</code> with a taint so only opt-in pods land there. Karpenter picks the optimal instance type, AZ, and purchase option at launch time, giving you tighter bin-packing, less waste, and nodes in 60 seconds instead of 3–5 minutes.</p>
 
-    <p><strong>On-demand NodePool</strong> for stable workloads:</p>
-
-    <pre><span class="ky">apiVersion</span>: karpenter.sh/v1
-<span class="ky">kind</span>: NodePool
-<span class="ky">metadata</span>:
-  <span class="ky">name</span>: <span class="st">on-demand-base</span>
-<span class="ky">spec</span>:
-  <span class="ky">template</span>:
-    <span class="ky">metadata</span>:
-      <span class="ky">labels</span>:
-        <span class="ky">lifecycle</span>: <span class="st">on-demand</span>
-        <span class="ky">intent</span>: <span class="st">base-workloads</span>
-    <span class="ky">spec</span>:
-      <span class="ky">requirements</span>:
-        - <span class="ky">key</span>: <span class="st">karpenter.sh/capacity-type</span>
-          <span class="ky">operator</span>: <span class="st">In</span>
-          <span class="ky">values</span>: [<span class="st">"on-demand"</span>]
-        - <span class="ky">key</span>: <span class="st">node.kubernetes.io/instance-type</span>
-          <span class="ky">operator</span>: <span class="st">In</span>
-          <span class="ky">values</span>: [<span class="st">"m5.xlarge"</span>, <span class="st">"m5.2xlarge"</span>, <span class="st">"m6i.xlarge"</span>, <span class="st">"m6i.2xlarge"</span>]
-        - <span class="ky">key</span>: <span class="st">topology.kubernetes.io/zone</span>
-          <span class="ky">operator</span>: <span class="st">In</span>
-          <span class="ky">values</span>: [<span class="st">"eu-central-1a"</span>, <span class="st">"eu-central-1b"</span>, <span class="st">"eu-central-1c"</span>]
-      <span class="ky">nodeClassRef</span>:
-        <span class="ky">group</span>: <span class="st">karpenter.k8s.aws</span>
-        <span class="ky">kind</span>: <span class="st">EC2NodeClass</span>
-        <span class="ky">name</span>: <span class="st">default</span>
-  <span class="ky">limits</span>:
-    <span class="ky">cpu</span>: <span class="st">"100"</span>
-    <span class="ky">memory</span>: <span class="st">400Gi</span></pre>
-
-    <p><strong>Spot NodePool</strong> for burst and interruptible workloads:</p>
-
-    <pre><span class="ky">apiVersion</span>: karpenter.sh/v1
-<span class="ky">kind</span>: NodePool
-<span class="ky">metadata</span>:
-  <span class="ky">name</span>: <span class="st">spot-burst</span>
-<span class="ky">spec</span>:
-  <span class="ky">template</span>:
-    <span class="ky">metadata</span>:
-      <span class="ky">labels</span>:
-        <span class="ky">lifecycle</span>: <span class="st">spot</span>
-        <span class="ky">intent</span>: <span class="st">burst-workloads</span>
-    <span class="ky">spec</span>:
-      <span class="ky">taints</span>:
-        - <span class="ky">key</span>: <span class="st">lifecycle</span>
-          <span class="ky">value</span>: <span class="st">spot</span>
-          <span class="ky">effect</span>: <span class="st">NoSchedule</span>
-      <span class="ky">requirements</span>:
-        - <span class="ky">key</span>: <span class="st">karpenter.sh/capacity-type</span>
-          <span class="ky">operator</span>: <span class="st">In</span>
-          <span class="ky">values</span>: [<span class="st">"spot"</span>]
-        - <span class="ky">key</span>: <span class="st">node.kubernetes.io/instance-type</span>
-          <span class="ky">operator</span>: <span class="st">In</span>
-          <span class="ky">values</span>:
-            - <span class="st">"m5.xlarge"</span>
-            - <span class="st">"m5a.xlarge"</span>
-            - <span class="st">"m6i.xlarge"</span>
-            - <span class="st">"c5.xlarge"</span>
-            - <span class="st">"c5a.xlarge"</span>
-            - <span class="st">"c6i.xlarge"</span>
-            - <span class="st">"r5.xlarge"</span>
-            - <span class="st">"r5a.xlarge"</span>
-        - <span class="ky">key</span>: <span class="st">topology.kubernetes.io/zone</span>
-          <span class="ky">operator</span>: <span class="st">In</span>
-          <span class="ky">values</span>: [<span class="st">"eu-central-1a"</span>, <span class="st">"eu-central-1b"</span>, <span class="st">"eu-central-1c"</span>]
-      <span class="ky">nodeClassRef</span>:
-        <span class="ky">group</span>: <span class="st">karpenter.k8s.aws</span>
-        <span class="ky">kind</span>: <span class="st">EC2NodeClass</span>
-        <span class="ky">name</span>: <span class="st">default</span>
-  <span class="ky">disruption</span>:
-    <span class="ky">consolidationPolicy</span>: <span class="st">WhenEmptyOrUnderutilized</span>
-    <span class="ky">consolidateAfter</span>: <span class="st">30s</span>
-  <span class="ky">limits</span>:
-    <span class="ky">cpu</span>: <span class="st">"500"</span>
-    <span class="ky">memory</span>: <span class="st">2000Gi</span></pre>
-
-    <p>Now, your pod specs just need the right toleration and node selector:</p>
-
-    <pre><span class="cm"># Pod that opts into spot nodes</span>
-<span class="ky">spec</span>:
-  <span class="ky">tolerations</span>:
-    - <span class="ky">key</span>: <span class="st">lifecycle</span>
-      <span class="ky">value</span>: <span class="st">spot</span>
-      <span class="ky">operator</span>: <span class="st">Equal</span>
-      <span class="ky">effect</span>: <span class="st">NoSchedule</span>
-  <span class="ky">nodeSelector</span>:
-    <span class="ky">lifecycle</span>: <span class="st">spot</span></pre>
-
-    <div class="callout">
-      <strong>Karpenter's advantage here:</strong> Cluster Autoscaler scales ASGs — it picks <em>which group</em> to scale, not which instance type. Karpenter evaluates the pending pod's resource requests and picks the optimal instance type, AZ, and purchase option at launch time. This means tighter bin-packing, less waste, and faster scaling (30–60 seconds vs 3–5 minutes with CAS).
-    </div>
+    <p>See <a href="/blog/eks-scaling-with-karpenter#nodepool-config">Karpenter on EKS: Configuring Your NodePool</a> for full YAML examples with production-ready disruption policies, consolidation, and resource limits.</p>
 
     <h2 id="option-2-full-spot">Option 2: Running a Full Spot Cluster</h2>
 
@@ -635,55 +544,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <h3>With Karpenter</h3>
 
-    <p>Karpenter makes full Spot much simpler — you don't need to manage multiple ASGs. A single NodePool can handle the entire cluster:</p>
-
-    <pre><span class="ky">apiVersion</span>: karpenter.sh/v1
-<span class="ky">kind</span>: NodePool
-<span class="ky">metadata</span>:
-  <span class="ky">name</span>: <span class="st">full-spot</span>
-<span class="ky">spec</span>:
-  <span class="ky">template</span>:
-    <span class="ky">metadata</span>:
-      <span class="ky">labels</span>:
-        <span class="ky">lifecycle</span>: <span class="st">spot</span>
-    <span class="ky">spec</span>:
-      <span class="ky">requirements</span>:
-        - <span class="ky">key</span>: <span class="st">karpenter.sh/capacity-type</span>
-          <span class="ky">operator</span>: <span class="st">In</span>
-          <span class="ky">values</span>: [<span class="st">"spot"</span>]
-        - <span class="ky">key</span>: <span class="st">kubernetes.io/arch</span>
-          <span class="ky">operator</span>: <span class="st">In</span>
-          <span class="ky">values</span>: [<span class="st">"amd64"</span>]
-        - <span class="ky">key</span>: <span class="st">node.kubernetes.io/instance-type</span>
-          <span class="ky">operator</span>: <span class="st">In</span>
-          <span class="ky">values</span>:
-            - <span class="st">"m5.xlarge"</span>
-            - <span class="st">"m5a.xlarge"</span>
-            - <span class="st">"m5.2xlarge"</span>
-            - <span class="st">"m6i.xlarge"</span>
-            - <span class="st">"m6i.2xlarge"</span>
-            - <span class="st">"c5.xlarge"</span>
-            - <span class="st">"c5a.xlarge"</span>
-            - <span class="st">"c5.2xlarge"</span>
-            - <span class="st">"c6i.xlarge"</span>
-            - <span class="st">"r5.xlarge"</span>
-            - <span class="st">"r5a.xlarge"</span>
-            - <span class="st">"r5.2xlarge"</span>
-        - <span class="ky">key</span>: <span class="st">topology.kubernetes.io/zone</span>
-          <span class="ky">operator</span>: <span class="st">In</span>
-          <span class="ky">values</span>: [<span class="st">"eu-central-1a"</span>, <span class="st">"eu-central-1b"</span>, <span class="st">"eu-central-1c"</span>]
-      <span class="ky">nodeClassRef</span>:
-        <span class="ky">group</span>: <span class="st">karpenter.k8s.aws</span>
-        <span class="ky">kind</span>: <span class="st">EC2NodeClass</span>
-        <span class="ky">name</span>: <span class="st">default</span>
-  <span class="ky">disruption</span>:
-    <span class="ky">consolidationPolicy</span>: <span class="st">WhenEmptyOrUnderutilized</span>
-    <span class="ky">consolidateAfter</span>: <span class="st">30s</span>
-  <span class="ky">limits</span>:
-    <span class="ky">cpu</span>: <span class="st">"1000"</span>
-    <span class="ky">memory</span>: <span class="st">4000Gi</span></pre>
-
-    <p>Karpenter automatically applies the <code>capacity-optimized</code> allocation strategy for Spot — it evaluates available capacity across all the instance types and AZs you've listed and picks the combination with the deepest pool. No ASG configuration needed.</p>
+    <p>Karpenter makes full Spot much simpler — a single NodePool with <code>capacity-type: spot</code> and a broad list of instance types replaces all those ASGs. Karpenter automatically applies the <code>capacity-optimized</code> allocation strategy, evaluates available capacity across all instance types and AZs, and picks the combination with the deepest pool. It also handles Spot interruptions natively — no Node Termination Handler needed. See <a href="/blog/eks-scaling-with-karpenter">Karpenter on EKS</a> for the full setup, including consolidation, drift detection, and interruption handling.</p>
 
     <h2 id="handling-interruptions">Handling Spot Interruptions</h2>
 
@@ -718,31 +579,9 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <h3>Karpenter: Native Interruption Handling</h3>
 
-    <p>Karpenter handles Spot interruptions natively — no separate DaemonSet needed. It watches for EC2 interruption warnings, rebalance recommendations, and instance health events through the EC2 API and EventBridge. When an interruption is detected, Karpenter:</p>
+    <p>Karpenter handles Spot interruptions natively — no NTH DaemonSet needed. It watches for interruption warnings, rebalance recommendations, and health events via SQS and EventBridge. The critical difference: Karpenter <strong>pre-provisions a replacement node before draining</strong> the interrupted one, so the gap where pods are unscheduled is seconds, not minutes. With CAS + NTH, the replacement only starts provisioning after pods become Pending — adding 3–5 minutes of delay.</p>
 
-    <ol>
-      <li>Cordons the affected node</li>
-      <li>Pre-provisions a replacement node <em>before</em> draining — so there's capacity ready</li>
-      <li>Drains the old node once the replacement is ready</li>
-      <li>Deletes the old node object from the cluster</li>
-    </ol>
-
-    <p>This is a significant improvement over the NTH + CAS flow. With Karpenter, the replacement node is already launching while the old node is being drained. With CAS + NTH, the replacement only starts provisioning after the pods become Pending — adding 3–5 minutes of delay.</p>
-
-    <pre><span class="cm"># Karpenter interruption handling — no configuration needed</span>
-<span class="cm"># These capabilities are built in when you deploy Karpenter:</span>
-
-<span class="st">✓</span> Spot Instance interruption warnings    <span class="cm">(2-min notice)</span>
-<span class="st">✓</span> EC2 rebalance recommendations           <span class="cm">(early warning)</span>
-<span class="st">✓</span> Scheduled change health events          <span class="cm">(maintenance)</span>
-<span class="st">✓</span> Instance state change notifications     <span class="cm">(stopped/terminated)</span>
-
-<span class="cm"># Karpenter requires these IAM permissions for interruption handling:</span>
-<span class="ky">ec2:DescribeInstanceStatus</span>
-<span class="ky">sqs:ReceiveMessage</span>         <span class="cm"># If using SQS-based events</span>
-<span class="ky">sqs:DeleteMessage</span>
-<span class="ky">events:PutRule</span>             <span class="cm"># EventBridge rules</span>
-<span class="ky">events:PutTargets</span></pre>
+    <p>See <a href="/blog/eks-scaling-with-karpenter#spot-interruptions">Karpenter on EKS: Handling Spot Interruptions</a> for the full interruption flow, rebalance recommendation handling, and IAM permissions.</p>
 
     <h2 id="best-practices">Best Practices for Production</h2>
 
@@ -847,61 +686,9 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <h2 id="cluster-autoscaler-vs-karpenter">Cluster Autoscaler vs Karpenter: Which Should You Use</h2>
 
-    <table class="compare-table">
-      <thead>
-        <tr>
-          <th>Aspect</th>
-          <th>Cluster Autoscaler</th>
-          <th>Karpenter</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Scaling model</td>
-          <td>Scales ASGs up/down</td>
-          <td class="good">Provisions individual instances directly</td>
-        </tr>
-        <tr>
-          <td>Instance type selection</td>
-          <td>Fixed per ASG — you pre-define the types</td>
-          <td class="good">Dynamic — picks optimal type per pod at launch</td>
-        </tr>
-        <tr>
-          <td>Time to new node</td>
-          <td class="bad">3–5 minutes (ASG → EC2 → register → ready)</td>
-          <td class="good">30–60 seconds (direct EC2 fleet API call)</td>
-        </tr>
-        <tr>
-          <td>Spot interruption handling</td>
-          <td class="bad">Requires AWS Node Termination Handler (separate DaemonSet)</td>
-          <td class="good">Native — built-in, pre-provisions replacement</td>
-        </tr>
-        <tr>
-          <td>Bin packing</td>
-          <td>Picks which ASG to scale, not which instance fits best</td>
-          <td class="good">Right-sizes instance to pending pod needs</td>
-        </tr>
-        <tr>
-          <td>Consolidation</td>
-          <td>Scale-down only (removes underused nodes)</td>
-          <td class="good">Active consolidation — replaces nodes with cheaper/smaller ones</td>
-        </tr>
-        <tr>
-          <td>Operational complexity</td>
-          <td class="bad">Manage multiple ASGs, launch templates, NTH</td>
-          <td class="good">NodePool + EC2NodeClass — less infrastructure to manage</td>
-        </tr>
-        <tr>
-          <td>Maturity</td>
-          <td class="good">Battle-tested, widely deployed since 2018</td>
-          <td>GA since 2023, rapidly adopted, AWS-maintained</td>
-        </tr>
-      </tbody>
-    </table>
+    <p>Both autoscalers work with Spot. The short version: Karpenter is faster (60s vs 3–5 min), handles interruptions natively (no NTH needed), right-sizes instances per pod instead of per ASG, and actively consolidates underused nodes. Cluster Autoscaler is battle-tested since 2018 and works fine if it's already running — but Spot is where Karpenter's advantages are most pronounced.</p>
 
-    <div class="callout">
-      <strong>If you're starting fresh,</strong> use Karpenter. It's simpler to configure, faster to scale, handles interruptions natively, and produces tighter bin-packing. If you're already running Cluster Autoscaler and it's working, there's no rush to migrate — but Spot is where Karpenter's advantages are most pronounced.
-    </div>
+    <p>For the full setup, see <a href="/blog/eks-scaling-with-karpenter">Karpenter on EKS: Right-Sized Nodes in 60 Seconds</a>. A detailed side-by-side comparison of Cluster Autoscaler and Karpenter is coming in a dedicated article.</p>
 
     <h2 id="eks-auto-mode">A Note on EKS Auto Mode</h2>
 
@@ -967,7 +754,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <li><strong>Full Spot works for fully stateless environments</strong> — CI/CD, dev/staging, batch processing, load testing — where every pod can tolerate interruption</li>
       <li><strong>Instance diversification is the single most important practice</strong> — spread across 10+ instance types and all available AZs to minimize interruption risk</li>
       <li><strong>Always use capacity-optimized allocation</strong> — it selects Spot pools with the most spare capacity, reducing interruptions</li>
-      <li><strong>Karpenter handles Spot better than Cluster Autoscaler</strong> — native interruption handling, faster scaling, tighter bin-packing, and active consolidation. CAS works but needs the Node Termination Handler as a separate component</li>
+      <li><strong><a href="/blog/eks-scaling-with-karpenter">Karpenter handles Spot better than Cluster Autoscaler</a></strong> — native interruption handling, faster scaling, tighter bin-packing, and active consolidation. CAS works but needs the Node Termination Handler as a separate component</li>
       <li><strong>PodDisruptionBudgets and topology spread constraints are mandatory</strong> — they ensure graceful handling when nodes disappear</li>
       <li><strong>EKS Auto Mode manages Karpenter for you</strong> — if you want Spot with minimal ops overhead, it's the simplest path</li>
     </ol>
@@ -976,7 +763,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
     <ul>
       <li>AWS guide: <a href="https://aws.amazon.com/blogs/compute/run-your-kubernetes-workloads-on-amazon-ec2-spot-instances-with-amazon-eks/" target="_blank" rel="noopener">Run your Kubernetes Workloads on Amazon EC2 Spot Instances with Amazon EKS</a> — AWS Compute Blog</li>
       <li>AWS containers: <a href="https://aws.amazon.com/blogs/containers/using-amazon-ec2-spot-instances-with-karpenter/" target="_blank" rel="noopener">Using Amazon EC2 Spot Instances with Karpenter</a> — AWS Containers Blog</li>
-      <li>Karpenter docs: <a href="https://karpenter.sh/docs/" target="_blank" rel="noopener">karpenter.sh</a></li>
+      <li>Karpenter: <a href="/blog/eks-scaling-with-karpenter">Karpenter on EKS: Right-Sized Nodes in 60 Seconds</a> — full setup with drift detection, consolidation, and Spot handling</li>
       <li>AWS Node Termination Handler: <a href="https://github.com/aws/aws-node-termination-handler" target="_blank" rel="noopener">github.com/aws/aws-node-termination-handler</a></li>
       <li>EC2 Spot Instance Advisor: <a href="https://aws.amazon.com/ec2/spot/instance-advisor/" target="_blank" rel="noopener">aws.amazon.com/ec2/spot/instance-advisor</a> — check interruption rates by instance type</li>
     </ul>

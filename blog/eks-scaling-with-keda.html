@@ -718,25 +718,11 @@ keda-operator-metrics-apiserver-6d9-r8t5   1/1     Running   45s</pre>
 
     <p>The <code>queueLength</code> threshold is the most important tuning parameter. If your worker processes 10 messages per minute and you set <code>queueLength: "10"</code>, each pod handles roughly one minute's worth of backlog. If you set it to <code>"1"</code>, you get one pod per message — great for heavy tasks, wasteful for lightweight ones.</p>
 
-    <h3>5. Use KEDA with Karpenter for Maximum Efficiency</h3>
+    <h3>5. Pair KEDA with Karpenter for Node-Level Scaling</h3>
 
-    <p>KEDA and Karpenter are complementary. KEDA scales pods based on queue depth. Karpenter scales nodes based on pending pods. Together, they create a fully event-driven scaling pipeline:</p>
+    <p>KEDA scales pods. But who scales the nodes those pods run on? <a href="/blog/eks-scaling-with-karpenter">Karpenter</a> provisions right-sized EC2 instances in ~60 seconds when pods go Pending, and consolidates empty nodes when KEDA scales back to zero. Together, they create a fully event-driven pipeline: zero messages in the queue means zero pods <em>and</em> zero nodes — not just reduced compute, but no compute cost at all.</p>
 
-    <pre><span class="cm"># The full event-driven pipeline:</span>
-
-<span class="nm">1.</span> Messages arrive in SQS
-<span class="nm">2.</span> KEDA detects queue growth, increases Deployment replicas
-<span class="nm">3.</span> New pods go <span class="st">Pending</span> (no node capacity)
-<span class="nm">4.</span> Karpenter provisions a right-sized Spot instance in <span class="st">30–60s</span>
-<span class="nm">5.</span> Pods start processing messages
-<span class="nm">6.</span> Queue drains → KEDA scales pods to 0
-<span class="nm">7.</span> Karpenter consolidates empty nodes → terminates idle instances
-
-<span class="cm"># Result: pay only for compute when there's actual work to do</span></pre>
-
-    <div class="callout">
-      <strong>This is where the real savings happen.</strong> KEDA alone eliminates idle pods. KEDA + Karpenter eliminates idle pods <em>and</em> idle nodes. If your queue is empty for 8 hours overnight, you pay for zero worker compute during those hours — not just zero pods, but zero nodes.
-    </div>
+    <p>See <a href="/blog/eks-scaling-with-karpenter#keda-integration">Karpenter on EKS: KEDA + Karpenter Integration</a> for the full setup with ScaledObject, Deployment, and NodePool manifests that work together.</p>
 
     <h2 id="beyond-sqs">Beyond SQS: Other Event Sources</h2>
 
@@ -843,7 +829,7 @@ keda-operator-metrics-apiserver-6d9-r8t5   1/1     Running   45s</pre>
       <li><strong>Use EKS Pod Identity for authentication</strong> — no long-lived credentials, no secrets to rotate. KEDA's <code>TriggerAuthentication</code> with <code>podIdentity: aws</code> is the cleanest setup.</li>
       <li><strong>ScaledObject for persistent workers, ScaledJob for one-shot tasks</strong> — match the KEDA resource to your workload pattern.</li>
       <li><strong>Don't blindly scale to zero</strong> — latency-sensitive queues should keep <code>minReplicaCount: 1</code> to avoid cold starts.</li>
-      <li><strong>Pair KEDA with Karpenter</strong> — KEDA scales pods, Karpenter scales nodes. Together they create a fully event-driven pipeline where you only pay for compute when there's actual work.</li>
+      <li><strong>Pair KEDA with <a href="/blog/eks-scaling-with-karpenter">Karpenter</a></strong> — KEDA scales pods, Karpenter scales nodes. Together they create a fully event-driven pipeline where you only pay for compute when there's actual work.</li>
       <li><strong>Monitor and alert</strong> — watch <code>keda_scaler_metrics_value</code> for drift and alarm on DLQ growth to prevent runaway scaling loops.</li>
     </ol>
 
@@ -852,7 +838,7 @@ keda-operator-metrics-apiserver-6d9-r8t5   1/1     Running   45s</pre>
       <li>KEDA docs: <a href="https://keda.sh/docs/" target="_blank" rel="noopener">keda.sh</a> — official documentation for all scalers and configuration</li>
       <li>KEDA SQS scaler: <a href="https://keda.sh/docs/latest/scalers/aws-sqs/" target="_blank" rel="noopener">keda.sh/docs/latest/scalers/aws-sqs</a> — SQS-specific parameters and examples</li>
       <li>EKS Pod Identity: <a href="https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html" target="_blank" rel="noopener">EKS Pod Identity documentation</a></li>
-      <li>Karpenter: <a href="https://karpenter.sh/docs/" target="_blank" rel="noopener">karpenter.sh</a> — node autoscaling to complement KEDA's pod scaling</li>
+      <li>Karpenter: <a href="/blog/eks-scaling-with-karpenter">Karpenter on EKS: Right-Sized Nodes in 60 Seconds</a> — node autoscaling to complement KEDA's pod scaling</li>
       <li>KEDA GitHub: <a href="https://github.com/kedacore/keda" target="_blank" rel="noopener">github.com/kedacore/keda</a></li>
     </ul>
 
