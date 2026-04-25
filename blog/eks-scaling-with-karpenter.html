@@ -408,7 +408,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <li><strong>Spot interruptions need a separate component.</strong> You need to install and maintain a DaemonSet (AWS Node Termination Handler) on every node to detect Spot interruption warnings and drain pods gracefully. It's another moving part that can break.</li>
     </ul>
 
-    <p>Karpenter was designed at AWS to eliminate these friction points. Instead of managing node groups, you declare intent — "I need nodes from these instance families, in these AZs, using on-demand or Spot" — and Karpenter handles every decision from there: which instance type, which AZ, when to launch, when to replace, when to consolidate.</p>
+    <p>Karpenter was designed at AWS to eliminate these friction points. Instead of managing node groups, you declare intent — "I need nodes from these instance families, in these AZs, using on-demand or Spot" — and Karpenter handles every decision from there: which instance type, which AZ, when to launch, when to replace, when to consolidate. For a detailed comparison of both approaches and when to choose which, see <a href="/blog/eks-cluster-autoscaler-vs-karpenter">Cluster Autoscaler vs Karpenter</a>.</p>
 
     <h2 id="two-resources">The Two Resources That Replace Everything</h2>
 
