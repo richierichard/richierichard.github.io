@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Helm to Kustomize: Why We Ditched Templates for Overlays — Richie Richard Rajkumar</title>
+
+<meta name="description" content="We used Helm for everything — third-party installs and internal apps. Then Go template spaghetti, values.yaml indirection, and debugging rendered output became the problem. Here's why we moved our internal deployments to Kustomize and where Helm still earns its place.">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://www.richierichard.com/blog/helm-to-kustomize">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.richierichard.com/blog/helm-to-kustomize">
+<meta property="og:title" content="From Helm to Kustomize: Why We Ditched Templates for Overlays — Richie Richard Rajkumar">
+<meta property="og:description" content="We used Helm for everything. Then Go template complexity became the problem. Here's why we moved internal deployments to Kustomize and where Helm still earns its place.">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+
+<style>
+/* ── ARTICLE PAGE ── */
+.article-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 7rem 2rem 5rem;
+  position: relative;
+  z-index: 1;
+}
+.article-top { max-width: 960px; }
+
+.article-intro {
+  max-width: 960px;
+  margin-bottom: 2.5rem;
+  color: var(--text);
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+.article-intro p { margin-bottom: 1.25rem; }
+.article-intro code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+
+.article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  margin-bottom: 2.5rem;
+  transition: color 0.2s;
+}
+.article-back:hover { color: var(--accent); }
+
+.article-header { margin-bottom: 2.5rem; }
+.article-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.article-tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.2);
+  letter-spacing: 0.04em;
+}
+body.light .article-tag { border-color: rgba(2,132,199,0.25); }
+
+.article-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.article-title span { color: var(--accent); }
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.article-meta-dot { opacity: 0.3; }
+
+.article-hero {
+  width: 100%;
+  max-width: 960px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+}
+
+.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 2.5rem 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 6rem;
+}
+.article-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 1.75rem 0 0.5rem;
+}
+.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.article-body li { margin-bottom: 0.4rem; color: var(--text); }
+.article-body strong { color: var(--text); font-weight: 700; }
+.article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+.article-body pre {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.article-body code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+.article-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 1em;
+}
+.article-body pre .cm { color: var(--muted); }
+.article-body pre .ky { color: var(--accent); }
+.article-body pre .st { color: #f9a8d4; }
+.article-body pre .nm { color: #fde68a; }
+
+.callout {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+.callout strong { color: var(--accent); }
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
+}
+.compare-table th {
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.compare-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .good { color: var(--accent); font-weight: 700; }
+.compare-table .bad  { color: #f87171; }
+
+.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+
+.article-footer {
+  max-width: 960px;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.article-author { display: flex; align-items: center; gap: 0.85rem; }
+.author-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
+  flex-shrink: 0;
+}
+.author-name { font-weight: 700; font-size: 0.9rem; }
+.author-role { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--accent); color: var(--accent);
+  font-weight: 700; font-size: 0.85rem; text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #000; }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
+    <span class="nav-logo-tag">build · scale · secure</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Light</span>
+  </button>
+</nav>
+
+<div class="article-page">
+
+  <div class="article-top">
+    <a href="/blog" class="article-back">← Back to Blog</a>
+    <header class="article-header">
+      <div class="article-tags">
+        <span class="article-tag">Kubernetes</span>
+        <span class="article-tag">DevOps</span>
+        <span class="article-tag">GitOps</span>
+        <span class="article-tag">Platform Engineering</span>
+      </div>
+      <h1 class="article-title">From Helm to Kustomize: <span>Why We Ditched Templates for Overlays</span></h1>
+      <div class="article-meta">
+        <span>Richie Richard Rajkumar</span>
+        <span class="article-meta-dot">·</span>
+        <span>May 2026</span>
+        <span class="article-meta-dot">·</span>
+        <span>13 min read</span>
+      </div>
+    </header>
+  </div>
+
+  <div class="article-hero">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" width="760" height="420" style="width:100%;height:auto;display:block;">
+      <defs>
+        <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0a0c10"/>
+          <stop offset="100%" stop-color="#12151c"/>
+        </linearGradient>
+      </defs>
+      <rect width="760" height="420" fill="url(#bg-grad)"/>
+
+      <!-- TITLE -->
+      <text x="380" y="26" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">KUBERNETES DEPLOYMENT — TWO PHILOSOPHIES</text>
+
+      <!-- DIVIDER -->
+      <line x1="380" y1="40" x2="380" y2="370" stroke="#7a8099" stroke-width="0.5" stroke-dasharray="4 4"/>
+      <text x="380" y="390" font-family="'Fira Code',monospace" font-size="9" fill="#7a8099" text-anchor="middle">vs</text>
+
+      <!-- LEFT: HELM -->
+      <text x="190" y="58" font-family="'Nunito',sans-serif" font-size="14" fill="#fbbf24" text-anchor="middle" font-weight="800">Helm</text>
+      <text x="190" y="74" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">Templating Engine · Package Manager</text>
+
+      <!-- Helm file tree -->
+      <rect x="50" y="88" width="280" height="200" rx="8" fill="rgba(251,191,36,0.04)" stroke="#fbbf24" stroke-width="0.6" stroke-dasharray="4 2"/>
+
+      <text x="68" y="110" font-family="'Fira Code',monospace" font-size="8" fill="#fbbf24">my-app/</text>
+      <text x="80" y="126" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">Chart.yaml</text>
+      <text x="80" y="142" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24">values.yaml</text>
+      <text x="190" y="142" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099">← indirection layer</text>
+      <text x="80" y="158" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">values-dev.yaml</text>
+      <text x="80" y="174" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">values-staging.yaml</text>
+      <text x="80" y="190" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">values-prod.yaml</text>
+      <text x="80" y="206" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">templates/</text>
+      <text x="96" y="222" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171">deployment.yaml</text>
+      <text x="220" y="222" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099">← Go templates</text>
+      <text x="96" y="238" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171">service.yaml</text>
+      <text x="96" y="254" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171">ingress.yaml</text>
+      <text x="96" y="270" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171">_helpers.tpl</text>
+      <text x="220" y="270" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099">← template helpers</text>
+
+      <!-- Helm pain points -->
+      <rect x="50" y="298" width="280" height="62" rx="8" fill="rgba(248,113,113,0.05)" stroke="#f87171" stroke-width="0.6"/>
+      <text x="190" y="316" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">{{ if .Values.ingress.enabled }}</text>
+      <text x="190" y="332" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">{{- toYaml .Values.resources | nindent 12 }}</text>
+      <text x="190" y="348" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">Templates render YAML — but aren't YAML</text>
+
+      <!-- RIGHT: KUSTOMIZE -->
+      <text x="570" y="58" font-family="'Nunito',sans-serif" font-size="14" fill="#4ade80" text-anchor="middle" font-weight="800">Kustomize</text>
+      <text x="570" y="74" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">YAML Transformer · Overlay Engine</text>
+
+      <!-- Kustomize file tree -->
+      <rect x="430" y="88" width="280" height="200" rx="8" fill="rgba(74,222,128,0.04)" stroke="#4ade80" stroke-width="0.6" stroke-dasharray="4 2"/>
+
+      <text x="448" y="110" font-family="'Fira Code',monospace" font-size="8" fill="#4ade80">my-app/</text>
+      <text x="460" y="126" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80">base/</text>
+      <text x="476" y="142" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">kustomization.yaml</text>
+      <text x="476" y="158" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80">deployment.yaml</text>
+      <text x="628" y="158" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099">← plain YAML</text>
+      <text x="476" y="174" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80">service.yaml</text>
+      <text x="628" y="174" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099">← plain YAML</text>
+      <text x="460" y="194" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80">overlays/</text>
+      <text x="476" y="210" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">dev/</text>
+      <text x="528" y="210" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099">← patches only</text>
+      <text x="476" y="226" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">staging/</text>
+      <text x="476" y="242" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">prod/</text>
+      <text x="528" y="242" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099">← patches only</text>
+
+      <!-- Kustomize advantages -->
+      <rect x="430" y="298" width="280" height="62" rx="8" fill="rgba(74,222,128,0.05)" stroke="#4ade80" stroke-width="0.6"/>
+      <text x="570" y="316" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">Base: valid, runnable YAML</text>
+      <text x="570" y="332" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">Overlays: only what changes per env</text>
+      <text x="570" y="348" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">What you write is what gets applied</text>
+
+      <!-- Bottom tagline -->
+      <text x="380" y="408" font-family="'Nunito',sans-serif" font-size="11" fill="#38bdf8" text-anchor="middle" font-weight="700">Same Deployment, Different Philosophy</text>
+    </svg>
+  </div><!-- /article-hero -->
+
+  <div class="article-intro">
+    <p>We used Helm for everything. Third-party tools, internal applications, background workers, cron jobs — if it deployed to Kubernetes, it was a Helm chart. That's how most teams start. Helm is the default packaging tool for Kubernetes, and when you're setting up your first cluster, <code>helm install</code> is the fastest way to get things running.</p>
+    <p>Then we started maintaining our own charts. Go template logic crept in. <code>values.yaml</code> files grew to 200+ lines. Engineers spent more time debugging template rendering than writing actual Kubernetes manifests. The tool that was supposed to simplify deployments became the thing slowing them down. We moved our internal application deployments to Kustomize — and the complexity dropped overnight. Here's what drove the switch, what we gained, what we lost, and where Helm still earns its place.</p>
+  </div>
+
+  <article class="article-body">
+
+    <h2 id="what-helm-gets-right">What Helm Gets Right</h2>
+
+    <p>Before the critique: Helm solves real problems, and it does some things better than any alternative.</p>
+
+    <ul>
+      <li><strong>Package management for Kubernetes.</strong> Helm charts package an entire application — Deployments, Services, ConfigMaps, RBAC, CRDs — into a versioned, distributable unit. <code>helm install cert-manager</code> installs 15+ resources with correct dependencies in one command. No other tool does this as well.</li>
+      <li><strong>Third-party ecosystem.</strong> Every major Kubernetes project ships a Helm chart: NGINX Ingress, Prometheus, ArgoCD, KEDA, Karpenter, cert-manager. The chart authors handle the complexity of configuring their software correctly. You provide values; they handle the templates.</li>
+      <li><strong>Release management.</strong> Helm tracks releases — what version is deployed, what values were used, when it was installed. <code>helm rollback</code> reverts to a previous release. <code>helm history</code> shows the audit trail. This state tracking is genuinely useful for operational visibility.</li>
+      <li><strong>Lifecycle hooks.</strong> Pre-install jobs, post-upgrade migrations, pre-delete cleanup. Helm hooks let chart authors encode operational logic — run a database migration before the new deployment rolls out, clean up resources before deletion.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Helm is excellent at distributing other people's complexity.</strong> When you're consuming a chart someone else wrote, Helm's templating power is a feature — the chart author parameterised their application so you can configure it with values. The problem starts when <em>you</em> become the chart author for your own applications.
+    </div>
+
+    <h2 id="where-helm-hurts">Where Helm Started Hurting</h2>
+
+    <h3>Go Templates Are Not YAML</h3>
+
+    <p>This is the core issue. Helm templates look like YAML but aren't YAML. They're Go templates that <em>produce</em> YAML. Your editor can't validate them. Your linter can't parse them. A missing <code>nindent</code> produces valid YAML that does the wrong thing silently.</p>
+
+    <pre><span class="cm"># This is not YAML. It's a Go template that renders YAML.</span>
+<span class="cm"># Can you spot the bug?</span>
+
+<span class="ky">spec</span>:
+  <span class="ky">containers</span>:
+    - <span class="ky">name</span>: {{ .Values.app.name }}
+      <span class="ky">image</span>: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+      <span class="ky">resources</span>:
+        {{- toYaml .Values.resources | <span class="st">nindent 8</span> }}   <span class="cm"># Should be nindent 8? Or 10?</span>
+      {{- if .Values.env }}
+      <span class="ky">env</span>:
+        {{- range .Values.env }}
+        - <span class="ky">name</span>: {{ .name }}
+          <span class="ky">value</span>: {{ .value | <span class="st">quote</span> }}         <span class="cm"># Forgot quote? Silent failure.</span>
+        {{- end }}
+      {{- end }}</pre>
+
+    <p>Every engineer on the team has been burned by <code>nindent</code>. The indentation in the rendered output depends on where the template directive sits in the file, not where the YAML should logically be indented. A miscount produces valid YAML with wrong structure — the pod spec gets a field at the wrong level, and you don't find out until <code>kubectl apply</code> fails or, worse, the pod starts with wrong configuration.</p>
+
+    <h3>The values.yaml Indirection Problem</h3>
+
+    <p>To understand what a Helm chart deploys, you need to hold two files in your head simultaneously: the template and the values. Neither makes sense alone. The template is full of <code>{{ .Values.something }}</code> placeholders. The values file is a flat list of keys with no indication of where they're used.</p>
+
+    <pre><span class="cm"># values.yaml — what does this mean without reading the template?</span>
+<span class="ky">replicaCount</span>: <span class="nm">3</span>
+<span class="ky">image</span>:
+  <span class="ky">repository</span>: <span class="st">my-registry/api</span>
+  <span class="ky">tag</span>: <span class="st">v1.4.2</span>
+<span class="ky">resources</span>:
+  <span class="ky">requests</span>:
+    <span class="ky">cpu</span>: <span class="st">"500m"</span>
+    <span class="ky">memory</span>: <span class="st">"512Mi"</span>
+<span class="ky">ingress</span>:
+  <span class="ky">enabled</span>: <span class="nm">true</span>
+  <span class="ky">host</span>: <span class="st">api.example.com</span>
+<span class="ky">serviceAccount</span>:
+  <span class="ky">create</span>: <span class="nm">true</span>
+  <span class="ky">annotations</span>: {}
+<span class="ky">autoscaling</span>:
+  <span class="ky">enabled</span>: <span class="nm">false</span>
+  <span class="ky">minReplicas</span>: <span class="nm">2</span>
+  <span class="ky">maxReplicas</span>: <span class="nm">10</span></pre>
+
+    <p>Now multiply this by four environments (dev, staging, production, canary), each with an override file. To know what production actually deploys, you need to mentally merge <code>values.yaml</code> + <code>values-prod.yaml</code> + any CLI <code>--set</code> overrides. That merge happens at render time, not in any file you can read.</p>
+
+    <h3>Debugging Is Painful</h3>
+
+    <p>When something goes wrong, your first step is <code>helm template . --values values-prod.yaml</code> to see the rendered output. But the rendered output is a single stream of YAML documents with no indication of which template file produced which resource. If the output has a problem, you trace it back through the template logic, the values, the helpers in <code>_helpers.tpl</code>, and any dependencies.</p>
+
+    <p>Compare this to Kustomize, where the output of <code>kubectl kustomize overlays/prod</code> is... the same YAML you wrote, with patches applied. The base is valid YAML. The overlay is valid YAML. The output is valid YAML. Every step is debuggable with standard YAML tools.</p>
+
+    <h3>Chart Maintenance Overhead</h3>
+
+    <p>Internal Helm charts accumulate complexity over time. Someone adds a conditional <code>if .Values.monitoring.enabled</code>. Someone else adds a <code>range</code> over sidecar containers. A third person adds helpers for label generation. Six months later, the chart has more template logic than actual Kubernetes configuration, and modifying it requires understanding the entire template dependency graph.</p>
+
+    <p>We had a chart for an internal API service that was 400 lines of Go templates to produce 120 lines of YAML. The ratio was inverted — more scaffolding than output.</p>
+
+    <h2 id="enter-kustomize">Enter Kustomize</h2>
+
+    <p>Kustomize takes the opposite approach: <strong>no templating</strong>. You write plain, valid Kubernetes YAML. For environment-specific differences, you write patches — small YAML fragments that modify specific fields. Kustomize merges them using strategic merge patches.</p>
+
+    <h3>The Structure</h3>
+
+    <pre><span class="cm"># Directory structure for an app deployed to dev, staging, and prod</span>
+<span class="ky">my-app/</span>
+  <span class="ky">base/</span>
+    <span class="st">kustomization.yaml</span>     <span class="cm"># Lists resources to include</span>
+    <span class="st">deployment.yaml</span>         <span class="cm"># Full, valid, runnable deployment</span>
+    <span class="st">service.yaml</span>            <span class="cm"># Full, valid service</span>
+    <span class="st">hpa.yaml</span>                <span class="cm"># Full, valid HPA</span>
+  <span class="ky">overlays/</span>
+    <span class="ky">dev/</span>
+      <span class="st">kustomization.yaml</span>   <span class="cm"># References base + lists patches</span>
+      <span class="st">replicas-patch.yaml</span>  <span class="cm"># Only: replicas: 1</span>
+    <span class="ky">staging/</span>
+      <span class="st">kustomization.yaml</span>
+      <span class="st">replicas-patch.yaml</span>  <span class="cm"># Only: replicas: 2</span>
+    <span class="ky">prod/</span>
+      <span class="st">kustomization.yaml</span>
+      <span class="st">replicas-patch.yaml</span>  <span class="cm"># Only: replicas: 5</span>
+      <span class="st">resources-patch.yaml</span> <span class="cm"># Only: increased CPU/memory</span></pre>
+
+    <h3>The Base: Plain YAML</h3>
+
+    <pre><span class="cm"># base/deployment.yaml — this is real, valid, runnable YAML</span>
+<span class="ky">apiVersion</span>: apps/v1
+<span class="ky">kind</span>: Deployment
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">api-server</span>
+<span class="ky">spec</span>:
+  <span class="ky">replicas</span>: <span class="nm">3</span>
+  <span class="ky">selector</span>:
+    <span class="ky">matchLabels</span>:
+      <span class="ky">app</span>: <span class="st">api-server</span>
+  <span class="ky">template</span>:
+    <span class="ky">metadata</span>:
+      <span class="ky">labels</span>:
+        <span class="ky">app</span>: <span class="st">api-server</span>
+    <span class="ky">spec</span>:
+      <span class="ky">containers</span>:
+        - <span class="ky">name</span>: <span class="st">api</span>
+          <span class="ky">image</span>: <span class="st">my-registry/api-server:v1.4.2</span>
+          <span class="ky">ports</span>:
+            - <span class="ky">containerPort</span>: <span class="nm">8080</span>
+          <span class="ky">resources</span>:
+            <span class="ky">requests</span>:
+              <span class="ky">cpu</span>: <span class="st">"500m"</span>
+              <span class="ky">memory</span>: <span class="st">"512Mi"</span>
+            <span class="ky">limits</span>:
+              <span class="ky">memory</span>: <span class="st">"1Gi"</span></pre>
+
+    <p>This is a complete Deployment. You can <code>kubectl apply -f base/deployment.yaml</code> and it works. No rendering step. No values to substitute. No template to debug. Your editor validates it, your linter checks it, <code>kubectl diff</code> shows exactly what will change.</p>
+
+    <h3>The Overlay: Only What Changes</h3>
+
+    <pre><span class="cm"># overlays/prod/kustomization.yaml</span>
+<span class="ky">apiVersion</span>: kustomize.config.k8s.io/v1beta1
+<span class="ky">kind</span>: Kustomization
+
+<span class="ky">resources</span>:
+  - ../../base
+
+<span class="ky">namespace</span>: <span class="st">production</span>
+
+<span class="ky">images</span>:
+  - <span class="ky">name</span>: <span class="st">my-registry/api-server</span>
+    <span class="ky">newTag</span>: <span class="st">v1.5.0</span>
+
+<span class="ky">patches</span>:
+  - <span class="ky">path</span>: <span class="st">replicas-patch.yaml</span>
+  - <span class="ky">path</span>: <span class="st">resources-patch.yaml</span></pre>
+
+    <pre><span class="cm"># overlays/prod/replicas-patch.yaml</span>
+<span class="ky">apiVersion</span>: apps/v1
+<span class="ky">kind</span>: Deployment
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">api-server</span>
+<span class="ky">spec</span>:
+  <span class="ky">replicas</span>: <span class="nm">5</span></pre>
+
+    <pre><span class="cm"># overlays/prod/resources-patch.yaml</span>
+<span class="ky">apiVersion</span>: apps/v1
+<span class="ky">kind</span>: Deployment
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">api-server</span>
+<span class="ky">spec</span>:
+  <span class="ky">template</span>:
+    <span class="ky">spec</span>:
+      <span class="ky">containers</span>:
+        - <span class="ky">name</span>: <span class="st">api</span>
+          <span class="ky">resources</span>:
+            <span class="ky">requests</span>:
+              <span class="ky">cpu</span>: <span class="st">"1"</span>
+              <span class="ky">memory</span>: <span class="st">"1Gi"</span>
+            <span class="ky">limits</span>:
+              <span class="ky">memory</span>: <span class="st">"2Gi"</span></pre>
+
+    <p>The production overlay says: take the base, set the namespace to <code>production</code>, update the image tag to <code>v1.5.0</code>, increase replicas to 5, and bump resource requests. That's it. Every file is valid YAML. The patches only contain what's different — not a copy of the entire manifest.</p>
+
+    <div class="callout">
+      <strong>The key insight:</strong> With Helm, you start with templates and add values to make them concrete. With Kustomize, you start with concrete YAML and add patches to make it vary. Starting concrete is easier to understand, easier to debug, and easier to review in a pull request.
+    </div>
+
+    <h2 id="what-made-us-switch">What Actually Made Us Switch</h2>
+
+    <p>It wasn't one thing. It was the accumulation of friction across the team:</p>
+
+    <ol>
+      <li><strong>Onboarding time.</strong> New engineers needed to learn Go templating, Helm's value resolution order, and our chart conventions before they could deploy their first service. With Kustomize, the base is just Kubernetes YAML — if you know <code>kubectl</code>, you know the base. Overlays are small patches. The learning curve dropped from days to hours.</li>
+      <li><strong>Pull request reviews.</strong> Reviewing a Helm values change required mentally rendering the template to understand the impact. Reviewing a Kustomize patch is reviewing YAML — the diff shows exactly what changes in the final output. <code>kubectl kustomize overlays/prod | kubectl diff -f -</code> shows the exact cluster impact before merging.</li>
+      <li><strong>GitOps compatibility.</strong> ArgoCD and Flux both support Kustomize natively. Our GitOps pipeline renders <code>kustomize build</code> and applies the result. With Helm, ArgoCD needs to run <code>helm template</code> at sync time, which means the rendered output isn't visible in Git — it's computed at deploy time. Kustomize output is deterministic and inspectable.</li>
+      <li><strong>The 80/20 rule.</strong> 80% of our internal charts used maybe 5% of Helm's capabilities — basic value substitution for image tags, replica counts, and resource limits. We were paying the complexity cost of a full templating engine to do what strategic merge patches handle natively.</li>
+      <li><strong>Drift between environments.</strong> With Helm, environment differences were scattered across multiple <code>values-*.yaml</code> files. With Kustomize, each overlay directory is self-contained — <code>ls overlays/prod/</code> shows you every deviation from the base. No mental merging required.</li>
+    </ol>
+
+    <h2 id="comparison-table">Head-to-Head Comparison</h2>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>Helm</th>
+          <th>Kustomize</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Approach</strong></td>
+          <td>Template + values → rendered YAML</td>
+          <td class="good">Base YAML + patches → merged YAML</td>
+        </tr>
+        <tr>
+          <td><strong>Configuration files</strong></td>
+          <td class="bad">Go templates (not valid YAML)</td>
+          <td class="good">Plain Kubernetes YAML throughout</td>
+        </tr>
+        <tr>
+          <td><strong>Environment variants</strong></td>
+          <td>Multiple values files, merged at render time</td>
+          <td class="good">Overlay directories with only the diffs</td>
+        </tr>
+        <tr>
+          <td><strong>Learning curve</strong></td>
+          <td class="bad">Go templates + Helm conventions + value resolution</td>
+          <td class="good">Kubernetes YAML + patch mechanics</td>
+        </tr>
+        <tr>
+          <td><strong>Debugging</strong></td>
+          <td class="bad"><code>helm template</code> → trace through templates</td>
+          <td class="good"><code>kubectl kustomize</code> → read the output</td>
+        </tr>
+        <tr>
+          <td><strong>PR review</strong></td>
+          <td class="bad">Must mentally render to understand impact</td>
+          <td class="good">Diff shows the actual YAML change</td>
+        </tr>
+        <tr>
+          <td><strong>Package distribution</strong></td>
+          <td class="good">Chart repos, OCI registries, versioned releases</td>
+          <td class="bad">No native packaging — just directories in Git</td>
+        </tr>
+        <tr>
+          <td><strong>Release management</strong></td>
+          <td class="good">Built-in: history, rollback, status tracking</td>
+          <td class="bad">None — delegate to GitOps tool or kubectl</td>
+        </tr>
+        <tr>
+          <td><strong>Lifecycle hooks</strong></td>
+          <td class="good">Pre/post install, upgrade, delete hooks</td>
+          <td class="bad">Not supported natively</td>
+        </tr>
+        <tr>
+          <td><strong>Third-party software</strong></td>
+          <td class="good">Dominant — every K8s project ships charts</td>
+          <td>Growing — but Helm charts are still the standard</td>
+        </tr>
+        <tr>
+          <td><strong>Tooling required</strong></td>
+          <td>Helm CLI (separate binary)</td>
+          <td class="good">Built into <code>kubectl</code> (since 1.14)</td>
+        </tr>
+        <tr>
+          <td><strong>GitOps fit</strong></td>
+          <td>Supported but rendered at sync time</td>
+          <td class="good">Native — output is deterministic and in Git</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="where-helm-still-wins">Where We Still Use Helm</h2>
+
+    <p>We didn't delete Helm. We stopped <em>writing</em> Helm charts. We still <em>consume</em> them for third-party software:</p>
+
+    <ul>
+      <li><strong>KEDA</strong> — <code>helm install keda kedacore/keda</code></li>
+      <li><strong>Karpenter</strong> — <code>helm install karpenter oci://public.ecr.aws/karpenter/karpenter</code></li>
+      <li><strong>cert-manager</strong> — complex CRD lifecycle that Helm handles well</li>
+      <li><strong>NGINX Ingress Controller</strong> — dozens of configuration options abstracted by values</li>
+      <li><strong>Prometheus / kube-prometheus-stack</strong> — hundreds of resources, dependencies between components</li>
+      <li><strong>External Secrets Operator</strong> — CRDs + RBAC + webhook configuration</li>
+    </ul>
+
+    <p>These are all cases where the chart author has encoded significant operational knowledge into the templates. Installing Prometheus from plain YAML would mean managing 50+ resources and understanding their dependencies. The Helm chart does that for you. This is Helm at its best — distributing other people's complexity.</p>
+
+    <div class="callout">
+      <strong>The rule we follow:</strong> Consume Helm charts for software you didn't write. Use Kustomize for software you did write. Helm is a package manager; Kustomize is a deployment tool. They solve different problems.
+    </div>
+
+    <h2 id="hybrid">The Hybrid Model That Works</h2>
+
+    <p>In practice, most teams end up with a hybrid approach. Here's the model that works for us:</p>
+
+    <pre><span class="cm"># Repository structure — hybrid Helm + Kustomize</span>
+<span class="ky">infrastructure/</span>
+  <span class="ky">helm-releases/</span>             <span class="cm"># Third-party charts managed by Helm</span>
+    <span class="st">karpenter/</span>
+      <span class="st">values.yaml</span>             <span class="cm"># Custom values for the Helm chart</span>
+    <span class="st">keda/</span>
+      <span class="st">values.yaml</span>
+    <span class="st">cert-manager/</span>
+      <span class="st">values.yaml</span>
+    <span class="st">ingress-nginx/</span>
+      <span class="st">values.yaml</span>
+
+<span class="ky">applications/</span>
+  <span class="ky">api-server/</span>                <span class="cm"># Internal app — Kustomize</span>
+    <span class="st">base/</span>
+    <span class="st">overlays/dev/</span>
+    <span class="st">overlays/staging/</span>
+    <span class="st">overlays/prod/</span>
+  <span class="ky">worker-service/</span>            <span class="cm"># Internal app — Kustomize</span>
+    <span class="st">base/</span>
+    <span class="st">overlays/dev/</span>
+    <span class="st">overlays/staging/</span>
+    <span class="st">overlays/prod/</span></pre>
+
+    <p>ArgoCD (or Flux) watches both directories. For <code>helm-releases/</code>, it uses the Helm source type. For <code>applications/</code>, it uses the Kustomize source type. Each tool is used where it's strongest. No compromise, no workaround.</p>
+
+    <h3>Kustomize Built-In Features We Rely On</h3>
+
+    <p>Kustomize isn't just patches. A few built-in features that replaced common Helm patterns for us:</p>
+
+    <pre><span class="cm"># kustomization.yaml — built-in features</span>
+<span class="ky">apiVersion</span>: kustomize.config.k8s.io/v1beta1
+<span class="ky">kind</span>: Kustomization
+
+<span class="ky">resources</span>:
+  - ../../base
+
+<span class="ky">namespace</span>: <span class="st">production</span>               <span class="cm"># Sets namespace on all resources</span>
+
+<span class="ky">namePrefix</span>: <span class="st">prod-</span>                   <span class="cm"># Prefixes all resource names</span>
+
+<span class="ky">commonLabels</span>:                        <span class="cm"># Adds labels to all resources + selectors</span>
+  <span class="ky">environment</span>: <span class="st">production</span>
+  <span class="ky">team</span>: <span class="st">platform</span>
+
+<span class="ky">images</span>:                              <span class="cm"># Image tag overrides without patching</span>
+  - <span class="ky">name</span>: <span class="st">my-registry/api-server</span>
+    <span class="ky">newTag</span>: <span class="st">v1.5.0</span>
+
+<span class="ky">configMapGenerator</span>:                  <span class="cm"># Generates ConfigMaps with content hashing</span>
+  - <span class="ky">name</span>: <span class="st">app-config</span>
+    <span class="ky">files</span>:
+      - <span class="st">config.yaml</span>
+
+<span class="ky">secretGenerator</span>:                     <span class="cm"># Generates Secrets with content hashing</span>
+  - <span class="ky">name</span>: <span class="st">db-credentials</span>
+    <span class="ky">envs</span>:
+      - <span class="st">.env.secret</span></pre>
+
+    <p>The <code>configMapGenerator</code> and <code>secretGenerator</code> deserve special mention. They generate ConfigMaps and Secrets with a content hash suffix (e.g., <code>app-config-m2k8f2h5</code>). When the content changes, the name changes, which forces a Deployment rollout. With Helm, you typically need a checksum annotation hack to achieve the same thing. Kustomize does it by default.</p>
+
+    <h2 id="migration-path">How We Migrated</h2>
+
+    <p>We didn't migrate everything at once. We followed a pragmatic approach:</p>
+
+    <ol>
+      <li><strong>Stop writing new Helm charts.</strong> Any new service gets a Kustomize base + overlays from day one. This is the easiest step — no migration, just a new convention.</li>
+      <li><strong>Convert the simplest charts first.</strong> Services with minimal template logic — basically just value substitution for image tags and replicas. <code>helm template</code> the chart, clean up the output, and that becomes your Kustomize base. One afternoon per service.</li>
+      <li><strong>Tackle complex charts last.</strong> Charts with conditionals, loops, and helper functions. These take longer because you need to decide: does the conditional become a separate overlay, or does the feature just get included in the base? Usually the answer is "include it in the base, it's always on anyway."</li>
+      <li><strong>Don't migrate third-party charts.</strong> cert-manager, NGINX Ingress, Prometheus — these stay as Helm releases. The chart authors maintain them better than you could with raw YAML.</li>
+    </ol>
+
+    <pre><span class="cm"># Quick conversion: Helm chart → Kustomize base</span>
+
+<span class="cm"># Step 1: Render the Helm chart to get the final YAML</span>
+<span class="ky">$</span> helm template my-app ./charts/my-app \
+    --values values-prod.yaml \
+    --namespace production > rendered.yaml
+
+<span class="cm"># Step 2: Split into individual files</span>
+<span class="cm"># (manually or with a tool like yq)</span>
+<span class="ky">$</span> mkdir -p my-app/base
+<span class="cm"># Extract each resource into its own file</span>
+
+<span class="cm"># Step 3: Create kustomization.yaml</span>
+<span class="ky">$</span> cd my-app/base && kustomize create --autodetect
+
+<span class="cm"># Step 4: Create overlays for each environment</span>
+<span class="ky">$</span> mkdir -p overlays/{dev,staging,prod}
+<span class="cm"># Add patches for environment-specific differences</span>
+
+<span class="cm"># Step 5: Verify the output matches</span>
+<span class="ky">$</span> kubectl kustomize overlays/prod | diff - rendered.yaml</pre>
+
+    <h2 id="takeaways">Key Takeaways</h2>
+
+    <ol>
+      <li><strong>Helm is a package manager. Kustomize is a deployment tool.</strong> They solve different problems. Use Helm to install software you didn't write. Use Kustomize to deploy software you did write.</li>
+      <li><strong>Go templates are the tax you pay for Helm's power.</strong> For third-party charts, that tax is worth it — the chart author paid it, not you. For internal apps, the tax compounds: every engineer on the team pays it every time they touch the chart.</li>
+      <li><strong>Kustomize starts with valid YAML.</strong> The base is a complete, runnable deployment. Overlays only contain what changes per environment. Every file is valid YAML that your editor, linter, and <code>kubectl</code> understand natively.</li>
+      <li><strong>The hybrid model works.</strong> <code>helm-releases/</code> for third-party software, <code>applications/</code> with Kustomize for internal apps. ArgoCD or Flux handles both. Each tool is used where it's strongest.</li>
+      <li><strong>Pull request reviews get dramatically easier.</strong> Kustomize diffs show the actual YAML change. Helm diffs show values that need mental rendering to understand the impact.</li>
+      <li><strong>configMapGenerator and secretGenerator replace annotation hacks.</strong> Content-hash suffixed names force rollouts on config changes — no checksum annotation template required.</li>
+      <li><strong>Migration is incremental.</strong> Stop writing new charts first. Convert simple charts next. Tackle complex ones last. Don't touch third-party charts.</li>
+      <li><strong>The simplicity is the point.</strong> Kustomize doesn't have hooks, release history, or a chart repository. That's not a gap — it's a design choice. If you need those, use Helm. If you don't, why pay the complexity?</li>
+    </ol>
+
+    <h2 id="reference">Reference</h2>
+    <ul>
+      <li>Kustomize docs: <a href="https://kustomize.io/" target="_blank" rel="noopener">kustomize.io</a> — official documentation</li>
+      <li>Kustomize built-in features: <a href="https://kubectl.docs.kubernetes.io/references/kustomize/" target="_blank" rel="noopener">kubectl.docs.kubernetes.io/references/kustomize</a></li>
+      <li>Helm docs: <a href="https://helm.sh/docs/" target="_blank" rel="noopener">helm.sh</a></li>
+      <li>ArgoCD with Kustomize: <a href="https://argo-cd.readthedocs.io/en/stable/user-guide/kustomize/" target="_blank" rel="noopener">ArgoCD Kustomize integration</a></li>
+      <li>Kubernetes SIG CLI: <a href="https://github.com/kubernetes-sigs/kustomize" target="_blank" rel="noopener">github.com/kubernetes-sigs/kustomize</a></li>
+    </ul>
+
+  </article>
+
+  <div class="article-divider"></div>
+  <footer class="article-footer">
+    <div class="article-author">
+      <div class="author-avatar">R³</div>
+      <div>
+        <div class="author-name">Richie Richard Rajkumar</div>
+        <div class="author-role">Infrastructure Architect · Platform Leader · Berlin</div>
+      </div>
+    </div>
+    <a href="/blog" class="back-btn">← All articles</a>
+  </footer>
+
+</div><!-- /article-page -->
+
+<script src="/js/main.js"></script>
+</body>
+</html>

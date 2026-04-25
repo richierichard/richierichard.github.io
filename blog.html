@@ -331,7 +331,7 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
       <div class="sidebar-section-label">// by topic</div>
       <div class="tag-filter-list">
         <button class="tag-filter-btn active" data-tag="all">
-          All posts <span class="tag-filter-count" id="count-all">8</span>
+          All posts <span class="tag-filter-count" id="count-all">9</span>
         </button>
         <button class="tag-filter-btn" data-tag="ai">
           AI <span class="tag-filter-count" id="count-ai">2</span>
@@ -343,22 +343,22 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           Cost Engineering <span class="tag-filter-count" id="count-cost-engineering">4</span>
         </button>
         <button class="tag-filter-btn" data-tag="devops">
-          DevOps <span class="tag-filter-count" id="count-devops">8</span>
+          DevOps <span class="tag-filter-count" id="count-devops">9</span>
         </button>
         <button class="tag-filter-btn" data-tag="finops">
           FinOps <span class="tag-filter-count" id="count-finops">1</span>
         </button>
         <button class="tag-filter-btn" data-tag="gitops">
-          GitOps <span class="tag-filter-count" id="count-gitops">0</span>
+          GitOps <span class="tag-filter-count" id="count-gitops">1</span>
         </button>
         <button class="tag-filter-btn" data-tag="infrastructure">
           Infrastructure <span class="tag-filter-count" id="count-infrastructure">6</span>
         </button>
         <button class="tag-filter-btn" data-tag="kubernetes">
-          Kubernetes <span class="tag-filter-count" id="count-kubernetes">6</span>
+          Kubernetes <span class="tag-filter-count" id="count-kubernetes">7</span>
         </button>
         <button class="tag-filter-btn" data-tag="platform-engineering">
-          Platform Engineering <span class="tag-filter-count" id="count-platform-engineering">6</span>
+          Platform Engineering <span class="tag-filter-count" id="count-platform-engineering">7</span>
         </button>
         <button class="tag-filter-btn" data-tag="s3">
           S3 <span class="tag-filter-count" id="count-s3">2</span>
@@ -368,7 +368,7 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
       <div class="sidebar-divider"></div>
 
       <div class="sidebar-stat">
-        <span class="sidebar-stat-number" id="visible-count">8</span>
+        <span class="sidebar-stat-number" id="visible-count">9</span>
         <span class="sidebar-stat-label">articles published</span>
       </div>
 
@@ -390,6 +390,29 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <p>Writing about Kubernetes cost optimisation, GitOps patterns, and platform engineering at scale. Check back soon.</p>
         </div>
       </div>
+
+      <!-- ARTICLE: Helm to Kustomize -->
+      <a href="/blog/helm-to-kustomize" class="post-card reveal"
+         data-tags="kubernetes devops gitops platform-engineering"
+         data-title="from helm to kustomize why we ditched templates for overlays"
+         data-excerpt="we used helm for everything then go template spaghetti values yaml indirection and debugging rendered output became the problem here is why we moved internal deployments to kustomize and where helm still earns its place">
+        <div>
+          <div class="post-tags">
+            <span class="post-tag">Kubernetes</span>
+            <span class="post-tag">DevOps</span>
+            <span class="post-tag">GitOps</span>
+            <span class="post-tag">Platform Engineering</span>
+          </div>
+          <div class="post-title">From Helm to Kustomize: Why We Ditched Templates for Overlays</div>
+          <div class="post-excerpt">We used Helm for everything. Then Go template spaghetti, values.yaml indirection, and debugging rendered output became the problem. Here's why we moved internal deployments to Kustomize and where Helm still earns its place.</div>
+          <div class="post-meta">
+            <span>May 2026</span>
+            <span>·</span>
+            <span>13 min read</span>
+          </div>
+        </div>
+        <div class="post-arrow">→</div>
+      </a>
 
       <!-- ARTICLE: CAS vs Karpenter -->
       <a href="/blog/eks-cluster-autoscaler-vs-karpenter" class="post-card reveal"
