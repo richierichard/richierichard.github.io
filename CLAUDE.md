@@ -23,7 +23,8 @@ richierichard.github.io/
 │   ├── kubernetes-mcp-server-centralised.html # Article: Centralised MCP Server with IRSA (April 2026)
 │   ├── s3-files-filesystem.html            # Article: S3 Files — S3 Buckets as File Systems (April 2026)
 │   ├── eks-spot-instances.html             # Article: EKS Spot Instances Cost Optimisation (April 2026)
-│   └── eks-scaling-with-keda.html         # Article: KEDA Event-Driven Scaling with SQS (April 2026)
+│   ├── eks-scaling-with-keda.html         # Article: KEDA Event-Driven Scaling with SQS (April 2026)
+│   └── eks-scaling-with-karpenter.html    # Article: Karpenter Node Scaling on EKS (May 2026)
 ├── CNAME                    # GitHub Pages artefact (no longer used by Vercel)
 └── README.md
 ```
@@ -148,6 +149,7 @@ Each article is a standalone HTML file in the `blog/` directory with:
 | `s3-files-filesystem` | S3 Files: Your Buckets Are File Systems Now | April 2026 | AWS, S3, Infrastructure, DevOps |
 | `eks-spot-instances` | EKS Spot Instances: A Practical Guide to Cutting Your Kubernetes Compute Costs | April 2026 | Kubernetes, AWS, FinOps, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
 | `eks-scaling-with-keda` | KEDA on EKS: Event-Driven Scaling with SQS Queue Depth | May 2026 | Kubernetes, AWS, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
+| `eks-scaling-with-karpenter` | Karpenter on EKS: Right-Sized Nodes in 60 Seconds | May 2026 | Kubernetes, AWS, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
 
 ## favicon.svg
 - SVG favicon, transparent background, green R³ in Courier New bold
