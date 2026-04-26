@@ -365,7 +365,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <ul>
       <li><strong>Package management for Kubernetes.</strong> Helm charts package an entire application — Deployments, Services, ConfigMaps, RBAC, CRDs — into a versioned, distributable unit. <code>helm install cert-manager</code> installs 15+ resources with correct dependencies in one command. No other tool does this as well.</li>
-      <li><strong>Third-party ecosystem.</strong> Every major Kubernetes project ships a Helm chart: NGINX Ingress, Prometheus, ArgoCD, KEDA, Karpenter, cert-manager. The chart authors handle the complexity of configuring their software correctly. You provide values; they handle the templates.</li>
+      <li><strong>Third-party ecosystem.</strong> Every major Kubernetes project ships a Helm chart: AWS Load Balancer Controller, Prometheus, ArgoCD, KEDA, Karpenter, cert-manager. The chart authors handle the complexity of configuring their software correctly. You provide values; they handle the templates.</li>
       <li><strong>Release management.</strong> Helm tracks releases — what version is deployed, what values were used, when it was installed. <code>helm rollback</code> reverts to a previous release. <code>helm history</code> shows the audit trail. This state tracking is genuinely useful for operational visibility.</li>
       <li><strong>Lifecycle hooks.</strong> Pre-install jobs, post-upgrade migrations, pre-delete cleanup. Helm hooks let chart authors encode operational logic — run a database migration before the new deployment rolls out, clean up resources before deletion.</li>
     </ul>
@@ -637,7 +637,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <li><strong>KEDA</strong> — <code>helm install keda kedacore/keda</code></li>
       <li><strong>Karpenter</strong> — <code>helm install karpenter oci://public.ecr.aws/karpenter/karpenter</code></li>
       <li><strong>cert-manager</strong> — complex CRD lifecycle that Helm handles well</li>
-      <li><strong>NGINX Ingress Controller</strong> — dozens of configuration options abstracted by values</li>
+      <li><strong>AWS Load Balancer Controller</strong> — ALB/NLB provisioning, TargetGroupBinding CRDs, IAM integration</li>
       <li><strong>Prometheus / kube-prometheus-stack</strong> — hundreds of resources, dependencies between components</li>
       <li><strong>External Secrets Operator</strong> — CRDs + RBAC + webhook configuration</li>
     </ul>
@@ -661,7 +661,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <span class="st">values.yaml</span>
     <span class="st">cert-manager/</span>
       <span class="st">values.yaml</span>
-    <span class="st">ingress-nginx/</span>
+    <span class="st">aws-load-balancer-controller/</span>
       <span class="st">values.yaml</span>
 
 <span class="ky">applications/</span>
@@ -721,7 +721,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <li><strong>Stop writing new Helm charts.</strong> Any new service gets a Kustomize base + overlays from day one. This is the easiest step — no migration, just a new convention.</li>
       <li><strong>Convert the simplest charts first.</strong> Services with minimal template logic — basically just value substitution for image tags and replicas. <code>helm template</code> the chart, clean up the output, and that becomes your Kustomize base. One afternoon per service.</li>
       <li><strong>Tackle complex charts last.</strong> Charts with conditionals, loops, and helper functions. These take longer because you need to decide: does the conditional become a separate overlay, or does the feature just get included in the base? Usually the answer is "include it in the base, it's always on anyway."</li>
-      <li><strong>Don't migrate third-party charts.</strong> cert-manager, NGINX Ingress, Prometheus — these stay as Helm releases. The chart authors maintain them better than you could with raw YAML.</li>
+      <li><strong>Don't migrate third-party charts.</strong> cert-manager, AWS Load Balancer Controller, Prometheus — these stay as Helm releases. The chart authors maintain them better than you could with raw YAML.</li>
     </ol>
 
     <pre><span class="cm"># Quick conversion: Helm chart → Kustomize base</span>
