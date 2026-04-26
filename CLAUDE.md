@@ -25,7 +25,8 @@ richierichard.github.io/
 │   ├── eks-spot-instances.html             # Article: EKS Spot Instances Cost Optimisation (April 2026)
 │   ├── eks-scaling-with-keda.html         # Article: KEDA Event-Driven Scaling with SQS (April 2026)
 │   ├── eks-scaling-with-karpenter.html    # Article: Karpenter Node Scaling on EKS (May 2026)
-│   └── eks-cluster-autoscaler-vs-karpenter.html # Article: CAS vs Karpenter Comparison (May 2026)
+│   ├── eks-cluster-autoscaler-vs-karpenter.html # Article: CAS vs Karpenter Comparison (May 2026)
+│   └── helm-to-kustomize.html                  # Article: Helm to Kustomize Migration (May 2026)
 ├── CNAME                    # GitHub Pages artefact (no longer used by Vercel)
 └── README.md
 ```
@@ -152,6 +153,7 @@ Each article is a standalone HTML file in the `blog/` directory with:
 | `eks-scaling-with-keda` | KEDA on EKS: Event-Driven Scaling with SQS Queue Depth | May 2026 | Kubernetes, AWS, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
 | `eks-scaling-with-karpenter` | Karpenter on EKS: Right-Sized Nodes in 60 Seconds | May 2026 | Kubernetes, AWS, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
 | `eks-cluster-autoscaler-vs-karpenter` | Cluster Autoscaler vs Karpenter: Choosing the Right Node Scaler for EKS | May 2026 | Kubernetes, AWS, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
+| `helm-to-kustomize` | From Helm to Kustomize: Why We Ditched Templates for Overlays | May 2026 | Kubernetes, DevOps, GitOps, Platform Engineering |
 
 ## favicon.svg
 - SVG favicon, transparent background, green R³ in Courier New bold
