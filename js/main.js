@@ -232,6 +232,57 @@ if (localStorage.getItem('theme') === 'light') {
 }
 
 /* ============================================================
+   TABLE OF CONTENTS (article pages — auto-generated)
+   ============================================================ */
+(function () {
+  var articleBody = document.querySelector('.article-body');
+  if (!articleBody) return;
+
+  var headings = articleBody.querySelectorAll('h2[id]');
+  if (headings.length < 2) return;
+
+  var toc = document.createElement('div');
+  toc.className = 'article-toc';
+
+  var title = document.createElement('div');
+  title.className = 'article-toc-title';
+  title.textContent = 'On this page';
+  toc.appendChild(title);
+
+  var links = [];
+  headings.forEach(function (h2) {
+    var a = document.createElement('a');
+    a.className = 'article-toc-link';
+    a.href = '#' + h2.id;
+    a.textContent = h2.textContent;
+    toc.appendChild(a);
+    links.push(a);
+  });
+
+  document.body.appendChild(toc);
+
+  // Scroll spy — highlight the last heading that scrolled past the top
+  function updateActive() {
+    var active = null;
+    headings.forEach(function (h2) {
+      if (h2.getBoundingClientRect().top <= 120) active = h2;
+    });
+    links.forEach(function (a) {
+      a.classList.toggle('active', active !== null && a.getAttribute('href') === '#' + active.id);
+    });
+  }
+
+  var ticking = false;
+  window.addEventListener('scroll', function () {
+    if (!ticking) {
+      requestAnimationFrame(function () { updateActive(); ticking = false; });
+      ticking = true;
+    }
+  }, { passive: true });
+  updateActive();
+}());
+
+/* ============================================================
    CONTACT FORM — AJAX SUBMIT (no redirect)
    ============================================================ */
 const contactForm = document.getElementById('contact-form');

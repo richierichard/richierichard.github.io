@@ -694,6 +694,57 @@ footer a { color: var(--accent); text-decoration: none; }
 @media (max-width: 1200px) { .side-nav { display: none; } }
 
 /* ============================================================
+   ARTICLE TABLE OF CONTENTS (right sidebar on article pages)
+   ============================================================ */
+.article-toc {
+  position: fixed;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 90;
+  max-width: 220px;
+  max-height: 60vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+  opacity: 0;
+  animation: tocFadeIn 0.6s ease 0.4s forwards;
+}
+.article-toc::-webkit-scrollbar { width: 3px; }
+.article-toc::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+@keyframes tocFadeIn { to { opacity: 1; } }
+
+.article-toc-title {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.article-toc-link {
+  display: block;
+  text-decoration: none;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  line-height: 1.4;
+  padding: 0.25rem 0 0.25rem 0.75rem;
+  border-left: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.article-toc-link:hover { color: var(--text); }
+.article-toc-link.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+}
+
+@media (max-width: 1400px) { .article-toc { display: none; } }
+
+/* ============================================================
    SCROLL REVEAL
    ============================================================ */
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
