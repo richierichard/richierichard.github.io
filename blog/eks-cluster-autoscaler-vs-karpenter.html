@@ -272,7 +272,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         <span class="article-meta-dot">·</span>
         <span>May 2026</span>
         <span class="article-meta-dot">·</span>
-        <span>13 min read</span>
+        <span>16 min read</span>
       </div>
     </header>
   </div>
@@ -396,6 +396,12 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <p>This direct model is why Karpenter can do things CAS structurally cannot: right-size instances per pod, detect configuration drift, actively consolidate underused nodes, and handle Spot interruptions without additional components.</p>
 
+    <h3>Karpenter: One Tool Replacing Four</h3>
+
+    <p>With CAS, a well-configured EKS data plane requires multiple components working together: <strong>Cluster Autoscaler</strong> for scaling, <strong>Node Groups / ASGs</strong> for instance management, <strong>Node Termination Handler</strong> for Spot interruptions, and a <strong>Descheduler</strong> for rebalancing pods across nodes. Each is installed, configured, and maintained separately. Each has its own failure modes.</p>
+
+    <p>Karpenter replaces all four. It scales nodes directly (no CAS), provisions instances without ASGs (no node groups), handles interruptions natively via SQS (no NTH DaemonSet), and actively consolidates workloads onto fewer, cheaper nodes (no Descheduler). One controller, two CRDs, four problems solved.</p>
+
     <div class="callout">
       <strong>The mental model:</strong> Cluster Autoscaler is an ASG manager that happens to respond to Kubernetes scheduling. Karpenter is a Kubernetes-native provisioner that happens to use EC2. Same goal, opposite starting points.
     </div>
@@ -457,6 +463,16 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
           <td class="good">NodePool + EC2NodeClass (Kubernetes CRDs)</td>
         </tr>
         <tr>
+          <td><strong>GPU / ML workloads</strong></td>
+          <td class="bad">Dedicated ASG per GPU type (g5, p4d, etc.)</td>
+          <td class="good">Single NodePool — Karpenter provisions GPUs on demand</td>
+        </tr>
+        <tr>
+          <td><strong>Descheduler / rebalancing</strong></td>
+          <td class="bad">Requires separate Descheduler component</td>
+          <td class="good">Built-in — active consolidation rebalances workloads</td>
+        </tr>
+        <tr>
           <td><strong>Multi-architecture</strong></td>
           <td>Separate ASG per architecture</td>
           <td class="good">Single NodePool with arch in requirements</td>
@@ -474,7 +490,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         <tr>
           <td><strong>Maturity</strong></td>
           <td class="good">Production since 2016, CNCF-hosted</td>
-          <td>GA since 2023, AWS-maintained</td>
+          <td>GA since 2023, CNCF sandbox project</td>
         </tr>
       </tbody>
     </table>
@@ -510,6 +526,20 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
     <p>CAS needs the AWS Node Termination Handler (NTH) — a DaemonSet you install on every node — to detect Spot interruption events and drain pods before termination. NTH is a separate project to install, configure, upgrade, and monitor. When an interruption happens, NTH drains the node, pods go Pending, and only then does CAS start provisioning a replacement. See <a href="/blog/eks-spot-instances#handling-interruptions">EKS Spot Instances: Handling Interruptions</a> for the NTH setup.</p>
 
     <p>Karpenter watches for interruption events natively via SQS. When an interruption is detected, it <strong>pre-provisions a replacement node before draining</strong> the affected one. By the time pods are evicted, the new node is already ready. It also responds to rebalance recommendations — an early signal that arrives minutes before the actual interruption — giving even more time for graceful migration. See <a href="/blog/eks-scaling-with-karpenter#spot-interruptions">Karpenter on EKS: Spot Interruptions</a> for details.</p>
+
+    <h3>GPU and ML Workloads: Dedicated ASGs vs Dynamic Provisioning</h3>
+
+    <p>With CAS, GPU workloads require dedicated ASGs — one for <code>g5.xlarge</code>, another for <code>p4d.24xlarge</code>, each with its own launch template, min/max bounds, and scaling configuration. If you run multiple GPU types for different ML workloads (training vs inference), the number of ASGs multiplies. Each ASG is another piece of infrastructure to manage and keep right-sized.</p>
+
+    <p>Karpenter handles GPU instances like any other instance type. List GPU families in your NodePool requirements, and Karpenter provisions the right GPU instance when an ML pod with a <code>nvidia.com/gpu</code> resource request goes Pending. Pair this with KEDA for queue-driven ML pipelines (Kubeflow, SageMaker jobs) and you get fully event-driven GPU scaling — GPU nodes appear when training jobs are queued, and disappear when training completes.</p>
+
+    <h3>Pre-Warming: Cluster Overprovisioner</h3>
+
+    <p>Both autoscalers have a cold-start window — 3–5 minutes for CAS, ~60 seconds for Karpenter. For latency-sensitive workloads where even 60 seconds is too long, the <strong>Cluster Overprovisioner</strong> pattern eliminates the wait entirely.</p>
+
+    <p>The technique: run low-priority <strong>pause pods</strong> (dummy containers using the <code>registry.k8s.io/pause</code> image) that reserve node capacity but consume no CPU. When real pods go Pending, Kubernetes evicts pause pods first — they have the lowest PriorityClass — and schedules application pods on the already-warm node instantly. The evicted pause pods then trigger new node provisioning in the background.</p>
+
+    <p>With CAS, this is one of the few ways to get fast scaling — you're essentially pre-paying for spare capacity so real pods never wait for ASG provisioning. With Karpenter, it's optional but useful for strict SLA workloads. A <strong>Proportional Autoscaler</strong> can scale the number of pause pods with your cluster size, so the warm buffer grows as your fleet grows and shrinks when it contracts. See <a href="/blog/eks-scaling-with-karpenter#cluster-overprovisioner">Karpenter on EKS: Cluster Overprovisioner</a> for the full setup.</p>
 
     <h2 id="when-cas">When Cluster Autoscaler Is the Right Choice</h2>
 
@@ -661,6 +691,7 @@ Multi-cloud?
     <h2 id="takeaways">Key Takeaways</h2>
 
     <ol>
+      <li><strong>Karpenter replaces four components with one.</strong> Cluster Autoscaler, node groups, Node Termination Handler, and Descheduler — all replaced by a single controller with two CRDs. Fewer moving parts, fewer failure modes.</li>
       <li><strong>Different architecture, not just different features.</strong> CAS manages ASGs (infrastructure-first). Karpenter provisions instances directly (workload-first). This structural difference is why Karpenter can right-size, consolidate, detect drift, and handle Spot natively.</li>
       <li><strong>Karpenter wins on speed, cost, and operational simplicity.</strong> 60-second provisioning, active consolidation, drift detection, native Spot handling, and two CRDs instead of multiple ASGs + launch templates + NTH.</li>
       <li><strong>CAS wins on portability and maturity.</strong> Cloud-agnostic (AWS, GCP, Azure), battle-tested since 2016, works with managed node groups, and has a simpler IAM footprint.</li>

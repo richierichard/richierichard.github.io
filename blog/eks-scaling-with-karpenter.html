@@ -272,7 +272,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         <span class="article-meta-dot">·</span>
         <span>May 2026</span>
         <span class="article-meta-dot">·</span>
-        <span>15 min read</span>
+        <span>20 min read</span>
       </div>
     </header>
   </div>
@@ -406,9 +406,10 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <li><strong>AMI updates require rolling infrastructure changes.</strong> When a new EKS-optimised AMI is released — security patches, kernel updates, runtime upgrades — you update the launch template, then trigger a rolling replace. Nodes running the old AMI stay in the cluster until you explicitly replace them.</li>
       <li><strong>Consolidation is passive.</strong> Underused nodes only get removed if they fall below a utilisation threshold <em>and</em> the cooldown timer has expired. The controller won't actively move workloads onto fewer, better-fitted nodes. It just removes empty or nearly-empty nodes and hopes the scheduler does the rest.</li>
       <li><strong>Spot interruptions need a separate component.</strong> You need to install and maintain a DaemonSet (AWS Node Termination Handler) on every node to detect Spot interruption warnings and drain pods gracefully. It's another moving part that can break.</li>
+      <li><strong>Pod rebalancing needs yet another component.</strong> When nodes are underused but not empty, pods don't move themselves. You need a separate <a href="https://github.com/kubernetes-sigs/descheduler" target="_blank" rel="noopener">Descheduler</a> to evict and redistribute pods across nodes — another controller to install, configure, and maintain.</li>
     </ul>
 
-    <p>Karpenter was designed at AWS to eliminate these friction points. Instead of managing node groups, you declare intent — "I need nodes from these instance families, in these AZs, using on-demand or Spot" — and Karpenter handles every decision from there: which instance type, which AZ, when to launch, when to replace, when to consolidate. For a detailed comparison of both approaches and when to choose which, see <a href="/blog/eks-cluster-autoscaler-vs-karpenter">Cluster Autoscaler vs Karpenter</a>.</p>
+    <p>Karpenter was designed at AWS to eliminate these friction points — replacing the Cluster Autoscaler, node groups, Node Termination Handler, and Descheduler with a single controller. Instead of managing node groups, you declare intent — "I need nodes from these instance families, in these AZs, using on-demand or Spot" — and Karpenter handles every decision from there: which instance type, which AZ, when to launch, when to replace, when to consolidate. For a detailed comparison of both approaches and when to choose which, see <a href="/blog/eks-cluster-autoscaler-vs-karpenter">Cluster Autoscaler vs Karpenter</a>.</p>
 
     <h2 id="two-resources">The Two Resources That Replace Everything</h2>
 
@@ -933,6 +934,153 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
       <strong>This is where the real savings happen.</strong> KEDA alone eliminates idle pods. Karpenter alone eliminates overprovisioned nodes. Together, they eliminate idle pods <em>and</em> the nodes they ran on. If your queue-based workloads are idle for 12 hours overnight, that's 12 hours of zero compute cost — not just reduced, but zero.
     </div>
 
+    <h2 id="cluster-overprovisioner">Pre-Warming Nodes: Cluster Overprovisioner</h2>
+
+    <p>Karpenter provisions nodes in ~60 seconds — fast, but not instant. For latency-sensitive workloads where even 60 seconds is too long (real-time APIs, game servers, trading platforms), you can combine Karpenter with the <strong>Cluster Overprovisioner</strong> pattern to have warm, empty capacity ready before pods actually need it.</p>
+
+    <h3>How It Works</h3>
+
+    <p>The idea is simple: run low-priority <strong>pause pods</strong> (dummy pods that consume no CPU but reserve node capacity). When real application pods go Pending, Kubernetes evicts the pause pods first — because they have the lowest priority — and schedules the application pods on the now-free capacity. The application pods start immediately on the already-running node. Meanwhile, the evicted pause pods go Pending, triggering Karpenter to provision new warm capacity in the background.</p>
+
+    <pre><span class="cm"># The pre-warming flow:</span>
+
+<span class="nm">1.</span> Pause pods run on pre-warmed nodes       <span class="cm"># Reserving capacity, using no CPU</span>
+<span class="nm">2.</span> Real application pod goes Pending         <span class="cm"># Needs a node now</span>
+<span class="nm">3.</span> Scheduler evicts a pause pod              <span class="cm"># Lowest priority → evicted first</span>
+<span class="nm">4.</span> Application pod starts <span class="st">immediately</span>       <span class="cm"># Node was already warm</span>
+<span class="nm">5.</span> Evicted pause pod goes Pending             <span class="cm"># Triggers Karpenter</span>
+<span class="nm">6.</span> Karpenter provisions a new warm node       <span class="cm"># Capacity replenished in ~60s</span>
+
+<span class="cm"># Result: application pods never wait for node provisioning</span></pre>
+
+    <h3>Setting Up the Overprovisioner</h3>
+
+    <pre><span class="cm"># 1. PriorityClass — lowest priority, so pause pods get evicted first</span>
+<span class="ky">apiVersion</span>: scheduling.k8s.io/v1
+<span class="ky">kind</span>: PriorityClass
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">overprovisioning</span>
+<span class="ky">value</span>: <span class="nm">-1</span>
+<span class="ky">globalDefault</span>: <span class="nm">false</span>
+<span class="ky">description</span>: <span class="st">"Pause pods for cluster overprovisioning"</span></pre>
+
+    <pre><span class="cm"># 2. Pause pod Deployment — reserves capacity on warm nodes</span>
+<span class="ky">apiVersion</span>: apps/v1
+<span class="ky">kind</span>: Deployment
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">overprovisioner</span>
+<span class="ky">spec</span>:
+  <span class="ky">replicas</span>: <span class="nm">5</span>                         <span class="cm"># 5 warm slots</span>
+  <span class="ky">selector</span>:
+    <span class="ky">matchLabels</span>:
+      <span class="ky">app</span>: <span class="st">overprovisioner</span>
+  <span class="ky">template</span>:
+    <span class="ky">metadata</span>:
+      <span class="ky">labels</span>:
+        <span class="ky">app</span>: <span class="st">overprovisioner</span>
+    <span class="ky">spec</span>:
+      <span class="ky">priorityClassName</span>: <span class="st">overprovisioning</span>
+      <span class="ky">terminationGracePeriodSeconds</span>: <span class="nm">0</span>
+      <span class="ky">containers</span>:
+        - <span class="ky">name</span>: <span class="st">pause</span>
+          <span class="ky">image</span>: <span class="st">registry.k8s.io/pause:3.9</span>
+          <span class="ky">resources</span>:
+            <span class="ky">requests</span>:
+              <span class="ky">cpu</span>: <span class="st">"1"</span>              <span class="cm"># Size to match your typical pod</span>
+              <span class="ky">memory</span>: <span class="st">"2Gi"</span></pre>
+
+    <p>Each pause pod reserves one "slot" of capacity. Size the requests to match your typical application pod. Five replicas with 1 CPU / 2 GiB each means you always have warm capacity for 5 pods to start instantly.</p>
+
+    <h3>Scaling the Buffer: Proportional Autoscaler</h3>
+
+    <p>A fixed number of pause pods works for stable workloads, but what about growing clusters? If your cluster scales from 6 nodes to 18 nodes, 5 warm slots may not be enough. The <strong>Proportional Autoscaler</strong> (<code>cluster-proportional-autoscaler</code>) scales the overprovisioner Deployment proportionally to your cluster size — maintaining a consistent warm buffer as you grow.</p>
+
+    <pre><span class="cm"># Proportional Autoscaler config — scales pause pods with cluster size</span>
+<span class="ky">apiVersion</span>: apps/v1
+<span class="ky">kind</span>: Deployment
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">proportional-autoscaler</span>
+<span class="ky">spec</span>:
+  <span class="ky">replicas</span>: <span class="nm">1</span>
+  <span class="ky">template</span>:
+    <span class="ky">spec</span>:
+      <span class="ky">containers</span>:
+        - <span class="ky">name</span>: <span class="st">autoscaler</span>
+          <span class="ky">image</span>: <span class="st">registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.8.9</span>
+          <span class="ky">command</span>:
+            - <span class="st">/cluster-proportional-autoscaler</span>
+            - <span class="st">--namespace=default</span>
+            - <span class="st">--configmap=overprovisioner-autoscaler</span>
+            - <span class="st">--target=deployment/overprovisioner</span>
+            - <span class="st">--logtostderr=true</span>
+---
+<span class="ky">apiVersion</span>: v1
+<span class="ky">kind</span>: ConfigMap
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">overprovisioner-autoscaler</span>
+<span class="ky">data</span>:
+  <span class="ky">linear</span>: <span class="st">'{"coresPerReplica":4,"nodesPerReplica":1,"min":2,"max":20}'</span>
+  <span class="cm"># 1 pause pod per node, or 1 per 4 cores — whichever is higher</span>
+  <span class="cm"># Cluster grows from 6 → 18 nodes, buffer grows from 6 → 18 pause pods</span></pre>
+
+    <p>As your cluster scales up and real pods replace pause pods, the Proportional Autoscaler increases the overprovisioner replica count. Karpenter provisions new nodes for the additional pause pods, maintaining the warm buffer proportionally. When the cluster scales down, the buffer shrinks too — you don't pay for oversized warm capacity during quiet periods.</p>
+
+    <div class="callout">
+      <strong>When to use overprovisioning:</strong> Most workloads don't need it — 60-second provisioning is fast enough. Use the Cluster Overprovisioner when you have strict latency SLAs (sub-second pod start times), bursty traffic patterns that can't tolerate any cold-start delay, or real-time workloads where even brief scheduling delays impact user experience.
+    </div>
+
+    <h2 id="gpu-ml-workloads">GPU and ML Workload Provisioning</h2>
+
+    <p>Karpenter provisions GPU instances the same way it provisions any other instance — dynamically, based on pod resource requests. When a pod requests <code>nvidia.com/gpu: 1</code>, Karpenter evaluates GPU instance families in your NodePool, picks the cheapest available option, and launches it. No dedicated ASG per GPU type, no separate launch template, no pre-provisioned GPU node group sitting idle.</p>
+
+    <h3>GPU NodePool Example</h3>
+
+    <pre><span class="ky">apiVersion</span>: karpenter.sh/v1
+<span class="ky">kind</span>: NodePool
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">gpu-workloads</span>
+<span class="ky">spec</span>:
+  <span class="ky">template</span>:
+    <span class="ky">metadata</span>:
+      <span class="ky">labels</span>:
+        <span class="ky">workload-type</span>: <span class="st">gpu</span>
+    <span class="ky">spec</span>:
+      <span class="ky">taints</span>:
+        - <span class="ky">key</span>: <span class="st">nvidia.com/gpu</span>
+          <span class="ky">effect</span>: <span class="st">NoSchedule</span>
+      <span class="ky">requirements</span>:
+        - <span class="ky">key</span>: <span class="st">karpenter.sh/capacity-type</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"on-demand"</span>, <span class="st">"spot"</span>]
+        - <span class="ky">key</span>: <span class="st">node.kubernetes.io/instance-type</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>:
+            - <span class="st">"g5.xlarge"</span>       <span class="cm"># 1 GPU, 4 vCPU — inference</span>
+            - <span class="st">"g5.2xlarge"</span>      <span class="cm"># 1 GPU, 8 vCPU — medium training</span>
+            - <span class="st">"g5.4xlarge"</span>      <span class="cm"># 1 GPU, 16 vCPU — large training</span>
+            - <span class="st">"p4d.24xlarge"</span>    <span class="cm"># 8 GPUs — distributed training</span>
+      <span class="ky">nodeClassRef</span>:
+        <span class="ky">group</span>: <span class="st">karpenter.k8s.aws</span>
+        <span class="ky">kind</span>: <span class="st">EC2NodeClass</span>
+        <span class="ky">name</span>: <span class="st">gpu-nodes</span>
+      <span class="ky">expireAfter</span>: <span class="st">336h</span>
+  <span class="ky">disruption</span>:
+    <span class="ky">consolidationPolicy</span>: <span class="st">WhenEmpty</span>    <span class="cm"># Don't consolidate mid-training</span>
+    <span class="ky">consolidateAfter</span>: <span class="st">60s</span>
+  <span class="ky">limits</span>:
+    <span class="ky">cpu</span>: <span class="st">"100"</span>
+    <span class="ky">memory</span>: <span class="st">400Gi</span></pre>
+
+    <p>The taint ensures only GPU workloads land on these expensive instances. The <code>WhenEmpty</code> consolidation policy avoids disrupting long-running training jobs — GPU nodes are only removed when they're fully idle.</p>
+
+    <h3>KEDA + Karpenter for ML Pipelines</h3>
+
+    <p>The combination is particularly powerful for ML workloads. When training jobs or inference requests arrive via SQS, Kafka, or a Kubeflow pipeline, KEDA scales the pods and Karpenter provisions the GPU nodes. When the pipeline drains, pods scale to zero, GPU nodes get consolidated, and you pay nothing. This is the same pattern as the <a href="#keda-integration">KEDA + Karpenter pipeline</a> — but with GPU instances costing $1–30/hr each, the savings from scaling to zero are substantial.</p>
+
+    <div class="callout">
+      <strong>GPU instances are expensive to leave idle.</strong> A single <code>g5.xlarge</code> costs ~$1.00/hr on-demand. A <code>p4d.24xlarge</code> costs ~$32/hr. With ASG-based scaling, GPU node groups often have a minimum of 1 to avoid cold-start delays. Karpenter provisions GPU nodes on demand in ~60 seconds, so you can safely set your floor to zero.
+    </div>
+
     <h2 id="production-hardening">Production Hardening</h2>
 
     <h3>1. Disruption Budgets on NodePools</h3>
@@ -1086,6 +1234,8 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
       <li><strong>Spot interruptions are handled natively.</strong> No DaemonSet needed. Karpenter detects interruption events via SQS, pre-provisions replacement nodes before draining, and responds to rebalance recommendations proactively.</li>
       <li><strong>Disruption budgets give you control.</strong> Limit how many nodes are disrupted at once, schedule maintenance windows, and annotate critical pods with <code>do-not-disrupt</code> to prevent unwanted moves.</li>
       <li><strong>Separate NodePools for different workload classes.</strong> On-demand for critical services, mixed for general purpose, Spot-only for batch. Use weights to control priority.</li>
+      <li><strong>GPU instances are provisioned on demand like any other type.</strong> No dedicated ASG needed. Karpenter launches GPU nodes when ML pods go Pending and consolidates them when training completes. Pair with KEDA for fully event-driven ML pipelines.</li>
+      <li><strong>Cluster Overprovisioner eliminates even the 60-second wait.</strong> Low-priority pause pods reserve warm capacity. When real pods arrive, pause pods get evicted and application pods start instantly. Use Proportional Autoscaler to scale the buffer with your cluster.</li>
     </ol>
 
     <h2 id="reference">Reference</h2>
