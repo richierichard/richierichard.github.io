@@ -13,6 +13,8 @@ richierichard.github.io/
 ├── favicon.svg              # SVG favicon — transparent background, green R³ in Courier New
 ├── vercel.json              # Vercel config — clean URLs + .html → clean URL redirects
 ├── github-profile-README.md # Source file for GitHub profile README (deploy to richierichard/richierichard repo)
+├── img/
+│   └── richie.jpeg          # Profile photo (hero section)
 ├── css/
 │   └── style.css            # All styles, organised by section with comments
 ├── js/
@@ -47,7 +49,7 @@ Top nav (all pages): **Home · About · Blog · Contact** only.
 ## index.html — Homepage sections (by anchor ID)
 | ID           | Content                                         |
 |--------------|-------------------------------------------------|
-| `#hero`      | Hero — name, role, stats, terminal visual       |
+| `#hero`      | Hero — statement heading, description, stats, profile photo with bio + social icons |
 | `#about-me`  | "Get to Know Me" — intro text + highlight cards |
 | `#skills`    | Skills grid — cards by category                 |
 | `#experience`| Timeline of work history                        |
@@ -57,7 +59,11 @@ Top nav (all pages): **Home · About · Blog · Contact** only.
 Notes:
 - Certifications section removed from homepage — full detailed certs live on `about.html`
 - Education section removed from homepage — lives on `about.html` only
-- Browser tab title: "Richie Richard Rajkumar — Leader · Visionary · Architect"
+- Browser tab title: "Richie Richard Rajkumar | Leader · Visionary · Architect"
+- Hero heading is a statement ("Building cloud platforms that scale organisations, not just systems.") not the name
+- Hero CTA buttons: "Start a conversation" (primary) + "View experience" (outline)
+- Profile photo in a framed card (`.hero-photo-frame`) with decorative accent circles, bio caption, and social icon links (LinkedIn, GitHub, X)
+- Em-dashes (`—`) are not used in index.html; use commas, periods, or semicolons instead
 
 ## Side navigation (index.html only)
 A fixed right-side dot navigator (`.side-nav` div, NOT a `<nav>` element — avoid `<nav>` or it inherits the top nav styles).
@@ -79,7 +85,7 @@ A separate full page at `richierichard.com/about.html` with:
 - Consulting services (3 cards)
 - **Detailed certifications** — 8 cards with description, issuer, and skill tags (`.cert-detail-card`)
 - Education
-- Contact CTA block
+- Contact CTA block — dark navy-blue gradient background with subtle radial glows, light text; `.btn-outline` overridden for visibility on dark bg
 - Page-specific styles are inline `<style>` block in `about.html` — not in `style.css`
 
 ## blog.html — Blog listing page
@@ -166,20 +172,31 @@ Canvas-based animation in `main.js` (`#bg-canvas` element, first child of `<body
 - 28 floating nodes (25% larger "server" nodes with pulse ring, 75% smaller endpoint nodes)
 - Connection lines drawn between nodes within 200px, opacity fades with distance
 - Data packets (small dots, green or cyan) travel along connections
-- Adapts to light/dark mode by reading `document.body.classList.contains('light')`
+- Adapts to light/dark mode by reading `document.body.classList.contains('light')` (light is the default)
 - Canvas: `position: fixed; z-index: 0` — sections/footer have `position: relative; z-index: 1` to sit above it
 - `main.js` guards page-specific elements with null checks: `cloud-tags` and `contact-form`
 - **Do NOT use `<nav>` for the side nav** — the global `nav {}` CSS rule would override its positioning
 
 ## Nav logo
 ```html
-<a href="index.html" class="nav-logo">
-  <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
-  <span class="nav-logo-tag">build · scale · secure</span>
+<a href="/" class="nav-logo">
+  <span class="nav-logo-mark">R³</span>
+  <span class="nav-logo-divider"></span>
+  <span class="nav-logo-right">
+    <span class="nav-logo-name-line">
+      <span class="nav-logo-name">Richie Richard </span>
+      <span class="nav-logo-surname">Rajkumar</span>
+    </span>
+    <span class="nav-logo-tag">BUILD ▸ SCALE ▸ SECURE</span>
+  </span>
 </a>
 ```
-- `.nav-logo-mark` and `.nav-logo-tag` have `display: block` to ensure they always stack vertically
-- Tagline: "build · scale · secure"
+- Three-part horizontal layout: R³ mark | vertical divider | name + tagline stacked
+- `.nav-logo-mark` is sized (2.4rem) to match the height of the two right-side lines
+- `.nav-logo-divider` is a 1px vertical line using `align-self: stretch`
+- `.nav-logo-name` is black, `.nav-logo-surname` is accent blue, both bold
+- `.nav-logo-arrow` spans colour the `▸` pipeline arrows in accent blue
+- Tagline: "BUILD ▸ SCALE ▸ SECURE" (uppercase, pipeline-style arrows)
 
 ## Footer
 - Both `index.html` and `about.html` footer reads: `© 2026 Richie Richard Rajkumar · Built with Claude`
@@ -193,7 +210,11 @@ Canvas-based animation in `main.js` (`#bg-canvas` element, first child of `<body
 
 ## Conventions
 - **No build step** — edits to HTML, CSS, or JS files are live on push
-- **CSS variables** for theming (`--bg`, `--accent`, `--muted`, etc.) — dark mode by default, light mode toggled via `body.light`
+- **CSS variables** for theming (`--bg`, `--accent`, `--muted`, etc.) — light mode by default (`body.light` class on `<body>`), dark mode toggled by removing the class
+- **Light mode accent**: `#0369a1` (dark blue); **dark mode accent**: `#38bdf8` (sky blue)
+- **Light mode text**: `#000000` (solid black); **muted**: `#333a47`
+- **Button hover**: primary buttons glow (`box-shadow`) on hover instead of changing colour; outline buttons highlight border + text in accent colour
+- Small accent-coloured labels (section labels, hero tag, photo caption labels) use `font-weight: 600` for readability
 - **Scroll reveal** — add class `reveal` to any element to animate it in on scroll
 - **Emails are HTML-entity-encoded** in HTML files to deter scrapers — do not decode them
 - All asset paths (`/css/style.css`, `/js/main.js`, `/favicon.svg`) use absolute paths — do not use relative paths or they will break on `/about` and `/blog`

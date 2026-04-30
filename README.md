@@ -35,6 +35,8 @@ richierichard.github.io/
 ├── blog.html                # Blog listing page
 ├── favicon.svg              # SVG favicon — green R³ on transparent background
 ├── vercel.json              # Vercel config — clean URLs + redirects
+├── img/
+│   └── richie.jpeg          # Profile photo (hero section)
 ├── css/
 │   └── style.css            # All shared styles
 ├── js/
