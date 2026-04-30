@@ -17,7 +17,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
 
 <style>
@@ -34,7 +34,7 @@
 .article-intro {
   max-width: 960px;
   margin-bottom: 2.5rem;
-  color: var(--text);
+  color: var(--ink);
   line-height: 1.85;
   font-size: 1.05rem;
 }
@@ -42,8 +42,8 @@
 .article-intro code {
   font-family: var(--mono);
   font-size: 0.88em;
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 4px;
   padding: 0.1em 0.35em;
   color: var(--accent);
@@ -70,18 +70,16 @@
   font-size: 0.68rem;
   padding: 0.2rem 0.6rem;
   border-radius: 20px;
-  background: var(--accent-dim);
+  background: var(--accent-soft);
   color: var(--accent);
-  border: 1px solid rgba(56,189,248,0.2);
+  border: 1px solid rgba(196,30,58,0.2);
   letter-spacing: 0.04em;
 }
-body.light .article-tag { border-color: rgba(2,132,199,0.25); }
-
 .article-title {
   font-size: clamp(1.75rem, 4vw, 2.75rem);
   font-weight: 900;
   line-height: 1.2;
-  color: var(--text);
+  color: var(--ink);
   margin-bottom: 1rem;
 }
 .article-title span { color: var(--accent); }
@@ -103,18 +101,18 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   border-radius: 14px;
   overflow: hidden;
   margin-bottom: 3rem;
-  border: 1px solid var(--border2);
-  background: var(--bg2);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
 }
 
-.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body { color: var(--ink); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
 .article-body h2 {
   font-size: 1.35rem;
   font-weight: 800;
-  color: var(--text);
+  color: var(--ink);
   margin: 2.5rem 0 0.85rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
   scroll-margin-top: 6rem;
 }
 .article-body h3 {
@@ -123,15 +121,15 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   color: var(--accent);
   margin: 1.75rem 0 0.5rem;
 }
-.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body p { margin-bottom: 1.25rem; color: var(--ink); }
 .article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
-.article-body li { margin-bottom: 0.4rem; color: var(--text); }
-.article-body strong { color: var(--text); font-weight: 700; }
+.article-body li { margin-bottom: 0.4rem; color: var(--ink); }
+.article-body strong { color: var(--ink); font-weight: 700; }
 .article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 
 .article-body pre {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
   border-radius: 10px;
   padding: 1.25rem 1.5rem;
   overflow-x: auto;
@@ -143,8 +141,8 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 .article-body code {
   font-family: var(--mono);
   font-size: 0.88em;
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 4px;
   padding: 0.1em 0.35em;
   color: var(--accent);
@@ -153,7 +151,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   background: none;
   border: none;
   padding: 0;
-  color: var(--text);
+  color: var(--ink);
   font-size: 1em;
 }
 .article-body pre .cm { color: var(--muted); }
@@ -162,7 +160,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 .article-body pre .nm { color: #fde68a; }
 
 .callout {
-  background: var(--accent-dim);
+  background: var(--accent-soft);
   border-left: 3px solid var(--accent);
   border-radius: 0 10px 10px 0;
   padding: 1rem 1.25rem;
@@ -178,7 +176,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   font-size: 0.9rem;
 }
 .compare-table th {
-  background: var(--bg2);
+  background: var(--surface);
   font-family: var(--mono);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
@@ -186,25 +184,25 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   color: var(--muted);
   padding: 0.65rem 1rem;
   text-align: left;
-  border-bottom: 1px solid var(--border2);
+  border-bottom: 1px solid var(--line-strong);
 }
 .compare-table td {
   padding: 0.65rem 1rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
   vertical-align: top;
-  color: var(--text);
+  color: var(--ink);
 }
 .compare-table tr:last-child td { border-bottom: none; }
 .compare-table .good { color: var(--accent); font-weight: 700; }
 .compare-table .bad  { color: #f87171; }
 
-.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+.article-divider { height: 1px; background: var(--line); margin: 2.5rem 0; max-width: 960px; }
 
 .article-footer {
   max-width: 960px;
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -214,7 +212,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 .article-author { display: flex; align-items: center; gap: 0.85rem; }
 .author-avatar {
   width: 44px; height: 44px; border-radius: 50%;
-  background: var(--accent-dim);
+  background: var(--accent-soft);
   border: 2px solid var(--accent);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
@@ -234,24 +232,27 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
-
-<nav>
-  <a href="/" class="nav-logo">
-    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
-    <span class="nav-logo-tag">build · scale · secure</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="/">Home</a></li>
-    <li><a href="/about">About</a></li>
-    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
-    <li><a href="/#contact">Contact</a></li>
-  </ul>
-  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-    <span class="t-icon">☀</span>
-    <span id="theme-label">Light</span>
-  </button>
-</nav>
+<header class="site-header" data-site-header>
+  <nav class="nav shell" aria-label="Primary navigation">
+    <a class="brand" href="/" aria-label="Richie Richard Rajkumar home">
+      <span class="brand-mark">R<sup style="font-size:0.6em">3</sup></span>
+      <span class="brand-lockup">
+        <span class="brand-name">Richie Richard Rajkumar</span>
+        <span class="brand-tagline">build · scale · secure</span>
+      </span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-menu" data-nav-toggle>
+      <span>Menu</span>
+    </button>
+    <div class="nav-menu" id="site-menu" data-nav-menu>
+      <a href="/about">About</a>
+      <a href="/#expertise">Expertise</a>
+      <a href="/#experience">Experience</a>
+      <a href="/blog">Writing</a>
+      <a class="nav-cta" href="/#contact">Contact</a>
+    </div>
+  </nav>
+</header>
 
 <div class="article-page">
 
@@ -307,23 +308,23 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <text x="160" y="186" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">assets/banner.png</text>
 
       <!-- CENTRE: S3 Files layer -->
-      <rect x="290" y="72" width="180" height="140" rx="10" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="1.5"/>
-      <text x="380" y="96" font-family="'Nunito',sans-serif" font-size="12" fill="#38bdf8" text-anchor="middle" font-weight="800">S3 Files</text>
+      <rect x="290" y="72" width="180" height="140" rx="10" fill="rgba(196,30,58,0.06)" stroke="#c41e3a" stroke-width="1.5"/>
+      <text x="380" y="96" font-family="'Nunito',sans-serif" font-size="12" fill="#c41e3a" text-anchor="middle" font-weight="800">S3 Files</text>
       <text x="380" y="112" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">NFS v4.1+ Mount</text>
       <text x="380" y="126" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">~1ms latency (active data)</text>
 
       <!-- File tree -->
-      <text x="316" y="148" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8">/mnt/s3/</text>
-      <text x="326" y="162" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8">├── data/</text>
-      <text x="326" y="176" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8">├── config/</text>
-      <text x="326" y="190" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8">├── logs/</text>
-      <text x="326" y="204" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8">└── assets/</text>
+      <text x="316" y="148" font-family="'Fira Code',monospace" font-size="7.5" fill="#c41e3a">/mnt/s3/</text>
+      <text x="326" y="162" font-family="'Fira Code',monospace" font-size="7.5" fill="#c41e3a">├── data/</text>
+      <text x="326" y="176" font-family="'Fira Code',monospace" font-size="7.5" fill="#c41e3a">├── config/</text>
+      <text x="326" y="190" font-family="'Fira Code',monospace" font-size="7.5" fill="#c41e3a">├── logs/</text>
+      <text x="326" y="204" font-family="'Fira Code',monospace" font-size="7.5" fill="#c41e3a">└── assets/</text>
 
       <!-- Arrows: S3 ↔ S3 Files -->
       <line x1="260" y1="130" x2="290" y2="130" stroke="#fbbf24" stroke-width="1.2" opacity="0.7"/>
       <polygon points="288,126 296,130 288,134" fill="#fbbf24" opacity="0.7"/>
-      <line x1="290" y1="150" x2="260" y2="150" stroke="#38bdf8" stroke-width="1.2" opacity="0.7"/>
-      <polygon points="262,146 254,150 262,154" fill="#38bdf8" opacity="0.7"/>
+      <line x1="290" y1="150" x2="260" y2="150" stroke="#c41e3a" stroke-width="1.2" opacity="0.7"/>
+      <polygon points="262,146 254,150 262,154" fill="#c41e3a" opacity="0.7"/>
       <text x="275" y="118" font-family="'Fira Code',monospace" font-size="6" fill="#7a8099" text-anchor="middle">auto</text>
       <text x="275" y="166" font-family="'Fira Code',monospace" font-size="6" fill="#7a8099" text-anchor="middle">sync</text>
 
@@ -355,12 +356,12 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <text x="200" y="280" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">BEFORE: S3 (objects) + EFS (files) + sync scripts</text>
       <text x="200" y="296" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">Two storage systems, manual data movement</text>
 
-      <rect x="400" y="264" width="320" height="40" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
-      <text x="560" y="280" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8" text-anchor="middle">AFTER: S3 Files — one bucket, two access patterns</text>
-      <text x="560" y="296" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8" text-anchor="middle">Object API + NFS mount, automatic sync</text>
+      <rect x="400" y="264" width="320" height="40" rx="6" fill="rgba(196,30,58,0.06)" stroke="#c41e3a" stroke-width="0.8"/>
+      <text x="560" y="280" font-family="'Fira Code',monospace" font-size="7.5" fill="#c41e3a" text-anchor="middle">AFTER: S3 Files — one bucket, two access patterns</text>
+      <text x="560" y="296" font-family="'Fira Code',monospace" font-size="7.5" fill="#c41e3a" text-anchor="middle">Object API + NFS mount, automatic sync</text>
 
       <!-- Bottom tagline -->
-      <text x="380" y="336" font-family="'Nunito',sans-serif" font-size="12" fill="#38bdf8" text-anchor="middle" font-weight="700">One Bucket · Two Access Patterns · No Data Movement</text>
+      <text x="380" y="336" font-family="'Nunito',sans-serif" font-size="12" fill="#c41e3a" text-anchor="middle" font-weight="700">One Bucket · Two Access Patterns · No Data Movement</text>
       <text x="380" y="352" font-family="'Fira Code',monospace" font-size="8" fill="#7a8099" text-anchor="middle">mount -t s3files fs-xxx:/ /mnt/s3 — NFS v4.1+ · ~1ms · All Regions</text>
     </svg>
   </div><!-- /article-hero -->
@@ -736,6 +737,40 @@ config/  data/  logs/  assets/
   </footer>
 
 </div><!-- /article-page -->
+
+<footer class="site-footer">
+  <div class="shell">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <a class="brand" href="/">
+            <span class="brand-mark">R<sup style="font-size:0.6em">3</sup></span>
+          </a>
+        </div>
+        <p>Infrastructure Architect &amp; Engineering Leader. Building cloud platforms that scale organisations, not just systems.</p>
+      </div>
+      <div>
+        <h2>Navigation</h2>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/blog">Writing</a>
+        <a href="/#contact">Contact</a>
+      </div>
+      <div>
+        <h2>Connect</h2>
+        <a href="mailto:contact@richierichard.com">contact@richierichard.com</a>
+        <a href="https://www.linkedin.com/in/richierichard/" target="_blank">LinkedIn</a>
+        <a href="https://github.com/richierichard" target="_blank">GitHub</a>
+        <a href="https://x.com/RajkumarRichie" target="_blank">X / Twitter</a>
+        <span>Berlin, Germany</span>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Richie Richard Rajkumar &middot; All Rights Reserved</span>
+      <span>Built with Claude</span>
+    </div>
+  </div>
+</footer>
 
 <script src="/js/main.js"></script>
 </body>

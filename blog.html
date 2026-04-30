@@ -12,7 +12,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
 
 <style>
@@ -21,8 +21,6 @@
   max-width: 1240px;
   margin: 0 auto;
   padding: 7rem 2rem 5rem;
-  position: relative;
-  z-index: 1;
 }
 
 /* Hero */
@@ -36,9 +34,10 @@
   margin-bottom: 0.6rem;
 }
 .blog-hero-title {
+  font-family: var(--serif);
   font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 900;
-  color: var(--text);
+  font-weight: 500;
+  color: var(--ink);
   margin-bottom: 0.6rem;
 }
 .blog-hero-sub {
@@ -65,13 +64,13 @@
 }
 #blog-search {
   width: 100%;
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
   padding: 0.65rem 1rem 0.65rem 2.4rem;
   font-family: var(--mono);
   font-size: 0.8rem;
-  color: var(--text);
+  color: var(--ink);
   outline: none;
   transition: border-color 0.2s;
 }
@@ -111,7 +110,7 @@
   justify-content: space-between;
   background: none;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius);
   padding: 0.45rem 0.75rem;
   font-family: var(--mono);
   font-size: 0.75rem;
@@ -123,20 +122,18 @@
 }
 .tag-filter-btn:hover {
   color: var(--accent);
-  background: var(--accent-dim);
-  border-color: rgba(56,189,248,0.2);
+  background: var(--accent-soft);
+  border-color: rgba(196,30,58,0.2);
 }
-body.light .tag-filter-btn:hover { border-color: rgba(2,132,199,0.2); }
 .tag-filter-btn.active {
   color: var(--accent);
-  background: var(--accent-dim);
-  border-color: rgba(56,189,248,0.25);
+  background: var(--accent-soft);
+  border-color: rgba(196,30,58,0.25);
   font-weight: 700;
 }
-body.light .tag-filter-btn.active { border-color: rgba(2,132,199,0.3); }
 .tag-filter-count {
   font-size: 0.65rem;
-  background: var(--bg3);
+  background: var(--surface);
   border-radius: 10px;
   padding: 0.1rem 0.45rem;
   min-width: 1.4rem;
@@ -144,7 +141,7 @@ body.light .tag-filter-btn.active { border-color: rgba(2,132,199,0.3); }
 }
 .sidebar-divider {
   height: 1px;
-  background: var(--border);
+  background: var(--line);
   margin-bottom: 1.5rem;
 }
 .sidebar-stat {
@@ -155,8 +152,8 @@ body.light .tag-filter-btn.active { border-color: rgba(2,132,199,0.3); }
 }
 .sidebar-stat-number {
   font-size: 1.6rem;
-  font-weight: 900;
-  color: var(--text);
+  font-weight: 800;
+  color: var(--ink);
   line-height: 1;
 }
 .sidebar-stat-label {
@@ -174,17 +171,18 @@ body.light .tag-filter-btn.active { border-color: rgba(2,132,199,0.3); }
   grid-template-columns: 1fr auto;
   gap: 1.5rem;
   align-items: start;
-  background: var(--bg2);
-  border: 1px solid var(--border2);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
   border-radius: 14px;
   padding: 1.75rem 2rem;
   text-decoration: none;
-  transition: border-color 0.2s, transform 0.2s;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
   margin-bottom: 1.25rem;
 }
 .post-card:hover {
   border-color: var(--accent);
   transform: translateY(-2px);
+  box-shadow: var(--shadow);
 }
 .post-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.75rem; }
 .post-tag {
@@ -192,16 +190,15 @@ body.light .tag-filter-btn.active { border-color: rgba(2,132,199,0.3); }
   font-size: 0.65rem;
   padding: 0.15rem 0.55rem;
   border-radius: 20px;
-  background: var(--accent-dim);
+  background: var(--accent-soft);
   color: var(--accent);
-  border: 1px solid rgba(56,189,248,0.2);
+  border: 1px solid rgba(196,30,58,0.2);
   letter-spacing: 0.04em;
 }
-body.light .post-tag { border-color: rgba(2,132,199,0.25); }
 .post-title {
   font-size: 1.2rem;
-  font-weight: 800;
-  color: var(--text);
+  font-weight: 700;
+  color: var(--ink);
   margin-bottom: 0.5rem;
   line-height: 1.3;
 }
@@ -231,32 +228,32 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
 #no-results {
   text-align: center;
   padding: 3rem 2rem;
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 14px;
   color: var(--muted);
   font-family: var(--mono);
   font-size: 0.85rem;
   margin-bottom: 1.25rem;
 }
-#no-results strong { color: var(--text); display: block; font-size: 1rem; margin-bottom: 0.5rem; }
+#no-results strong { color: var(--ink); display: block; font-size: 1rem; margin-bottom: 0.5rem; }
 
 /* More coming section */
 .blog-more {
   margin-top: 0.5rem;
   margin-bottom: 1.25rem;
   padding: 1.75rem 2rem;
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 14px;
   display: flex;
   align-items: center;
   gap: 1.5rem;
 }
 .blog-terminal {
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-radius: 8px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
   padding: 1rem 1.25rem;
   font-family: var(--mono);
   font-size: 0.8rem;
@@ -272,7 +269,7 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
   animation: blink 1s step-end infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
-.blog-more-text h3 { font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 0.35rem; }
+.blog-more-text h3 { font-size: 1rem; font-weight: 700; color: var(--ink); margin-bottom: 0.35rem; }
 .blog-more-text p  { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
 
 /* Responsive */
@@ -292,41 +289,44 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
-
-<nav>
-  <a href="/" class="nav-logo">
-    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
-    <span class="nav-logo-tag">build · scale · secure</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="/">Home</a></li>
-    <li><a href="/about">About</a></li>
-    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
-    <li><a href="/#contact">Contact</a></li>
-  </ul>
-  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-    <span class="t-icon">☀</span>
-    <span id="theme-label">Light</span>
-  </button>
-</nav>
+<header class="site-header" data-site-header>
+  <nav class="nav shell" aria-label="Primary navigation">
+    <a class="brand" href="/" aria-label="Richie Richard Rajkumar home">
+      <span class="brand-mark">R<sup style="font-size:0.6em">3</sup></span>
+      <span class="brand-lockup">
+        <span class="brand-name">Richie Richard Rajkumar</span>
+        <span class="brand-tagline">build · scale · secure</span>
+      </span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-menu" data-nav-toggle>
+      <span>Menu</span>
+    </button>
+    <div class="nav-menu" id="site-menu" data-nav-menu>
+      <a href="/about">About</a>
+      <a href="/#expertise">Expertise</a>
+      <a href="/#experience">Experience</a>
+      <a href="/blog" style="color:var(--accent)">Writing</a>
+      <a class="nav-cta" href="/#contact">Contact</a>
+    </div>
+  </nav>
+</header>
 
 <div class="blog-wrap">
 
-  <div class="blog-hero reveal">
+  <div class="blog-hero">
     <p class="blog-hero-label">// writing</p>
     <h1 class="blog-hero-title">Blog</h1>
     <p class="blog-hero-sub">Thoughts on DevOps, platform engineering, cloud infrastructure, and building things that scale.</p>
     <div class="blog-search-wrap">
-      <span class="blog-search-icon">⌕</span>
-      <input type="text" id="blog-search" placeholder="Search articles…" autocomplete="off">
+      <span class="blog-search-icon">&#x2315;</span>
+      <input type="text" id="blog-search" placeholder="Search articles..." autocomplete="off">
     </div>
   </div>
 
   <div class="blog-layout">
 
     <!-- ── SIDEBAR ── -->
-    <aside class="blog-sidebar reveal">
+    <aside class="blog-sidebar">
 
       <div class="sidebar-section-label">// by topic</div>
       <div class="tag-filter-list">
@@ -378,11 +378,11 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
     <main class="blog-main">
 
       <!-- More coming -->
-      <div class="blog-more reveal">
+      <div class="blog-more">
         <div class="blog-terminal">
           <div><span class="prompt">$ </span>git status</div>
           <div style="color:var(--muted);margin:0.2rem 0;">On branch <span style="color:var(--accent)">blog/drafts</span></div>
-          <div style="color:var(--muted);">1 article in progress…</div>
+          <div style="color:var(--muted);">1 article in progress...</div>
           <div style="margin-top:0.4rem;"><span class="prompt">$ </span><span class="cursor"></span></div>
         </div>
         <div class="blog-more-text">
@@ -392,7 +392,7 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
       </div>
 
       <!-- ARTICLE: Helm to Kustomize -->
-      <a href="/blog/helm-to-kustomize" class="post-card reveal"
+      <a href="/blog/helm-to-kustomize" class="post-card"
          data-tags="kubernetes devops gitops platform-engineering"
          data-title="from helm to kustomize why we ditched templates for overlays"
          data-excerpt="we used helm for everything then go template spaghetti values yaml indirection and debugging rendered output became the problem here is why we moved internal deployments to kustomize and where helm still earns its place">
@@ -407,15 +407,15 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <div class="post-excerpt">We used Helm for everything. Then Go template spaghetti, values.yaml indirection, and debugging rendered output became the problem. Here's why we moved internal deployments to Kustomize and where Helm still earns its place.</div>
           <div class="post-meta">
             <span>May 2026</span>
-            <span>·</span>
+            <span>&middot;</span>
             <span>13 min read</span>
           </div>
         </div>
-        <div class="post-arrow">→</div>
+        <div class="post-arrow">&rarr;</div>
       </a>
 
       <!-- ARTICLE: CAS vs Karpenter -->
-      <a href="/blog/eks-cluster-autoscaler-vs-karpenter" class="post-card reveal"
+      <a href="/blog/eks-cluster-autoscaler-vs-karpenter" class="post-card"
          data-tags="kubernetes aws cost-engineering devops infrastructure platform-engineering"
          data-title="cluster autoscaler vs karpenter choosing the right node scaler for eks"
          data-excerpt="a practical decision framework for choosing between cluster autoscaler and karpenter on eks architecture differences feature comparison when to use which and how to migrate from cas to karpenter">
@@ -432,15 +432,15 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <div class="post-excerpt">A practical decision framework for choosing between Cluster Autoscaler and Karpenter on EKS. Covers architecture differences, feature-by-feature comparison, when to use which, and how to migrate from CAS to Karpenter.</div>
           <div class="post-meta">
             <span>May 2026</span>
-            <span>·</span>
+            <span>&middot;</span>
             <span>13 min read</span>
           </div>
         </div>
-        <div class="post-arrow">→</div>
+        <div class="post-arrow">&rarr;</div>
       </a>
 
       <!-- ARTICLE: Karpenter on EKS -->
-      <a href="/blog/eks-scaling-with-karpenter" class="post-card reveal"
+      <a href="/blog/eks-scaling-with-karpenter" class="post-card"
          data-tags="kubernetes aws cost-engineering devops infrastructure platform-engineering"
          data-title="karpenter on eks right-sized nodes in 60 seconds"
          data-excerpt="stop managing auto scaling groups karpenter provisions right-sized ec2 instances in seconds detects drift automatically consolidates underused nodes and handles spot interruptions natively from two kubernetes crds">
@@ -457,15 +457,15 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <div class="post-excerpt">Stop managing Auto Scaling Groups. Karpenter provisions right-sized EC2 instances in seconds, detects drift automatically, consolidates underused nodes, and handles Spot interruptions natively — all from two Kubernetes CRDs.</div>
           <div class="post-meta">
             <span>May 2026</span>
-            <span>·</span>
+            <span>&middot;</span>
             <span>15 min read</span>
           </div>
         </div>
-        <div class="post-arrow">→</div>
+        <div class="post-arrow">&rarr;</div>
       </a>
 
       <!-- ARTICLE: KEDA on EKS -->
-      <a href="/blog/eks-scaling-with-keda" class="post-card reveal"
+      <a href="/blog/eks-scaling-with-keda" class="post-card"
          data-tags="kubernetes aws cost-engineering devops infrastructure platform-engineering"
          data-title="keda on eks event-driven scaling with sqs queue depth"
          data-excerpt="stop scaling kubernetes workers on cpu use keda to scale pods based on sqs queue depth from zero to hundreds with eks pod identity scaledobjects scaledjobs and production hardening">
@@ -482,15 +482,15 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <div class="post-excerpt">Stop scaling Kubernetes workers on CPU. Use KEDA to scale pods based on SQS queue depth — from zero to hundreds, with EKS Pod Identity, ScaledObjects, ScaledJobs, and production hardening tips.</div>
           <div class="post-meta">
             <span>May 2026</span>
-            <span>·</span>
+            <span>&middot;</span>
             <span>12 min read</span>
           </div>
         </div>
-        <div class="post-arrow">→</div>
+        <div class="post-arrow">&rarr;</div>
       </a>
 
       <!-- ARTICLE: EKS Spot Instances -->
-      <a href="/blog/eks-spot-instances" class="post-card reveal"
+      <a href="/blog/eks-spot-instances" class="post-card"
          data-tags="kubernetes aws finops cost-engineering devops infrastructure platform-engineering"
          data-title="eks spot instances a practical guide to cutting your kubernetes compute costs"
          data-excerpt="run eks workloads on ec2 spot instances and save up to 90 percent on compute hybrid on-demand plus spot strategies full spot clusters cluster autoscaler karpenter interruption handling best practices">
@@ -508,15 +508,15 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <div class="post-excerpt">Run EKS workloads on EC2 Spot Instances and save up to 90% on compute. Covers hybrid on-demand + spot strategies, full spot clusters, Cluster Autoscaler, Karpenter, interruption handling, and production best practices.</div>
           <div class="post-meta">
             <span>April 2026</span>
-            <span>·</span>
+            <span>&middot;</span>
             <span>14 min read</span>
           </div>
         </div>
-        <div class="post-arrow">→</div>
+        <div class="post-arrow">&rarr;</div>
       </a>
 
       <!-- ARTICLE: S3 Files -->
-      <a href="/blog/s3-files-filesystem" class="post-card reveal"
+      <a href="/blog/s3-files-filesystem" class="post-card"
          data-tags="aws s3 infrastructure devops"
          data-title="s3 files your buckets are file systems now"
          data-excerpt="aws s3 files turns any general purpose bucket into a mountable nfs file system mount it on ec2 eks lambda with examples for kubernetes persistentvolume terraform and lambda">
@@ -531,15 +531,15 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <div class="post-excerpt">AWS S3 Files turns any general purpose bucket into a mountable NFS file system. Here's what it means for your infrastructure, how to mount it on EC2, EKS, and Lambda, and where it fits alongside EFS and FSx.</div>
           <div class="post-meta">
             <span>April 2026</span>
-            <span>·</span>
+            <span>&middot;</span>
             <span>10 min read</span>
           </div>
         </div>
-        <div class="post-arrow">→</div>
+        <div class="post-arrow">&rarr;</div>
       </a>
 
       <!-- ARTICLE: Centralised MCP Server with IRSA -->
-      <a href="/blog/kubernetes-mcp-server-centralised" class="post-card reveal"
+      <a href="/blog/kubernetes-mcp-server-centralised" class="post-card"
          data-tags="kubernetes aws ai platform-engineering devops"
          data-title="one mcp server eight clusters centralised ai access with irsa"
          data-excerpt="deploy the kubernetes mcp server as a shared platform service in a centralised infra cluster using irsa for cross-cluster authentication zero local setup one url for every engineer">
@@ -555,15 +555,15 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <div class="post-excerpt">Deploy the Kubernetes MCP Server once in your infra cluster, authenticate to all target clusters with IRSA, and give every DevOps engineer AI-powered cluster access with a single URL. No local kubeconfig, no local installs.</div>
           <div class="post-meta">
             <span>April 2026</span>
-            <span>·</span>
+            <span>&middot;</span>
             <span>16 min read</span>
           </div>
         </div>
-        <div class="post-arrow">→</div>
+        <div class="post-arrow">&rarr;</div>
       </a>
 
       <!-- ARTICLE: Kubernetes MCP Server -->
-      <a href="/blog/kubernetes-mcp-server" class="post-card reveal"
+      <a href="/blog/kubernetes-mcp-server" class="post-card"
          data-tags="kubernetes ai devops platform-engineering"
          data-title="talk to your cluster: kubernetes mcp server in practice"
          data-excerpt="the kubernetes mcp server lets ai assistants like claude interact with your clusters using natural language setup real examples and production guardrails">
@@ -578,15 +578,15 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <div class="post-excerpt">The Kubernetes MCP Server connects AI assistants directly to the Kubernetes API via the Model Context Protocol. Here's how to set it up, real conversation examples from incident triage, and the production guardrails you shouldn't skip.</div>
           <div class="post-meta">
             <span>April 2026</span>
-            <span>·</span>
+            <span>&middot;</span>
             <span>10 min read</span>
           </div>
         </div>
-        <div class="post-arrow">→</div>
+        <div class="post-arrow">&rarr;</div>
       </a>
 
       <!-- ARTICLE: S3 Regional Namespaces -->
-      <a href="/blog/s3-regional-namespaces" class="post-card reveal"
+      <a href="/blog/s3-regional-namespaces" class="post-card"
          data-tags="aws s3 infrastructure devops"
          data-title="aws s3 bucket naming just changed forever"
          data-excerpt="aws introduced account-regional namespaces for s3 with a structured naming convention prefix-accountid-region-an that encodes the namespace into the bucket name itself">
@@ -601,11 +601,11 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <div class="post-excerpt">In March 2026, AWS introduced account-regional namespaces for S3, ending the era of global bucket name collisions. Here's what shifted, what breaks, and what every infrastructure engineer needs to update.</div>
           <div class="post-meta">
             <span>March 2026</span>
-            <span>·</span>
+            <span>&middot;</span>
             <span>6 min read</span>
           </div>
         </div>
-        <div class="post-arrow">→</div>
+        <div class="post-arrow">&rarr;</div>
       </a>
 
       <!-- No results message -->
@@ -617,6 +617,40 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
     </main>
   </div>
 </div>
+
+<footer class="site-footer">
+  <div class="shell">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <a class="brand" href="/">
+            <span class="brand-mark">R<sup style="font-size:0.6em">3</sup></span>
+          </a>
+        </div>
+        <p>Infrastructure Architect &amp; Engineering Leader. Building cloud platforms that scale organisations, not just systems.</p>
+      </div>
+      <div>
+        <h2>Navigation</h2>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/blog">Writing</a>
+        <a href="/#contact">Contact</a>
+      </div>
+      <div>
+        <h2>Connect</h2>
+        <a href="mailto:contact@richierichard.com">contact@richierichard.com</a>
+        <a href="https://www.linkedin.com/in/richierichard/" target="_blank">LinkedIn</a>
+        <a href="https://github.com/richierichard" target="_blank">GitHub</a>
+        <a href="https://x.com/RajkumarRichie" target="_blank">X / Twitter</a>
+        <span>Berlin, Germany</span>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; <span data-site-value="copyrightYear">2026</span> Richie Richard Rajkumar &middot; All Rights Reserved</span>
+      <span>Built with Claude</span>
+    </div>
+  </div>
+</footer>
 
 <script src="/js/main.js"></script>
 <script>

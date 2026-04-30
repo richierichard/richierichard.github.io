@@ -17,7 +17,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
 
 <style>
@@ -39,7 +39,7 @@
 .article-intro {
   max-width: 960px;
   margin-bottom: 2.5rem;
-  color: var(--text);
+  color: var(--ink);
   line-height: 1.85;
   font-size: 1.05rem;
 }
@@ -47,8 +47,8 @@
 .article-intro code {
   font-family: var(--mono);
   font-size: 0.88em;
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 4px;
   padding: 0.1em 0.35em;
   color: var(--accent);
@@ -77,18 +77,17 @@
   font-size: 0.68rem;
   padding: 0.2rem 0.6rem;
   border-radius: 20px;
-  background: var(--accent-dim);
+  background: var(--accent-soft);
   color: var(--accent);
-  border: 1px solid rgba(56,189,248,0.2);
+  border: 1px solid rgba(196,30,58,0.2);
   letter-spacing: 0.04em;
 }
-body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
 .article-title {
   font-size: clamp(1.75rem, 4vw, 2.75rem);
   font-weight: 900;
   line-height: 1.2;
-  color: var(--text);
+  color: var(--ink);
   margin-bottom: 1rem;
 }
 .article-title span { color: var(--accent); }
@@ -111,19 +110,19 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   border-radius: 14px;
   overflow: hidden;
   margin-bottom: 3rem;
-  border: 1px solid var(--border2);
-  background: var(--bg2);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
 }
 
 /* Body */
-.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body { color: var(--ink); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
 .article-body h2 {
   font-size: 1.35rem;
   font-weight: 800;
-  color: var(--text);
+  color: var(--ink);
   margin: 2.5rem 0 0.85rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
   scroll-margin-top: 6rem;
 }
 .article-body h3 {
@@ -132,16 +131,16 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   color: var(--accent);
   margin: 1.75rem 0 0.5rem;
 }
-.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body p { margin-bottom: 1.25rem; color: var(--ink); }
 .article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
-.article-body li { margin-bottom: 0.4rem; color: var(--text); }
-.article-body strong { color: var(--text); font-weight: 700; }
+.article-body li { margin-bottom: 0.4rem; color: var(--ink); }
+.article-body strong { color: var(--ink); font-weight: 700; }
 .article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 
 /* Code blocks */
 .article-body pre {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
   border-radius: 10px;
   padding: 1.25rem 1.5rem;
   overflow-x: auto;
@@ -153,8 +152,8 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 .article-body code {
   font-family: var(--mono);
   font-size: 0.88em;
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 4px;
   padding: 0.1em 0.35em;
   color: var(--accent);
@@ -163,7 +162,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   background: none;
   border: none;
   padding: 0;
-  color: var(--text);
+  color: var(--ink);
   font-size: 1em;
 }
 .article-body pre .cm { color: var(--muted); }
@@ -173,7 +172,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
 /* Callout box */
 .callout {
-  background: var(--accent-dim);
+  background: var(--accent-soft);
   border-left: 3px solid var(--accent);
   border-radius: 0 10px 10px 0;
   padding: 1rem 1.25rem;
@@ -190,7 +189,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   font-size: 0.9rem;
 }
 .compare-table th {
-  background: var(--bg2);
+  background: var(--surface);
   font-family: var(--mono);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
@@ -198,13 +197,13 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   color: var(--muted);
   padding: 0.65rem 1rem;
   text-align: left;
-  border-bottom: 1px solid var(--border2);
+  border-bottom: 1px solid var(--line-strong);
 }
 .compare-table td {
   padding: 0.65rem 1rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
   vertical-align: top;
-  color: var(--text);
+  color: var(--ink);
 }
 .compare-table tr:last-child td { border-bottom: none; }
 .compare-table .good { color: var(--accent); font-weight: 700; }
@@ -212,8 +211,8 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
 /* Conversation block */
 .conversation {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
   border-radius: 10px;
   padding: 1.25rem 1.5rem;
   margin-bottom: 1.5rem;
@@ -233,28 +232,28 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 .conversation .msg {
   margin-bottom: 1rem;
   padding-left: 0.5rem;
-  color: var(--text);
+  color: var(--ink);
 }
 .conversation .msg:last-child { margin-bottom: 0; }
 .conversation code {
   font-family: var(--mono);
   font-size: 0.88em;
-  background: var(--bg3);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 4px;
   padding: 0.1em 0.35em;
   color: var(--accent);
 }
 
 /* Divider */
-.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+.article-divider { height: 1px; background: var(--line); margin: 2.5rem 0; max-width: 960px; }
 
 /* Footer */
 .article-footer {
   max-width: 960px;
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -264,7 +263,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 .article-author { display: flex; align-items: center; gap: 0.85rem; }
 .author-avatar {
   width: 44px; height: 44px; border-radius: 50%;
-  background: var(--accent-dim);
+  background: var(--accent-soft);
   border: 2px solid var(--accent);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
@@ -286,24 +285,27 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
-
-<nav>
-  <a href="/" class="nav-logo">
-    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
-    <span class="nav-logo-tag">build · scale · secure</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="/">Home</a></li>
-    <li><a href="/about">About</a></li>
-    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
-    <li><a href="/#contact">Contact</a></li>
-  </ul>
-  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-    <span class="t-icon">☀</span>
-    <span id="theme-label">Light</span>
-  </button>
-</nav>
+<header class="site-header" data-site-header>
+  <nav class="nav shell" aria-label="Primary navigation">
+    <a class="brand" href="/" aria-label="Richie Richard Rajkumar home">
+      <span class="brand-mark">R<sup style="font-size:0.6em">3</sup></span>
+      <span class="brand-lockup">
+        <span class="brand-name">Richie Richard Rajkumar</span>
+        <span class="brand-tagline">build · scale · secure</span>
+      </span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-menu" data-nav-toggle>
+      <span>Menu</span>
+    </button>
+    <div class="nav-menu" id="site-menu" data-nav-menu>
+      <a href="/about">About</a>
+      <a href="/#expertise">Expertise</a>
+      <a href="/#experience">Experience</a>
+      <a href="/blog">Writing</a>
+      <a class="nav-cta" href="/#contact">Contact</a>
+    </div>
+  </nav>
+</header>
 
 <div class="article-page">
 
@@ -342,14 +344,14 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <text x="190" y="32" font-family="'Fira Code',monospace" font-size="11" fill="#7a8099" text-anchor="middle" letter-spacing="2">NATURAL LANGUAGE</text>
 
       <!-- Chat bubbles -->
-      <rect x="60" y="52" width="260" height="32" rx="8" fill="rgba(56,189,248,0.08)" stroke="#38bdf8" stroke-width="1"/>
-      <text x="190" y="73" font-family="'Fira Code',monospace" font-size="9" fill="#38bdf8" text-anchor="middle">"Show me crashing pods in prod"</text>
+      <rect x="60" y="52" width="260" height="32" rx="8" fill="rgba(196,30,58,0.08)" stroke="#c41e3a" stroke-width="1"/>
+      <text x="190" y="73" font-family="'Fira Code',monospace" font-size="9" fill="#c41e3a" text-anchor="middle">"Show me crashing pods in prod"</text>
 
-      <rect x="60" y="96" width="260" height="32" rx="8" fill="rgba(56,189,248,0.08)" stroke="#38bdf8" stroke-width="1"/>
-      <text x="190" y="117" font-family="'Fira Code',monospace" font-size="9" fill="#38bdf8" text-anchor="middle">"Scale api-gateway to 5 replicas"</text>
+      <rect x="60" y="96" width="260" height="32" rx="8" fill="rgba(196,30,58,0.08)" stroke="#c41e3a" stroke-width="1"/>
+      <text x="190" y="117" font-family="'Fira Code',monospace" font-size="9" fill="#c41e3a" text-anchor="middle">"Scale api-gateway to 5 replicas"</text>
 
-      <rect x="60" y="140" width="260" height="32" rx="8" fill="rgba(56,189,248,0.08)" stroke="#38bdf8" stroke-width="1"/>
-      <text x="190" y="161" font-family="'Fira Code',monospace" font-size="9" fill="#38bdf8" text-anchor="middle">"Why is the payment svc OOMKilling?"</text>
+      <rect x="60" y="140" width="260" height="32" rx="8" fill="rgba(196,30,58,0.08)" stroke="#c41e3a" stroke-width="1"/>
+      <text x="190" y="161" font-family="'Fira Code',monospace" font-size="9" fill="#c41e3a" text-anchor="middle">"Why is the payment svc OOMKilling?"</text>
 
       <!-- MCP SERVER (centre) -->
       <rect x="310" y="70" width="140" height="100" rx="10" fill="rgba(167,139,250,0.08)" stroke="#a78bfa" stroke-width="1.5"/>
@@ -366,14 +368,14 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <text x="590" y="32" font-family="'Fira Code',monospace" font-size="11" fill="#7a8099" text-anchor="middle" letter-spacing="2">KUBERNETES CLUSTER</text>
 
       <!-- Cluster box -->
-      <rect x="490" y="48" width="200" height="148" rx="10" fill="rgba(56,189,248,0.04)" stroke="#38bdf8" stroke-width="1" stroke-dasharray="6 3" opacity="0.6"/>
+      <rect x="490" y="48" width="200" height="148" rx="10" fill="rgba(196,30,58,0.04)" stroke="#c41e3a" stroke-width="1" stroke-dasharray="6 3" opacity="0.6"/>
 
       <!-- Nodes -->
-      <rect x="508" y="62" width="80" height="24" rx="5" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
-      <text x="548" y="78" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle">node-1</text>
+      <rect x="508" y="62" width="80" height="24" rx="5" fill="#1a1e28" stroke="#c41e3a" stroke-width="0.8"/>
+      <text x="548" y="78" font-family="'Fira Code',monospace" font-size="8" fill="#c41e3a" text-anchor="middle">node-1</text>
 
-      <rect x="600" y="62" width="80" height="24" rx="5" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
-      <text x="640" y="78" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle">node-2</text>
+      <rect x="600" y="62" width="80" height="24" rx="5" fill="#1a1e28" stroke="#c41e3a" stroke-width="0.8"/>
+      <text x="640" y="78" font-family="'Fira Code',monospace" font-size="8" fill="#c41e3a" text-anchor="middle">node-2</text>
 
       <!-- Pods -->
       <rect x="508" y="98" width="55" height="20" rx="4" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.8"/>
@@ -386,37 +388,37 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <text x="659" y="112" font-family="'Fira Code',monospace" font-size="7" fill="#f87171" text-anchor="middle">pod !</text>
 
       <!-- Services -->
-      <rect x="530" y="132" width="90" height="20" rx="4" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
-      <text x="575" y="146" font-family="'Fira Code',monospace" font-size="7" fill="#38bdf8" text-anchor="middle">svc/api-gw</text>
+      <rect x="530" y="132" width="90" height="20" rx="4" fill="#1a1e28" stroke="#c41e3a" stroke-width="0.8"/>
+      <text x="575" y="146" font-family="'Fira Code',monospace" font-size="7" fill="#c41e3a" text-anchor="middle">svc/api-gw</text>
 
-      <rect x="530" y="160" width="90" height="20" rx="4" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
-      <text x="575" y="174" font-family="'Fira Code',monospace" font-size="7" fill="#38bdf8" text-anchor="middle">deploy/web</text>
+      <rect x="530" y="160" width="90" height="20" rx="4" fill="#1a1e28" stroke="#c41e3a" stroke-width="0.8"/>
+      <text x="575" y="174" font-family="'Fira Code',monospace" font-size="7" fill="#c41e3a" text-anchor="middle">deploy/web</text>
 
       <!-- Arrows centre to right -->
-      <line x1="450" y1="100" x2="490" y2="100" stroke="#38bdf8" stroke-width="1.2" opacity="0.7"/>
-      <polygon points="488,96 496,100 488,104" fill="#38bdf8" opacity="0.7"/>
-      <line x1="450" y1="130" x2="490" y2="140" stroke="#38bdf8" stroke-width="1.2" opacity="0.7"/>
+      <line x1="450" y1="100" x2="490" y2="100" stroke="#c41e3a" stroke-width="1.2" opacity="0.7"/>
+      <polygon points="488,96 496,100 488,104" fill="#c41e3a" opacity="0.7"/>
+      <line x1="450" y1="130" x2="490" y2="140" stroke="#c41e3a" stroke-width="1.2" opacity="0.7"/>
 
       <!-- BOTTOM: Capabilities row -->
       <text x="380" y="228" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">CAPABILITIES</text>
 
-      <rect x="40" y="244" width="125" height="36" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
-      <text x="102" y="267" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle">Pod Management</text>
+      <rect x="40" y="244" width="125" height="36" rx="6" fill="rgba(196,30,58,0.06)" stroke="#c41e3a" stroke-width="0.8"/>
+      <text x="102" y="267" font-family="'Fira Code',monospace" font-size="8" fill="#c41e3a" text-anchor="middle">Pod Management</text>
 
-      <rect x="178" y="244" width="125" height="36" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
-      <text x="240" y="267" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle">Helm Operations</text>
+      <rect x="178" y="244" width="125" height="36" rx="6" fill="rgba(196,30,58,0.06)" stroke="#c41e3a" stroke-width="0.8"/>
+      <text x="240" y="267" font-family="'Fira Code',monospace" font-size="8" fill="#c41e3a" text-anchor="middle">Helm Operations</text>
 
-      <rect x="316" y="244" width="125" height="36" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
-      <text x="378" y="267" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle">Multi-Cluster</text>
+      <rect x="316" y="244" width="125" height="36" rx="6" fill="rgba(196,30,58,0.06)" stroke="#c41e3a" stroke-width="0.8"/>
+      <text x="378" y="267" font-family="'Fira Code',monospace" font-size="8" fill="#c41e3a" text-anchor="middle">Multi-Cluster</text>
 
-      <rect x="454" y="244" width="125" height="36" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
-      <text x="516" y="267" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle">Observability</text>
+      <rect x="454" y="244" width="125" height="36" rx="6" fill="rgba(196,30,58,0.06)" stroke="#c41e3a" stroke-width="0.8"/>
+      <text x="516" y="267" font-family="'Fira Code',monospace" font-size="8" fill="#c41e3a" text-anchor="middle">Observability</text>
 
-      <rect x="592" y="244" width="125" height="36" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
-      <text x="654" y="267" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle">Troubleshooting</text>
+      <rect x="592" y="244" width="125" height="36" rx="6" fill="rgba(196,30,58,0.06)" stroke="#c41e3a" stroke-width="0.8"/>
+      <text x="654" y="267" font-family="'Fira Code',monospace" font-size="8" fill="#c41e3a" text-anchor="middle">Troubleshooting</text>
 
       <!-- Bottom labels -->
-      <text x="380" y="310" font-family="'Nunito',sans-serif" font-size="12" fill="#38bdf8" text-anchor="middle" font-weight="700">Natural Language → Kubernetes API → Actionable Results</text>
+      <text x="380" y="310" font-family="'Nunito',sans-serif" font-size="12" fill="#c41e3a" text-anchor="middle" font-weight="700">Natural Language → Kubernetes API → Actionable Results</text>
       <text x="380" y="328" font-family="'Fira Code',monospace" font-size="8" fill="#7a8099" text-anchor="middle">github.com/containers/kubernetes-mcp-server · Go · Zero Dependencies</text>
     </svg>
   </div><!-- /article-hero -->
@@ -841,13 +843,47 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
       <div class="author-avatar">R³</div>
       <div>
         <div class="author-name">Richie Richard Rajkumar</div>
-        <div class="author-role">Infrastructure Architect · Platform Leader · Berlin</div>
+        <div class="author-role">Infrastructure Architect & Engineering Leader</div>
       </div>
     </div>
     <a href="/blog" class="back-btn">← All articles</a>
   </footer>
 
 </div><!-- /article-page -->
+
+<footer class="site-footer">
+  <div class="shell">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <a class="brand" href="/">
+            <span class="brand-mark">R<sup style="font-size:0.6em">3</sup></span>
+          </a>
+        </div>
+        <p>Infrastructure Architect &amp; Engineering Leader. Building cloud platforms that scale organisations, not just systems.</p>
+      </div>
+      <div>
+        <h2>Navigation</h2>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/blog">Writing</a>
+        <a href="/#contact">Contact</a>
+      </div>
+      <div>
+        <h2>Connect</h2>
+        <a href="mailto:contact@richierichard.com">contact@richierichard.com</a>
+        <a href="https://www.linkedin.com/in/richierichard/" target="_blank">LinkedIn</a>
+        <a href="https://github.com/richierichard" target="_blank">GitHub</a>
+        <a href="https://x.com/RajkumarRichie" target="_blank">X / Twitter</a>
+        <span>Berlin, Germany</span>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Richie Richard Rajkumar &middot; All Rights Reserved</span>
+      <span>Built with Claude</span>
+    </div>
+  </div>
+</footer>
 
 <script src="/js/main.js"></script>
 </body>

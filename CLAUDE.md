@@ -1,22 +1,24 @@
 # CLAUDE.md — Project Context for Claude Code
 
 ## Project overview
-Personal portfolio website and technical blog for Richie Richard Rajkumar (Senior DevOps Engineer, Berlin).
+Personal portfolio website and technical blog for Richie Richard Rajkumar (Infrastructure Architect & Engineering Leader, Berlin).
 Deployed as a static site via **Vercel** at `https://www.richierichard.com/`.
 
 ## File structure
 ```
 richierichard.github.io/
-├── index.html               # Homepage — hero, intro, skills, experience, projects, contact
+├── index.html               # Homepage — hero with photo, metrics, operating model, skills, experience, projects, writing, contact
 ├── about.html               # Dedicated detailed About Me page
 ├── blog.html                # Blog listing page — search, tag filters, post cards
-├── favicon.svg              # SVG favicon — transparent background, green R³ in Courier New
+├── favicon.svg              # SVG favicon — candy red background, white R³ in Courier New
 ├── vercel.json              # Vercel config — clean URLs + .html → clean URL redirects
 ├── github-profile-README.md # Source file for GitHub profile README (deploy to richierichard/richierichard repo)
 ├── css/
-│   └── style.css            # All styles, organised by section with comments
+│   └── style.css            # All shared styles — design tokens, nav, hero, sections, footer, responsive
 ├── js/
-│   └── main.js              # All scripts: network animation, scroll reveal, cloud dots, theme toggle, contact form
+│   └── main.js              # Scripts: sticky header, mobile nav toggle, scroll reveal, TOC, contact form, site config
+├── img/
+│   └── richie.jpeg          # Portrait photo used in hero section (300×300, displayed at 4:5 ratio via CSS)
 ├── blog/
 │   ├── s3-regional-namespaces.html         # Article: AWS S3 Account-Regional Namespaces (March 2026)
 │   ├── kubernetes-mcp-server.html          # Article: Kubernetes MCP Server in Practice (April 2026)
@@ -33,51 +35,75 @@ richierichard.github.io/
 
 ## Tech stack
 - Plain HTML/CSS/JS — no framework, no build tool, no bundler
-- Fonts loaded from Google Fonts (Nunito + Fira Code)
+- Fonts loaded from Google Fonts (Inter + Fira Code)
+- Headings use Georgia (system serif font) — no Google Fonts load needed
 - Contact form submitted via **Formspree** (`https://formspree.io/f/mgoporww`) using fetch + JSON — no page redirect
 - Deployed automatically by **Vercel** on push to `main`
 
+## Design system
+Warm executive aesthetic — single light theme, no dark mode.
+
+**Colour palette (CSS variables in `:root`):**
+| Variable | Value | Usage |
+|----------|-------|-------|
+| `--bg` | `#f7f5f0` | Page background (warm sandalwood) |
+| `--surface` | `#fffdfa` | Card/panel background |
+| `--surface-strong` | `#ffffff` | Strong card background |
+| `--ink` | `#171717` | Primary text |
+| `--muted` | `#5d615d` | Secondary text |
+| `--line` | `#dfdbd2` | Borders |
+| `--line-strong` | `#c9c2b6` | Strong borders |
+| `--accent` | `#c41e3a` | Accent — Mazda Soul Red Crystal (candy red) |
+| `--accent-deep` | `#8b1425` | Dark accent (hover, deep text) |
+| `--accent-soft` | `#fce8ec` | Light accent background (blush tint) |
+
+**Typography:**
+| Variable | Value | Usage |
+|----------|-------|-------|
+| `--sans` | Inter, system stack | Body text |
+| `--serif` | Georgia, Times New Roman | Headings (h1, h2) |
+| `--mono` | Fira Code | Code blocks, labels, eyebrows |
+
+**Other tokens:** `--shadow`, `--radius: 8px`, `--shell: 1180px`, `--section`, `--section-tight`
+
 ## Navigation structure
-Top nav (all pages): **Home · About · Blog · Contact** only.
-- `Blog` links to `/blog` — blog listing page with search, tag filters, and post cards
-- Active page link is highlighted with `style="color:var(--accent)"`
-- All nav links use **absolute paths** (`/about`, `/blog`, `/#contact`, `/`)
-- All asset paths (CSS, JS, favicon) use **absolute paths** (`/css/style.css`, `/js/main.js`, `/favicon.svg`) — required because Vercel serves `about.html` at `/about` and relative paths would resolve incorrectly
+Sticky header nav (`<header class="site-header">`) on all pages:
+- Brand: R³ mark (candy red bg, white text) + name + tagline "build · scale · secure"
+- Links: **About · Expertise · Experience · Writing · Contact**
+- Contact link styled as CTA button (`.nav-cta`)
+- Mobile: hamburger toggle (`[data-nav-toggle]`) shows dropdown menu (`.nav-menu.is-open`)
+- All nav links use **absolute paths** (`/about`, `/blog`, `/#contact`, `/#expertise`, `/#experience`)
+- All asset paths use **absolute paths** (`/css/style.css`, `/js/main.js`, `/favicon.svg`)
 
 ## index.html — Homepage sections (by anchor ID)
-| ID           | Content                                         |
-|--------------|-------------------------------------------------|
-| `#hero`      | Hero — name, role, stats, terminal visual       |
-| `#about-me`  | "Get to Know Me" — intro text + highlight cards |
-| `#skills`    | Skills grid — cards by category                 |
-| `#experience`| Timeline of work history                        |
-| `#projects`  | Consulting projects                             |
-| `#contact`   | Contact info + form                             |
+| ID | Content |
+|----|---------|
+| (hero) | Hero — photo with profile card, headline, description, CTAs |
+| `#impact` | Metrics bar (15+ yrs, 8 certs, 7+ platforms, 5+ teams) |
+| `#expertise` | Operating model — 4 numbered capability cards |
+| `#skills` | Core expertise — 9 skill category cards with tags |
+| `#experience` | Career arc — 7 timeline items |
+| `#projects` | Consulting projects — 2 project cards |
+| `#writing` | Latest articles — 3 blog post cards |
+| `#contact` | Contact form + links |
+| (CTA) | LinkedIn CTA panel |
 
 Notes:
-- Certifications section removed from homepage — full detailed certs live on `about.html`
-- Education section removed from homepage — lives on `about.html` only
+- Hero uses profile photo (`/img/richie.jpeg`) with CSS `aspect-ratio: 4/5` and `object-fit: cover`
+- Profile card overlaps photo bottom with `margin: -76px auto 0`
+- Numbered sections use eyebrow labels: "01 — Leadership focus", "02 — Technical depth", etc.
 - Browser tab title: "Richie Richard Rajkumar — Leader · Visionary · Architect"
 
-## Side navigation (index.html only)
-A fixed right-side dot navigator (`.side-nav` div, NOT a `<nav>` element — avoid `<nav>` or it inherits the top nav styles).
-- Links: Introduction, Skills, Experience, Projects, Contact (Certifications removed)
-- Labels hidden by default, slide in on hover
-- Active section dot scales up via scroll-spy JS at the bottom of `index.html`
-- Scroll-spy array: `['about-me','skills','experience','projects','contact']`
-- Hidden on screens narrower than 1200px (`@media (max-width: 1200px)`)
-- `.side-nav` must NOT be in the `section, footer, .hero { position: relative }` grouping — it has its own `position: fixed` rule
-
 ## about.html — Dedicated About page
-A separate full page at `richierichard.com/about.html` with:
+A separate full page at `richierichard.com/about` with:
 - Extended bio + sidebar info cards
 - Stats row (15+ yrs, 8 certs, 7+ platforms, 5+ teams)
 - Four pillar cards (What I Do)
 - Skill proficiency bars with animated fill (JS IntersectionObserver)
-- Engineering philosophy (6 cards)
+- Engineering philosophy (6 numbered cards)
 - Career direction / What I'm looking for (Director of DevOps & Infrastructure / Staff Principal)
 - Consulting services (3 cards)
-- **Detailed certifications** — 8 cards with description, issuer, and skill tags (`.cert-detail-card`)
+- **Detailed certifications** — 8 cards with description, issuer, and skill tags
 - Education
 - Contact CTA block
 - Page-specific styles are inline `<style>` block in `about.html` — not in `style.css`
@@ -89,13 +115,13 @@ Full blog listing with client-side search and tag filtering.
 - Hero section with title and search bar
 - Two-column grid: sticky sidebar (210px) + post cards (1fr)
 - Responsive: sidebar stacks at 860px, post cards simplify at 600px
-- Inline styles in `blog.html` (~290 lines)
+- Inline styles in `blog.html`
 
 **Sidebar:**
-- Tag filter buttons with post counts (e.g., `AWS (2)`, `Kubernetes (2)`)
+- Tag filter buttons with post counts (e.g., `AWS (7)`, `Kubernetes (7)`)
 - Active tag highlighted; "All posts" is default
 - "Articles published" stat counter
-- Tags: AWS, Cost Engineering, DevOps, FinOps, GitOps, Infrastructure, Kubernetes, Platform Engineering, S3 (alphabetical order)
+- Tags: AI, AWS, Cost Engineering, DevOps, FinOps, GitOps, Infrastructure, Kubernetes, Platform Engineering, S3
 
 **Post cards:**
 - Each card is an `<a>` with `data-tags`, `data-title`, `data-excerpt` attributes for filtering
@@ -115,13 +141,14 @@ Full blog listing with client-side search and tag filtering.
 **When adding a new blog post:**
 1. Create `blog/{slug}.html` using an existing article as template
 2. Add a post card `<a>` in `blog.html` (newest first, above existing cards)
-3. Update tag filter counts in the sidebar
-4. Update the "All posts" count and `#visible-count` stat
-5. Update the "articles in progress" count in the terminal widget if applicable
+3. Add a writing card `<a>` on `index.html` in the writing section (keep 3 most recent)
+4. Update tag filter counts in the sidebar
+5. Update the "All posts" count and `#visible-count` stat
+6. Update the "articles in progress" count in the terminal widget if applicable
 
 ## blog/ — Article pages
 Each article is a standalone HTML file in the `blog/` directory with:
-- Same nav, canvas animation, and theme toggle as all pages
+- Same sticky header nav and footer as all pages
 - Page-specific inline `<style>` block (~200+ lines) — not in `style.css`
 - All asset paths use absolute paths (`/css/style.css`, `/js/main.js`, `/favicon.svg`)
 
@@ -130,7 +157,7 @@ Each article is a standalone HTML file in the `blog/` directory with:
 |-----------|-------|---------|
 | Back link | `.article-back` | `← Back to Blog` linking to `/blog` |
 | Header | `.article-header` | Tags (`.article-tag`), title (`.article-title` with accent `<span>`), meta (author, date, read time) |
-| Hero image | `.article-hero` | Inline SVG diagram (~760×320–420px), dark gradient background, Fira Code labels |
+| Hero image | `.article-hero` | Inline SVG diagram (~760×320–420px), gradient background, Fira Code labels |
 | Intro | `.article-intro` | 1–2 paragraphs of context before the main body |
 | Body | `.article-body` | Sections with `h2` (bordered bottom), `h3` (accent color), paragraphs, lists, code blocks |
 | Divider | `.article-divider` | Horizontal line |
@@ -139,8 +166,8 @@ Each article is a standalone HTML file in the `blog/` directory with:
 **Reusable content components in articles:**
 - **Code blocks** — `<pre>` with syntax highlighting via span classes: `.cm` (comment/muted), `.ky` (keyword/accent), `.st` (string/pink), `.nm` (name/yellow)
 - **Callout boxes** — `.callout` div with accent left border, used for key takeaways and author opinions
-- **Comparison tables** — `.compare-table` with `.good` (accent/green) and `.bad` (red) cell classes
-- **Conversation blocks** — `.conversation` div with `.human` (accent blue), `.ai` (purple #a78bfa), `.msg` children; used for AI dialogue examples
+- **Comparison tables** — `.compare-table` with `.good` (accent) and `.bad` (red) cell classes
+- **Conversation blocks** — `.conversation` div with `.human` (accent), `.ai` (purple #a78bfa), `.msg` children; used for AI dialogue examples
 
 **Published articles:**
 | Slug | Title | Date | Tags |
@@ -156,33 +183,28 @@ Each article is a standalone HTML file in the `blog/` directory with:
 | `helm-to-kustomize` | From Helm to Kustomize: Why We Ditched Templates for Overlays | May 2026 | Kubernetes, DevOps, GitOps, Platform Engineering |
 
 ## favicon.svg
-- SVG favicon, transparent background, green R³ in Courier New bold
-- `<link rel="icon" href="favicon.svg" type="image/svg+xml">` added to all pages
-- For `about.html` and `blog.html` the path is relative from the same root directory
+- SVG favicon, candy red background (`#c41e3a`), white R³ in Courier New bold
+- `<link rel="icon" href="/favicon.svg" type="image/svg+xml">` on all pages
 
-## Network topology background animation
-Canvas-based animation in `main.js` (`#bg-canvas` element, first child of `<body>`).
-- Applied to `index.html`, `about.html`, `blog.html`, and all `blog/*.html` article pages
-- 28 floating nodes (25% larger "server" nodes with pulse ring, 75% smaller endpoint nodes)
-- Connection lines drawn between nodes within 200px, opacity fades with distance
-- Data packets (small dots, green or cyan) travel along connections
-- Adapts to light/dark mode by reading `document.body.classList.contains('light')`
-- Canvas: `position: fixed; z-index: 0` — sections/footer have `position: relative; z-index: 1` to sit above it
-- `main.js` guards page-specific elements with null checks: `cloud-tags` and `contact-form`
-- **Do NOT use `<nav>` for the side nav** — the global `nav {}` CSS rule would override its positioning
-
-## Nav logo
+## Nav brand
 ```html
-<a href="index.html" class="nav-logo">
-  <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
-  <span class="nav-logo-tag">build · scale · secure</span>
+<a class="brand" href="/" aria-label="Richie Richard Rajkumar home">
+  <span class="brand-mark">R<sup style="font-size:0.6em">3</sup></span>
+  <span class="brand-lockup">
+    <span class="brand-name">Richie Richard Rajkumar</span>
+    <span class="brand-tagline">build · scale · secure</span>
+  </span>
 </a>
 ```
-- `.nav-logo-mark` and `.nav-logo-tag` have `display: block` to ensure they always stack vertically
+- `.brand-mark` is candy red background with white text
 - Tagline: "build · scale · secure"
 
 ## Footer
-- Both `index.html` and `about.html` footer reads: `© 2026 Richie Richard Rajkumar · Built with Claude`
+All pages use `<footer class="site-footer">` with:
+- Brand mark, description
+- Navigation links column
+- Connect links column (email, LinkedIn, GitHub, X, location)
+- Bottom bar: copyright + "Built with Claude"
 
 ## Contact links
 - Email: `contact@richierichard.com` (HTML-entity-encoded in HTML to deter scrapers)
@@ -193,8 +215,8 @@ Canvas-based animation in `main.js` (`#bg-canvas` element, first child of `<body
 
 ## Conventions
 - **No build step** — edits to HTML, CSS, or JS files are live on push
-- **CSS variables** for theming (`--bg`, `--accent`, `--muted`, etc.) — dark mode by default, light mode toggled via `body.light`
-- **Scroll reveal** — add class `reveal` to any element to animate it in on scroll
+- **CSS variables** for theming — warm sandalwood palette, single light theme, no dark mode
+- **Scroll reveal** — add class `reveal` to any element to animate it in on scroll (via IntersectionObserver in `main.js`)
 - **Emails are HTML-entity-encoded** in HTML files to deter scrapers — do not decode them
 - All asset paths (`/css/style.css`, `/js/main.js`, `/favicon.svg`) use absolute paths — do not use relative paths or they will break on `/about` and `/blog`
 - All nav links use absolute paths (`/`, `/about`, `/blog`, `/#contact`)

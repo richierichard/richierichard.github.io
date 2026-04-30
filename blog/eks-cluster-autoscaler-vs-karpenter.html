@@ -17,7 +17,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
 
 <style>
@@ -34,7 +34,7 @@
 .article-intro {
   max-width: 960px;
   margin-bottom: 2.5rem;
-  color: var(--text);
+  color: var(--ink);
   line-height: 1.85;
   font-size: 1.05rem;
 }
@@ -42,8 +42,8 @@
 .article-intro code {
   font-family: var(--mono);
   font-size: 0.88em;
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 4px;
   padding: 0.1em 0.35em;
   color: var(--accent);
@@ -70,18 +70,17 @@
   font-size: 0.68rem;
   padding: 0.2rem 0.6rem;
   border-radius: 20px;
-  background: var(--accent-dim);
+  background: var(--accent-soft);
   color: var(--accent);
-  border: 1px solid rgba(56,189,248,0.2);
+  border: 1px solid rgba(196,30,58,0.2);
   letter-spacing: 0.04em;
 }
-body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
 .article-title {
   font-size: clamp(1.75rem, 4vw, 2.75rem);
   font-weight: 900;
   line-height: 1.2;
-  color: var(--text);
+  color: var(--ink);
   margin-bottom: 1rem;
 }
 .article-title span { color: var(--accent); }
@@ -103,18 +102,18 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   border-radius: 14px;
   overflow: hidden;
   margin-bottom: 3rem;
-  border: 1px solid var(--border2);
-  background: var(--bg2);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
 }
 
-.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body { color: var(--ink); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
 .article-body h2 {
   font-size: 1.35rem;
   font-weight: 800;
-  color: var(--text);
+  color: var(--ink);
   margin: 2.5rem 0 0.85rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
   scroll-margin-top: 6rem;
 }
 .article-body h3 {
@@ -123,15 +122,15 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   color: var(--accent);
   margin: 1.75rem 0 0.5rem;
 }
-.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body p { margin-bottom: 1.25rem; color: var(--ink); }
 .article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
-.article-body li { margin-bottom: 0.4rem; color: var(--text); }
-.article-body strong { color: var(--text); font-weight: 700; }
+.article-body li { margin-bottom: 0.4rem; color: var(--ink); }
+.article-body strong { color: var(--ink); font-weight: 700; }
 .article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 
 .article-body pre {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
   border-radius: 10px;
   padding: 1.25rem 1.5rem;
   overflow-x: auto;
@@ -143,8 +142,8 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 .article-body code {
   font-family: var(--mono);
   font-size: 0.88em;
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 4px;
   padding: 0.1em 0.35em;
   color: var(--accent);
@@ -153,7 +152,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   background: none;
   border: none;
   padding: 0;
-  color: var(--text);
+  color: var(--ink);
   font-size: 1em;
 }
 .article-body pre .cm { color: var(--muted); }
@@ -162,7 +161,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 .article-body pre .nm { color: #fde68a; }
 
 .callout {
-  background: var(--accent-dim);
+  background: var(--accent-soft);
   border-left: 3px solid var(--accent);
   border-radius: 0 10px 10px 0;
   padding: 1rem 1.25rem;
@@ -178,7 +177,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   font-size: 0.9rem;
 }
 .compare-table th {
-  background: var(--bg2);
+  background: var(--surface);
   font-family: var(--mono);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
@@ -186,25 +185,25 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   color: var(--muted);
   padding: 0.65rem 1rem;
   text-align: left;
-  border-bottom: 1px solid var(--border2);
+  border-bottom: 1px solid var(--line-strong);
 }
 .compare-table td {
   padding: 0.65rem 1rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
   vertical-align: top;
-  color: var(--text);
+  color: var(--ink);
 }
 .compare-table tr:last-child td { border-bottom: none; }
 .compare-table .good { color: var(--accent); font-weight: 700; }
 .compare-table .bad  { color: #f87171; }
 
-.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+.article-divider { height: 1px; background: var(--line); margin: 2.5rem 0; max-width: 960px; }
 
 .article-footer {
   max-width: 960px;
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -214,7 +213,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 .article-author { display: flex; align-items: center; gap: 0.85rem; }
 .author-avatar {
   width: 44px; height: 44px; border-radius: 50%;
-  background: var(--accent-dim);
+  background: var(--accent-soft);
   border: 2px solid var(--accent);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
@@ -234,24 +233,27 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
-
-<nav>
-  <a href="/" class="nav-logo">
-    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
-    <span class="nav-logo-tag">build · scale · secure</span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="/">Home</a></li>
-    <li><a href="/about">About</a></li>
-    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
-    <li><a href="/#contact">Contact</a></li>
-  </ul>
-  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-    <span class="t-icon">☀</span>
-    <span id="theme-label">Light</span>
-  </button>
-</nav>
+<header class="site-header" data-site-header>
+  <nav class="nav shell" aria-label="Primary navigation">
+    <a class="brand" href="/" aria-label="Richie Richard Rajkumar home">
+      <span class="brand-mark">R<sup style="font-size:0.6em">3</sup></span>
+      <span class="brand-lockup">
+        <span class="brand-name">Richie Richard Rajkumar</span>
+        <span class="brand-tagline">build · scale · secure</span>
+      </span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-menu" data-nav-toggle>
+      <span>Menu</span>
+    </button>
+    <div class="nav-menu" id="site-menu" data-nav-menu>
+      <a href="/about">About</a>
+      <a href="/#expertise">Expertise</a>
+      <a href="/#experience">Experience</a>
+      <a href="/blog">Writing</a>
+      <a class="nav-cta" href="/#contact">Contact</a>
+    </div>
+  </nav>
+</header>
 
 <div class="article-page">
 
@@ -288,7 +290,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
           <polygon points="0 0, 7 2.5, 0 5" fill="#f87171"/>
         </marker>
         <marker id="arrow-green" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
-          <polygon points="0 0, 7 2.5, 0 5" fill="#4ade80"/>
+          <polygon points="0 0, 7 2.5, 0 5" fill="#d4614e"/>
         </marker>
       </defs>
       <rect width="760" height="420" fill="url(#bg-grad)"/>
@@ -332,44 +334,44 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <text x="190" y="296" font-family="'Fira Code',monospace" font-size="7" fill="#f87171" text-anchor="middle">ASGs + Launch Templates + NTH DaemonSet</text>
       <text x="190" y="312" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">Passive scale-down · No drift detection</text>
       <text x="190" y="328" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">Cloud-agnostic · Battle-tested since 2016</text>
-      <text x="190" y="344" font-family="'Fira Code',monospace" font-size="7" fill="#4ade80" text-anchor="middle">Works on EKS, GKE, AKS, and more</text>
+      <text x="190" y="344" font-family="'Fira Code',monospace" font-size="7" fill="#d4614e" text-anchor="middle">Works on EKS, GKE, AKS, and more</text>
 
       <!-- RIGHT: KARPENTER -->
-      <text x="570" y="55" font-family="'Nunito',sans-serif" font-size="13" fill="#4ade80" text-anchor="middle" font-weight="800">Karpenter</text>
+      <text x="570" y="55" font-family="'Nunito',sans-serif" font-size="13" fill="#d4614e" text-anchor="middle" font-weight="800">Karpenter</text>
       <text x="570" y="70" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">Pod-Driven · Workload-First</text>
 
       <!-- Karpenter Flow -->
-      <rect x="430" y="85" width="280" height="34" rx="6" fill="#1a1e28" stroke="#4ade80" stroke-width="0.7"/>
-      <text x="570" y="99" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">1. Pods go Pending</text>
+      <rect x="430" y="85" width="280" height="34" rx="6" fill="#1a1e28" stroke="#d4614e" stroke-width="0.7"/>
+      <text x="570" y="99" font-family="'Fira Code',monospace" font-size="7.5" fill="#d4614e" text-anchor="middle">1. Pods go Pending</text>
       <text x="570" y="112" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">No node with enough capacity</text>
 
-      <line x1="570" y1="119" x2="570" y2="131" stroke="#4ade80" stroke-width="0.8" marker-end="url(#arrow-green)"/>
+      <line x1="570" y1="119" x2="570" y2="131" stroke="#d4614e" stroke-width="0.8" marker-end="url(#arrow-green)"/>
 
-      <rect x="430" y="133" width="280" height="34" rx="6" fill="#1a1e28" stroke="#4ade80" stroke-width="0.7"/>
-      <text x="570" y="147" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">2. Evaluate pod requirements + batch</text>
+      <rect x="430" y="133" width="280" height="34" rx="6" fill="#1a1e28" stroke="#d4614e" stroke-width="0.7"/>
+      <text x="570" y="147" font-family="'Fira Code',monospace" font-size="7.5" fill="#d4614e" text-anchor="middle">2. Evaluate pod requirements + batch</text>
       <text x="570" y="160" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">"What node does this pod actually need?"</text>
 
-      <line x1="570" y1="167" x2="570" y2="179" stroke="#4ade80" stroke-width="0.8" marker-end="url(#arrow-green)"/>
+      <line x1="570" y1="167" x2="570" y2="179" stroke="#d4614e" stroke-width="0.8" marker-end="url(#arrow-green)"/>
 
-      <rect x="430" y="181" width="280" height="34" rx="6" fill="#1a1e28" stroke="#4ade80" stroke-width="0.7"/>
-      <text x="570" y="195" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">3. EC2 Fleet API → right-sized instance</text>
+      <rect x="430" y="181" width="280" height="34" rx="6" fill="#1a1e28" stroke="#d4614e" stroke-width="0.7"/>
+      <text x="570" y="195" font-family="'Fira Code',monospace" font-size="7.5" fill="#d4614e" text-anchor="middle">3. EC2 Fleet API → right-sized instance</text>
       <text x="570" y="208" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">Optimal type chosen at launch time</text>
 
-      <line x1="570" y1="215" x2="570" y2="227" stroke="#4ade80" stroke-width="0.8" marker-end="url(#arrow-green)"/>
+      <line x1="570" y1="215" x2="570" y2="227" stroke="#d4614e" stroke-width="0.8" marker-end="url(#arrow-green)"/>
 
-      <rect x="430" y="229" width="280" height="34" rx="6" fill="#1a1e28" stroke="#4ade80" stroke-width="0.7"/>
-      <text x="570" y="243" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">4. Node joins cluster → Pods schedule</text>
+      <rect x="430" y="229" width="280" height="34" rx="6" fill="#1a1e28" stroke="#d4614e" stroke-width="0.7"/>
+      <text x="570" y="243" font-family="'Fira Code',monospace" font-size="7.5" fill="#d4614e" text-anchor="middle">4. Node joins cluster → Pods schedule</text>
       <text x="570" y="256" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">Total: ~60 seconds</text>
 
       <!-- Karpenter characteristics -->
-      <rect x="430" y="278" width="280" height="80" rx="8" fill="rgba(74,222,128,0.04)" stroke="#4ade80" stroke-width="0.6" stroke-dasharray="4 2"/>
-      <text x="570" y="296" font-family="'Fira Code',monospace" font-size="7" fill="#4ade80" text-anchor="middle">NodePool + EC2NodeClass (2 CRDs)</text>
+      <rect x="430" y="278" width="280" height="80" rx="8" fill="rgba(196,30,58,0.04)" stroke="#d4614e" stroke-width="0.6" stroke-dasharray="4 2"/>
+      <text x="570" y="296" font-family="'Fira Code',monospace" font-size="7" fill="#d4614e" text-anchor="middle">NodePool + EC2NodeClass (2 CRDs)</text>
       <text x="570" y="312" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">Active consolidation · Drift detection</text>
       <text x="570" y="328" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">Native Spot handling · Expiration TTL</text>
       <text x="570" y="344" font-family="'Fira Code',monospace" font-size="7" fill="#fbbf24" text-anchor="middle">AWS-only · GA since 2023</text>
 
       <!-- Bottom tagline -->
-      <text x="380" y="408" font-family="'Nunito',sans-serif" font-size="11" fill="#38bdf8" text-anchor="middle" font-weight="700">Same Goal — Scale Nodes for Pending Pods — Different Architecture</text>
+      <text x="380" y="408" font-family="'Nunito',sans-serif" font-size="11" fill="#c41e3a" text-anchor="middle" font-weight="700">Same Goal — Scale Nodes for Pending Pods — Different Architecture</text>
     </svg>
   </div><!-- /article-hero -->
 
@@ -726,6 +728,40 @@ Multi-cloud?
   </footer>
 
 </div><!-- /article-page -->
+
+<footer class="site-footer">
+  <div class="shell">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <a class="brand" href="/">
+            <span class="brand-mark">R<sup style="font-size:0.6em">3</sup></span>
+          </a>
+        </div>
+        <p>Infrastructure Architect &amp; Engineering Leader. Building cloud platforms that scale organisations, not just systems.</p>
+      </div>
+      <div>
+        <h2>Navigation</h2>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/blog">Writing</a>
+        <a href="/#contact">Contact</a>
+      </div>
+      <div>
+        <h2>Connect</h2>
+        <a href="mailto:contact@richierichard.com">contact@richierichard.com</a>
+        <a href="https://www.linkedin.com/in/richierichard/" target="_blank">LinkedIn</a>
+        <a href="https://github.com/richierichard" target="_blank">GitHub</a>
+        <a href="https://x.com/RajkumarRichie" target="_blank">X / Twitter</a>
+        <span>Berlin, Germany</span>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Richie Richard Rajkumar &middot; All Rights Reserved</span>
+      <span>Built with Claude</span>
+    </div>
+  </div>
+</footer>
 
 <script src="/js/main.js"></script>
 </body>
