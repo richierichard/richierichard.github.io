@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Richie Richard Rajkumar — Leader · Visionary · Architect</title>
+<title>Richie Richard Rajkumar | Leader · Visionary · Architect</title>
 
 <!-- SEO -->
 <meta name="description" content="Senior DevOps Engineer and Infrastructure Architect with 15+ years of experience leading cloud platform strategy, engineering teams, and security compliance. CKA &amp; CKAD certified. Based in Berlin, Germany.">
@@ -15,13 +15,13 @@
 <!-- Open Graph (LinkedIn, Facebook, Slack previews) -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://richierichard.com/">
-<meta property="og:title" content="Richie Richard Rajkumar — Senior DevOps Engineer">
+<meta property="og:title" content="Richie Richard Rajkumar | Senior DevOps Engineer">
 <meta property="og:description" content="Senior DevOps Engineer and Infrastructure Architect with 15+ years of experience leading cloud platform strategy, engineering teams, and security compliance. CKA &amp; CKAD certified. Based in Berlin, Germany.">
 <meta property="og:locale" content="en_GB">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Richie Richard Rajkumar — Senior DevOps Engineer">
+<meta name="twitter:title" content="Richie Richard Rajkumar | Senior DevOps Engineer">
 <meta name="twitter:description" content="Senior DevOps Engineer and Infrastructure Architect with 15+ years of experience leading cloud platform strategy, engineering teams, and security compliance. CKA &amp; CKAD certified. Based in Berlin, Germany.">
 
 <!-- Fonts -->
@@ -32,7 +32,7 @@
 <!-- Styles -->
 <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
+<body class="light">
 
 <canvas id="bg-canvas"></canvas>
 
@@ -40,7 +40,11 @@
 <nav>
   <a href="/" class="nav-logo">
     <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
-    <span class="nav-logo-tag">build · scale · secure</span>
+    <span class="nav-logo-divider"></span>
+    <span class="nav-logo-right">
+      <span class="nav-logo-name-line"><span class="nav-logo-name">Richie Richard </span><span class="nav-logo-surname">Rajkumar</span></span>
+      <span class="nav-logo-tag">build <span class="nav-logo-arrow">▸</span> scale <span class="nav-logo-arrow">▸</span> secure</span>
+    </span>
   </a>
   <ul class="nav-links">
     <li><a href="/" style="color:var(--accent)">Home</a></li>
@@ -50,7 +54,7 @@
   </ul>
   <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
     <span class="t-icon">☀</span>
-    <span id="theme-label">Light</span>
+    <span id="theme-label">Dark</span>
   </button>
 </nav>
 
@@ -66,11 +70,11 @@
 <!-- HERO -->
 <section class="hero" id="hero">
   <div class="hero-content">
-    <h1 class="hero-name">Richie<br>Richard <span>Rajkumar</span></h1>
-    <p class="hero-role">// Infrastructure Architect · Platform Leader · Berlin, Germany</p>
-    <p class="hero-desc">I specialise in building cloud infrastructure that scales — turning complex platforms into reliable, secure foundations that let engineering teams ship faster and organisations grow without limits.</p>
+    <p class="hero-tag">Infrastructure Architecture &amp; Engineering Leadership</p>
+    <h1 class="hero-name">Building cloud platforms that scale organisations, <span>not just systems.</span></h1>
+    <p class="hero-desc">I specialise in building cloud infrastructure that scales, turning complex platforms into reliable, secure foundations that let engineering teams ship faster and organisations grow without limits.</p>
     <div class="hero-ctas">
-      <a href="#contact" class="btn btn-primary">Get in touch</a>
+      <a href="#contact" class="btn btn-primary">Start a conversation</a>
       <a href="#experience" class="btn btn-outline">View experience</a>
     </div>
     <div class="hero-stats">
@@ -89,30 +93,23 @@
     </div>
   </div>
   <div class="hero-visual">
-    <div class="terminal">
-      <div class="terminal-bar">
-        <span class="dot dot-r"></span>
-        <span class="dot dot-y"></span>
-        <span class="dot dot-g"></span>
-        <span class="terminal-title">richie@devops ~ zsh</span>
-      </div>
-      <div class="terminal-body">
-        <span class="t-line"><span class="t-prompt">❯ </span><span class="t-cmd">cat profile.json</span></span>
-        <span class="t-line">&nbsp;</span>
-        <span class="t-line"><span class="t-muted">{</span></span>
-        <span class="t-line">&nbsp;&nbsp;<span class="t-key">"name"</span><span class="t-muted">:</span> <span class="t-val">"Richie Richard Rajkumar"</span><span class="t-muted">,</span></span>
-        <span class="t-line">&nbsp;&nbsp;<span class="t-key">"role"</span><span class="t-muted">:</span> <span class="t-val">"Senior DevOps Engineer"</span><span class="t-muted">,</span></span>
-        <span class="t-line">&nbsp;&nbsp;<span class="t-key">"scope"</span><span class="t-muted">:</span> <span class="t-val">"platform + org"</span><span class="t-muted">,</span></span>
-        <span class="t-line">&nbsp;&nbsp;<span class="t-key">"company"</span><span class="t-muted">:</span> <span class="t-val">"keylight GmbH"</span><span class="t-muted">,</span></span>
-        <span class="t-line">&nbsp;&nbsp;<span class="t-key">"location"</span><span class="t-muted">:</span> <span class="t-val">"Berlin, Germany"</span><span class="t-muted">,</span></span>
-        <span class="t-line">&nbsp;&nbsp;<span class="t-key">"experience"</span><span class="t-muted">:</span> <span class="t-val">"15 years"</span><span class="t-muted">,</span></span>
-        <span class="t-line">&nbsp;&nbsp;<span class="t-key">"cka"</span><span class="t-muted">:</span> <span class="t-val">true</span><span class="t-muted">,</span></span>
-        <span class="t-line">&nbsp;&nbsp;<span class="t-key">"ckad"</span><span class="t-muted">:</span> <span class="t-val">true</span><span class="t-muted">,</span></span>
-        <span class="t-line">&nbsp;&nbsp;<span class="t-key">"cloud"</span><span class="t-muted">: [</span><span class="t-val">"AWS"</span><span class="t-muted">, </span><span class="t-val">"GCP"</span><span class="t-muted">, </span><span class="t-val">"..."</span><span class="t-muted">],</span></span>
-        <!-- <span class="t-line">&nbsp;&nbsp;<span class="t-key">"status"</span><span class="t-muted">:</span> <span class="t-val">"open_to_work"</span></span> -->
-        <span class="t-line"><span class="t-muted">}</span></span>
-        <span class="t-line">&nbsp;</span>
-        <span class="t-line"><span class="t-prompt">❯ </span><span class="cursor"></span></span>
+    <div class="hero-photo-frame">
+      <img src="/img/richie.jpeg" alt="Richie Richard Rajkumar" class="hero-photo">
+      <div class="hero-photo-caption">
+        <span class="hero-photo-label">Based in Berlin</span>
+        <span class="hero-photo-name">Richie Richard Rajkumar</span>
+        <span class="hero-photo-bio">Infrastructure Architect &amp; Engineering Leader. Builder of cloud platforms, security-first infrastructure, and high-performing engineering teams.</span>
+        <div class="hero-photo-socials">
+          <a href="https://www.linkedin.com/in/richierichard/" target="_blank" class="hero-social" aria-label="LinkedIn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          </a>
+          <a href="https://github.com/richierichard" target="_blank" class="hero-social" aria-label="GitHub">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+          <a href="https://x.com/RajkumarRichie" target="_blank" class="hero-social" aria-label="X">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -127,37 +124,37 @@
     <h2 class="section-title reveal">Get to Know Me</h2>
     <div class="about-grid">
       <div class="about-text reveal">
-        <p>With over 15 years of experience building and leading cloud infrastructure, I've grown from hands-on engineering into a role that sits at the intersection of architecture, security, and organisational impact. I don't just build platforms — I build the foundations that let engineering teams move fast, operate reliably, and scale without friction.</p>
+        <p>With over 15 years of experience building and leading cloud infrastructure, I've grown from hands-on engineering into a role that sits at the intersection of architecture, security, and organisational impact. I don't just build platforms. I build the foundations that let engineering teams move fast, operate reliably, and scale without friction.</p>
         <p>My work spans the full spectrum: cloud platform strategy and architecture, end-to-end infrastructure ownership, security and compliance as deliberate business enablers, and the engineering culture that makes it all sustainable. I've led teams, driven certifications that opened enterprise contracts, and made the kind of platform investments that compound over time.</p>
-        <p>I'm moving towards engineering leadership — where architectural thinking and organisational impact work at full scale, and where the right infrastructure decisions shape not just systems but entire product trajectories.</p>
+        <p>I'm moving towards engineering leadership, where architectural thinking and organisational impact work at full scale, and where the right infrastructure decisions shape not just systems but entire product trajectories.</p>
       </div>
       <div class="about-highlights reveal">
         <div class="about-highlight-item">
           <span class="about-highlight-icon">☁</span>
           <div>
             <div class="about-highlight-title">Cloud Platform Strategy &amp; Architecture</div>
-            <div class="about-highlight-desc">Defining direction across AWS, GCP, and beyond — at startup and enterprise scale.</div>
+            <div class="about-highlight-desc">Defining direction across AWS, GCP, and beyond, at startup and enterprise scale.</div>
           </div>
         </div>
         <div class="about-highlight-item">
           <span class="about-highlight-icon">🔒</span>
           <div>
             <div class="about-highlight-title">Security &amp; Compliance as a Business Enabler</div>
-            <div class="about-highlight-desc">PCI-DSS, ISO 27001, SOC 2 — not checkboxes, but levers that unlock growth.</div>
+            <div class="about-highlight-desc">PCI-DSS, ISO 27001, SOC 2. Not checkboxes, but levers that unlock growth.</div>
           </div>
         </div>
         <div class="about-highlight-item">
           <span class="about-highlight-icon">⚙</span>
           <div>
             <div class="about-highlight-title">End-to-End Infrastructure Ownership</div>
-            <div class="about-highlight-desc">From first principles to production — fully accountable for the platform and its outcomes.</div>
+            <div class="about-highlight-desc">From first principles to production, fully accountable for the platform and its outcomes.</div>
           </div>
         </div>
         <div class="about-highlight-item">
           <span class="about-highlight-icon">👥</span>
           <div>
             <div class="about-highlight-title">Engineering Culture &amp; Team Leadership</div>
-            <div class="about-highlight-desc">Building teams that don't need heroics — because the systems and standards are right.</div>
+            <div class="about-highlight-desc">Building teams that don't need heroics, because the systems and standards are right.</div>
           </div>
         </div>
       </div>
@@ -198,7 +195,7 @@
       <div class="skill-card reveal">
         <div class="skill-card-title">🔄 CI/CD Pipelines</div>
         <div class="skill-tags">
-          <span class="tag">ArgoCD</span><span class="tag">Capistrano</span><span class="tag">Cloud Build</span>
+          <span class="tag">ArgoCD</span>
           <span class="tag">GitHub Actions</span><span class="tag">GitLab CI</span><span class="tag">Jenkins</span>
         </div>
       </div>
@@ -214,18 +211,18 @@
         <div class="skill-card-title">🔒 Security &amp; Compliance</div>
         <div class="skill-tags">
           <span class="tag">HashiCorp Vault</span><span class="tag">ISO 27001</span><span class="tag">Nessus</span>
-          <span class="tag">PCI DSS</span><span class="tag">SOC 2</span><span class="tag">Trivy</span><span class="tag">Veracode</span>
+          <span class="tag">PCI DSS</span><span class="tag">SOC 2</span><span class="tag">Trivy</span><span class="tag">Vanta</span><span class="tag">Veracode</span>
         </div>
       </div>
       <div class="skill-card reveal">
         <div class="skill-card-title">☁ Cloud Services</div>
         <div style="display:flex;gap:0.5rem;align-items:flex-start;">
           <div class="skill-tags" id="cloud-tags" style="max-height:9rem;overflow-y:auto;flex:1;scrollbar-width:none;">
-            <span class="tag">Aurora &amp; RDS / Cloud SQL</span><span class="tag">AWS Backup</span><span class="tag">AWS Certificate Manager</span>
+            <span class="tag">Aurora &amp; RDS / Cloud SQL</span><span class="tag">AWS Backup</span><span class="tag">AWS Certificate Manager</span><span class="tag">AWS Config</span><span class="tag">AWS Inspector</span>
             <span class="tag">CloudWatch</span><span class="tag">Database Migration Service</span><span class="tag">DataSync</span>
             <span class="tag">EC2 / Compute Engine</span><span class="tag">ECR</span><span class="tag">EKS / GKE</span>
             <span class="tag">Elasticache (Redshift &amp; Valkey)</span><span class="tag">Fargate / Cloud Run</span>
-            <span class="tag">IAM / Cloud IAM</span><span class="tag">IAM Identity Center</span><span class="tag">KMS / Cloud KMS</span>
+            <span class="tag">GuardDuty</span><span class="tag">IAM / Cloud IAM</span><span class="tag">IAM Identity Center</span><span class="tag">KMS / Cloud KMS</span>
             <span class="tag">Lambda / Cloud Functions</span><span class="tag">Organizations</span><span class="tag">Route53 / Cloud DNS</span>
             <span class="tag">S3 / Cloud Storage</span><span class="tag">SQS / Pub/Sub</span><span class="tag">Systems Manager</span>
             <span class="tag">VPC</span><span class="tag">WAF</span>
@@ -270,7 +267,7 @@
             <span>Berlin, Germany · Hybrid</span>
           </div>
         </div>
-        <p class="exp-desc">Serving as keylight's principal infrastructure authority — the single technical voice accountable for the entire cloud platform strategy and execution. This isn't operational ownership alone; it's platform leadership in a high-stakes startup context: defining architecture direction, setting security standards from first principles, and driving PCI-DSS and ISO 27001 certification as deliberate business enablers. The compliance work wasn't a checkbox exercise — it was a strategic lever that opened enterprise contracts that would otherwise have been out of reach.</p>
+        <p class="exp-desc">Serving as keylight's principal infrastructure authority, the single technical voice accountable for the entire cloud platform strategy and execution. This isn't operational ownership alone; it's platform leadership in a high-stakes startup context: defining architecture direction, setting security standards from first principles, and driving PCI-DSS and ISO 27001 certification as deliberate business enablers. The compliance work wasn't a checkbox exercise; it was a strategic lever that opened enterprise contracts that would otherwise have been out of reach.</p>
         <div class="exp-stack">
           <span class="stack-tag">AWS</span>
           <span class="stack-tag">Hetzner Cloud</span>
@@ -292,7 +289,7 @@
             <span>Berlin, Germany</span>
           </div>
         </div>
-        <p class="exp-desc">Brought in to define and build Yababa's engineering platform from the ground up — making deliberate technology choices, including an intentional pivot to GCP despite no prior experience with it. Delivered a production-grade Kubernetes platform within six months. Beyond the technical build, owned the full engineering toolchain strategy: drove the migration to GitLab, introduced security-first CI/CD with automated vulnerability scanning, and championed developer experience through feature-branch environments with automatic teardown. Owned the budget, managed vendor relationships, and invested in the growth of a junior engineer — early, clear evidence that I lead people as naturally as I lead platforms.</p>
+        <p class="exp-desc">Brought in to define and build Yababa's engineering platform from the ground up, making deliberate technology choices, including an intentional pivot to GCP despite no prior experience with it. Delivered a production-grade Kubernetes platform within six months. Beyond the technical build, owned the full engineering toolchain strategy: drove the migration to GitLab, introduced security-first CI/CD with automated vulnerability scanning, and championed developer experience through feature-branch environments with automatic teardown. Owned the budget, managed vendor relationships, and invested in the growth of a junior engineer. Early, clear evidence that I lead people as naturally as I lead platforms.</p>
         <div class="exp-stack">
           <span class="stack-tag">Terraform</span>
           <span class="stack-tag">GCP</span>
@@ -313,7 +310,7 @@
             <span>Berlin, Germany</span>
           </div>
         </div>
-        <p class="exp-desc">Owned infrastructure reliability across a portfolio of global consumer brands — Zoosk, EliteSingles, Jdate, and more — serving millions of concurrent users across time zones. Drove the architectural strategy for multi-cluster EKS deployments, established a unified observability layer across all brands using Prometheus and Grafana, and standardised CDN delivery through Akamai. Operating at this scale, across multiple products and engineering teams simultaneously, shaped how I think about platform engineering: as a multiplier for organisational capability, not just a technical concern.</p>
+        <p class="exp-desc">Owned infrastructure reliability across a portfolio of global consumer brands (Zoosk, EliteSingles, Jdate, and more), serving millions of concurrent users across time zones. Drove the architectural strategy for multi-cluster EKS deployments, established a unified observability layer across all brands using Prometheus and Grafana, and standardised CDN delivery through Akamai. Operating at this scale, across multiple products and engineering teams simultaneously, shaped how I think about platform engineering: as a multiplier for organisational capability, not just a technical concern.</p>
         <div class="exp-stack">
           <span class="stack-tag">AWS / EKS</span>
           <span class="stack-tag">Terraform</span>
@@ -335,7 +332,7 @@
             <span>India</span>
           </div>
         </div>
-        <p class="exp-desc">Took full platform ownership for a fast-growing SaaS product serving millions of users — and translated that ownership into organisational outcomes. Drove SOC 2 and ISO 27001 compliance, scaled a continuous deployment pipeline to serve over a hundred enterprise customers without disruption, and stood up a comprehensive observability stack from scratch. Built and led a team of three engineers, defining the engineering culture and tooling standards that the platform still runs on. This role crystallised a conviction: great infrastructure leadership isn't about heroics — it's about building systems and teams that don't need them.</p>
+        <p class="exp-desc">Took full platform ownership for a fast-growing SaaS product serving millions of users, and translated that ownership into organisational outcomes. Drove SOC 2 and ISO 27001 compliance, scaled a continuous deployment pipeline to serve over a hundred enterprise customers without disruption, and stood up a comprehensive observability stack from scratch. Built and led a team of three engineers, defining the engineering culture and tooling standards that the platform still runs on. This role crystallised a conviction: great infrastructure leadership isn't about heroics; it's about building systems and teams that don't need them.</p>
         <div class="exp-stack">
           <span class="stack-tag">AWS</span>
           <span class="stack-tag">ELK Stack</span>
@@ -355,7 +352,7 @@
             <span>India</span>
           </div>
         </div>
-        <p class="exp-desc">Promoted from Senior Engineer to Lead within twelve months — recognition of both technical depth and an instinct to operate well beyond job description boundaries. Designed and built the AWS SaaS foundation from scratch, drove PrivacyShield and PCI DSS compliance as a business imperative, and demonstrated decisive crisis leadership when HEARTBLEED and SHELLSHOCK broke: full-stack patches shipped within hours of public disclosure, before most organisations had even assessed their exposure. Led a team of five and established the engineering rigour that the company's security reputation was built on.</p>
+        <p class="exp-desc">Promoted from Senior Engineer to Lead within twelve months, recognition of both technical depth and an instinct to operate well beyond job description boundaries. Designed and built the AWS SaaS foundation from scratch, drove PrivacyShield and PCI DSS compliance as a business imperative, and demonstrated decisive crisis leadership when HEARTBLEED and SHELLSHOCK broke: full-stack patches shipped within hours of public disclosure, before most organisations had even assessed their exposure. Led a team of five and established the engineering rigour that the company's security reputation was built on.</p>
         <div class="exp-stack">
           <span class="stack-tag">AWS</span>
           <span class="stack-tag">Terraform</span>
@@ -376,7 +373,7 @@
             <span>India</span>
           </div>
         </div>
-        <p class="exp-desc">An early role that established a pattern which has defined the career since: identify what the engineering organisation is missing, and build it. Recognised the absence of infrastructure-as-code practices, championed Ansible adoption, and transformed a manual, error-prone production setup into a consistent, repeatable one. Managed the full stack — from FortiGate firewalls and rack servers to cloud provisioning on Rackspace — building broad foundations that would prove essential at every step that followed.</p>
+        <p class="exp-desc">An early role that established a pattern which has defined the career since: identify what the engineering organisation is missing, and build it. Recognised the absence of infrastructure-as-code practices, championed Ansible adoption, and transformed a manual, error-prone production setup into a consistent, repeatable one. Managed the full stack, from FortiGate firewalls and rack servers to cloud provisioning on Rackspace, building broad foundations that would prove essential at every step that followed.</p>
         <div class="exp-stack">
           <span class="stack-tag">Rackspace</span>
           <span class="stack-tag">Ansible</span>
@@ -395,7 +392,7 @@
             <span>India</span>
           </div>
         </div>
-        <p class="exp-desc">Where it all began — and where the pattern was set. Made the case for DevOps methodology in an organisation that hadn't encountered it, driving automation across 35 virtual machines through a single Jenkins instance. For a major US telecommunications client, redesigned the delivery pipeline entirely: deployment time dropped from 60 minutes to 3. That outcome wasn't just a technical win — it was an early demonstration that the right platform investment creates compounding returns for the whole engineering organisation.</p>
+        <p class="exp-desc">Where it all began, and where the pattern was set. Made the case for DevOps methodology in an organisation that hadn't encountered it, driving automation across 35 virtual machines through a single Jenkins instance. For a major US telecommunications client, redesigned the delivery pipeline entirely: deployment time dropped from 60 minutes to 3. That outcome wasn't just a technical win; it was an early demonstration that the right platform investment creates compounding returns for the whole engineering organisation.</p>
         <div class="exp-stack">
           <span class="stack-tag">Jenkins</span>
           <span class="stack-tag">VMware vSphere</span>
@@ -423,7 +420,7 @@
           <div class="project-name">SnapPoints</div>
           <span class="project-role">Infrastructure Architect</span>
         </div>
-        <p class="project-desc">SnapPoints connects merchants to the world's leading loyalty programme networks — a workload that demands high availability, low-latency integrations, and the ability to scale as merchant volume grows. Trusted to own the cloud foundation entirely: designed the architecture, established CI/CD pipelines, and put the security controls in place that gave the team confidence to ship and grow.</p>
+        <p class="project-desc">SnapPoints connects merchants to the world's leading loyalty programme networks, a workload that demands high availability, low-latency integrations, and the ability to scale as merchant volume grows. Trusted to own the cloud foundation entirely: designed the architecture, established CI/CD pipelines, and put the security controls in place that gave the team confidence to ship and grow.</p>
         <div class="exp-stack">
           <span class="stack-tag">AWS</span>
           <span class="stack-tag">CI/CD</span>
@@ -439,7 +436,7 @@
           <div class="project-name">1-Click Procurement</div>
           <span class="project-role">Infrastructure Architect</span>
         </div>
-        <p class="project-desc">1-Click Procurement is building the PayPal equivalent for B2B purchasing — one-click corporate transactions, spend management, and enterprise integrations at scale. A product handling enterprise payments needs infrastructure built to a higher standard: PCI-compliant, locked down, and resilient enough that buyers and suppliers never feel the platform underneath them. Trusted with the architecture to make that possible — designed the cloud foundation and security layer that positioned the product for serious enterprise adoption.</p>
+        <p class="project-desc">1-Click Procurement is building the PayPal equivalent for B2B purchasing: one-click corporate transactions, spend management, and enterprise integrations at scale. A product handling enterprise payments needs infrastructure built to a higher standard: PCI-compliant, locked down, and resilient enough that buyers and suppliers never feel the platform underneath them. Trusted with the architecture to make that possible, designed the cloud foundation and security layer that positioned the product for serious enterprise adoption.</p>
         <div class="exp-stack">
           <span class="stack-tag">AWS</span>
           <span class="stack-tag">CI/CD</span>
@@ -462,7 +459,7 @@
     <h2 class="section-title reveal">Get in touch</h2>
     <div class="contact-grid">
       <div class="contact-left reveal">
-        <p>Whether you have an interesting infrastructure challenge, a role you think I'd be a great fit for, or simply want to talk DevOps — I'd love to hear from you. Drop me a message and I'll get back to you promptly.</p>
+        <p>Whether you have an interesting infrastructure challenge, a role you think I'd be a great fit for, or simply want to talk DevOps, I'd love to hear from you. Drop me a message and I'll get back to you promptly.</p>
         <div class="contact-links">
           <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#99;&#111;&#110;&#116;&#97;&#99;&#116;&#64;&#114;&#105;&#99;&#104;&#105;&#101;&#114;&#105;&#99;&#104;&#97;&#114;&#100;&#46;&#99;&#111;&#109;" class="contact-link">
             <span class="contact-link-icon">✉</span>

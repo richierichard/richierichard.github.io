@@ -402,8 +402,8 @@
 
 /* Contact CTA */
 .cta-block {
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: linear-gradient(135deg, #1a4568 0%, #0f3050 50%, #0a2540 100%);
+  border: none;
   border-radius: 16px;
   padding: 4rem 3rem;
   text-align: center;
@@ -413,11 +413,29 @@
 .cta-block::before {
   content: '';
   position: absolute;
-  top: -100px; left: 50%;
-  transform: translateX(-50%);
-  width: 500px; height: 300px;
-  background: radial-gradient(circle, rgba(74,222,128,0.06) 0%, transparent 70%);
+  top: -60px; right: -60px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 70%);
   pointer-events: none;
+}
+.cta-block::after {
+  content: '';
+  position: absolute;
+  bottom: -80px; left: -40px;
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, rgba(56,189,248,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-block .cta-title,
+.cta-block .cta-subtitle { color: #e8eef4; position: relative; z-index: 1; }
+.cta-block .cta-buttons { position: relative; z-index: 1; }
+.cta-block .btn-outline {
+  color: #e8eef4;
+  border-color: rgba(255,255,255,0.35);
+}
+.cta-block .btn-outline:hover {
+  border-color: #38bdf8;
+  color: #38bdf8;
 }
 .cta-title {
   font-size: clamp(1.8rem, 3vw, 2.8rem);
@@ -532,7 +550,7 @@ body.light .cert-tag {
 }
 </style>
 </head>
-<body>
+<body class="light">
 
 <canvas id="bg-canvas"></canvas>
 
@@ -550,7 +568,7 @@ body.light .cert-tag {
   </ul>
   <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
     <span class="t-icon">☀</span>
-    <span id="theme-label">Light</span>
+    <span id="theme-label">Dark</span>
   </button>
 </nav>
 
