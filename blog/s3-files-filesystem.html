@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>S3 Files: Your Buckets Are File Systems Now — Richie Richard Rajkumar</title>
+<title>S3 Files: Your Buckets Are File Systems Now · Richie Richard Rajkumar</title>
 
 <meta name="description" content="AWS S3 Files turns any general purpose bucket into a mountable NFS file system. Here's what it actually means for your infrastructure, how to mount it on EC2, EKS, and Lambda, and where it fits alongside EFS and FSx.">
 <meta name="author" content="Richie Richard Rajkumar">
@@ -11,7 +11,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://www.richierichard.com/blog/s3-files-filesystem">
-<meta property="og:title" content="S3 Files: Your Buckets Are File Systems Now — Richie Richard Rajkumar">
+<meta property="og:title" content="S3 Files: Your Buckets Are File Systems Now · Richie Richard Rajkumar">
 <meta property="og:description" content="AWS S3 Files turns any S3 bucket into a mountable NFS file system. Mount it on EC2, EKS, Lambda. Here's what changed and what it means for your architecture.">
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -290,7 +290,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <rect width="760" height="360" fill="url(#bg-grad)"/>
 
       <!-- TITLE -->
-      <text x="380" y="28" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">AMAZON S3 FILES — OBJECT STORE MEETS FILE SYSTEM</text>
+      <text x="380" y="28" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">AMAZON S3 FILES · OBJECT STORE MEETS FILE SYSTEM</text>
 
       <!-- LEFT: S3 Bucket (Object Store) -->
       <text x="160" y="60" font-family="'Fira Code',monospace" font-size="9" fill="#7a8099" text-anchor="middle" letter-spacing="1">S3 BUCKET</text>
@@ -360,18 +360,18 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <text x="200" y="296" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">Two storage systems, manual data movement</text>
 
       <rect x="400" y="264" width="320" height="40" rx="6" fill="rgba(56,189,248,0.06)" stroke="#38bdf8" stroke-width="0.8"/>
-      <text x="560" y="280" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8" text-anchor="middle">AFTER: S3 Files — one bucket, two access patterns</text>
+      <text x="560" y="280" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8" text-anchor="middle">AFTER: S3 Files · one bucket, two access patterns</text>
       <text x="560" y="296" font-family="'Fira Code',monospace" font-size="7.5" fill="#38bdf8" text-anchor="middle">Object API + NFS mount, automatic sync</text>
 
       <!-- Bottom tagline -->
       <text x="380" y="336" font-family="'Nunito',sans-serif" font-size="12" fill="#38bdf8" text-anchor="middle" font-weight="700">One Bucket · Two Access Patterns · No Data Movement</text>
-      <text x="380" y="352" font-family="'Fira Code',monospace" font-size="8" fill="#7a8099" text-anchor="middle">mount -t s3files fs-xxx:/ /mnt/s3 — NFS v4.1+ · ~1ms · All Regions</text>
+      <text x="380" y="352" font-family="'Fira Code',monospace" font-size="8" fill="#7a8099" text-anchor="middle">mount -t s3files fs-xxx:/ /mnt/s3 · NFS v4.1+ · ~1ms · All Regions</text>
     </svg>
   </div><!-- /article-hero -->
 
   <div class="article-intro">
-    <p>For as long as S3 has existed, there's been a tradeoff: you get cheap, durable, infinitely scalable object storage — but you can't <code>cd</code> into it. You can't <code>vim</code> a config file. You can't mount it and let your application read from a path. If your workload needed a file system, you reached for EFS or FSx, copied the data over, and built sync logic to keep them in sync. That era just ended.</p>
-    <p><strong>Amazon S3 Files</strong>, launched in April 2026, turns any general purpose S3 bucket into a mountable NFS v4.1+ file system. You <code>mount</code> it on EC2, EKS pods, ECS containers, or Lambda functions — and your S3 objects appear as files and directories. Writes to the file system sync back to S3 automatically. Changes to S3 objects appear in the mount within seconds. One bucket, two access patterns, no data movement.</p>
+    <p>For as long as S3 has existed, there's been a tradeoff: you get cheap, durable, infinitely scalable object storage, but you can't <code>cd</code> into it. You can't <code>vim</code> a config file. You can't mount it and let your application read from a path. If your workload needed a file system, you reached for EFS or FSx, copied the data over, and built sync logic to keep them in sync. That era just ended.</p>
+    <p><strong>Amazon S3 Files</strong>, launched in April 2026, turns any general purpose S3 bucket into a mountable NFS v4.1+ file system. You <code>mount</code> it on EC2, EKS pods, ECS containers, or Lambda functions, and your S3 objects appear as files and directories. Writes to the file system sync back to S3 automatically. Changes to S3 objects appear in the mount within seconds. One bucket, two access patterns, no data movement.</p>
   </div>
 
   <article class="article-body">
@@ -381,12 +381,12 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
     <p>S3 Files adds a file system layer on top of any general purpose S3 bucket. Under the hood, it uses EFS infrastructure to provide NFS access with ~1ms latencies for active data. The key mechanics:</p>
 
     <ul>
-      <li><strong>NFS v4.1+ protocol</strong> — standard POSIX file operations: create, read, update, delete, rename, chmod, chown</li>
-      <li><strong>Bidirectional sync</strong> — writes on the file system export back to S3 within minutes; changes on S3 appear in the file system within seconds</li>
-      <li><strong>High-performance storage tier</strong> — frequently accessed files and metadata are cached on low-latency storage; cold files are served directly from S3</li>
-      <li><strong>Byte-range reads</strong> — only the requested bytes are transferred from S3, not the entire object</li>
-      <li><strong>Multi-attach</strong> — multiple compute resources can mount the same file system concurrently with NFS close-to-open consistency</li>
-      <li><strong>Available in all commercial AWS regions</strong> — no waitlist, no preview</li>
+      <li><strong>NFS v4.1+ protocol</strong>, standard POSIX file operations: create, read, update, delete, rename, chmod, chown</li>
+      <li><strong>Bidirectional sync</strong>, writes on the file system export back to S3 within minutes; changes on S3 appear in the file system within seconds</li>
+      <li><strong>High-performance storage tier</strong>, frequently accessed files and metadata are cached on low-latency storage; cold files are served directly from S3</li>
+      <li><strong>Byte-range reads</strong>, only the requested bytes are transferred from S3, not the entire object</li>
+      <li><strong>Multi-attach</strong>, multiple compute resources can mount the same file system concurrently with NFS close-to-open consistency</li>
+      <li><strong>Available in all commercial AWS regions</strong>, no waitlist, no preview</li>
     </ul>
 
     <table class="compare-table">
@@ -425,7 +425,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         </tr>
         <tr>
           <td>POSIX permissions</td>
-          <td class="bad">Not applicable — S3 uses IAM policies</td>
+          <td class="bad">Not applicable, S3 uses IAM policies</td>
           <td class="good">UID/GID-based permissions stored as object metadata</td>
         </tr>
       </tbody>
@@ -437,7 +437,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <h2 id="how-it-works">How It Works: Three Steps</h2>
 
-    <h3>Step 1 — Create the S3 File System</h3>
+    <h3>Step 1, Create the S3 File System</h3>
 
     <p>You can create a file system from the S3 console, CLI, or IaC. The file system is attached to an existing general purpose bucket:</p>
 
@@ -452,9 +452,9 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 <span class="cm">#   "Status": "CREATING"</span>
 <span class="cm"># }</span></pre>
 
-    <h3>Step 2 — Create a Mount Target</h3>
+    <h3>Step 2, Create a Mount Target</h3>
 
-    <p>A mount target is a network endpoint in your VPC — it's how your compute resources reach the file system. You need one per availability zone:</p>
+    <p>A mount target is a network endpoint in your VPC, it's how your compute resources reach the file system. You need one per availability zone:</p>
 
     <pre><span class="cm"># Create mount target in your subnet</span>
 <span class="ky">$</span> aws s3 create-mount-target \
@@ -464,7 +464,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
 <span class="cm"># The security group must allow NFS traffic (TCP 2049) from your compute resources</span></pre>
 
-    <h3>Step 3 — Mount and Use</h3>
+    <h3>Step 3, Mount and Use</h3>
 
     <pre><span class="cm"># Install or update the EFS utils (required for the s3files mount type)</span>
 <span class="ky">$</span> sudo yum install -y amazon-efs-utils
@@ -482,7 +482,7 @@ config/  data/  logs/  assets/
   host: prod-db.internal
   port: 5432</span>
 
-<span class="cm"># Write a file — it syncs to S3 automatically within minutes</span>
+<span class="cm"># Write a file, it syncs to S3 automatically within minutes</span>
 <span class="ky">$</span> echo <span class="st">"deployment: v2.14.0"</span> > /mnt/s3/config/deploy.yaml
 
 <span class="cm"># Verify it's in S3</span>
@@ -491,7 +491,7 @@ config/  data/  logs/  assets/
 
     <h2 id="mounting-on-eks">Mounting on EKS: PersistentVolume with the EFS CSI Driver</h2>
 
-    <p>For Kubernetes workloads, you mount S3 Files using the existing <strong>EFS CSI driver</strong> — because S3 Files uses EFS infrastructure under the hood. If you're already running EFS volumes in EKS, you already have the driver installed.</p>
+    <p>For Kubernetes workloads, you mount S3 Files using the existing <strong>EFS CSI driver</strong>, because S3 Files uses EFS infrastructure under the hood. If you're already running EFS volumes in EKS, you already have the driver installed.</p>
 
     <h3>Static Provisioning with a PersistentVolume</h3>
 
@@ -501,7 +501,7 @@ config/  data/  logs/  assets/
   <span class="ky">name</span>: <span class="st">s3-files-training-data</span>
 <span class="ky">spec</span>:
   <span class="ky">capacity</span>:
-    <span class="ky">storage</span>: <span class="st">100Gi</span>  <span class="cm"># Required field but not enforced — S3 is effectively unlimited</span>
+    <span class="ky">storage</span>: <span class="st">100Gi</span>  <span class="cm"># Required field but not enforced, S3 is effectively unlimited</span>
   <span class="ky">accessModes</span>:
     - <span class="st">ReadWriteMany</span>  <span class="cm"># Multiple pods can mount concurrently</span>
   <span class="ky">persistentVolumeReclaimPolicy</span>: <span class="st">Retain</span>
@@ -546,7 +546,7 @@ config/  data/  logs/  assets/
     <p>The training job reads from <code>/data</code> as if it were a local directory. The data lives in S3, served through the S3 Files layer. When the job writes checkpoints or results back to <code>/data/output/</code>, those files appear in the S3 bucket automatically.</p>
 
     <div class="callout">
-      <strong>ReadWriteMany is the key.</strong> Multiple pods across different nodes can mount the same S3 file system concurrently. This is what makes it viable for distributed ML training, shared config management, and multi-pod pipelines — without the EBS single-attach limitation or the need to run a separate EFS file system.
+      <strong>ReadWriteMany is the key.</strong> Multiple pods across different nodes can mount the same S3 file system concurrently. This is what makes it viable for distributed ML training, shared config management, and multi-pod pipelines, without the EBS single-attach limitation or the need to run a separate EFS file system.
     </div>
 
     <h2 id="terraform">Terraform: Full Example</h2>
@@ -590,9 +590,9 @@ config/  data/  logs/  assets/
 
     <h2 id="lambda">Lambda: Mount S3 as a File System in a Function</h2>
 
-    <p>Lambda functions can mount S3 Files just like they can mount EFS today. This is particularly powerful for functions that process files — instead of downloading from S3 into <code>/tmp</code> (capped at 10 GB), the function reads directly from the mount:</p>
+    <p>Lambda functions can mount S3 Files just like they can mount EFS today. This is particularly powerful for functions that process files, instead of downloading from S3 into <code>/tmp</code> (capped at 10 GB), the function reads directly from the mount:</p>
 
-    <pre><span class="cm"># Terraform — Lambda with S3 Files mount</span>
+    <pre><span class="cm"># Terraform, Lambda with S3 Files mount</span>
 
 <span class="ky">resource</span> <span class="st">"aws_lambda_function"</span> <span class="st">"processor"</span> {
   function_name = <span class="st">"data-processor"</span>
@@ -612,18 +612,18 @@ config/  data/  logs/  assets/
   }
 }</pre>
 
-    <pre><span class="cm"># Lambda function code — reads directly from the mounted file system</span>
+    <pre><span class="cm"># Lambda function code, reads directly from the mounted file system</span>
 <span class="ky">import</span> json
 <span class="ky">import</span> os
 
 <span class="ky">def</span> handler(event, context):
-    <span class="cm"># No S3 SDK calls needed — just read from the mount</span>
+    <span class="cm"># No S3 SDK calls needed, just read from the mount</span>
     config_path = <span class="st">"/mnt/data/config/app.yaml"</span>
 
     <span class="ky">with</span> open(config_path, <span class="st">"r"</span>) <span class="ky">as</span> f:
         config = f.read()
 
-    <span class="cm"># Process files in a directory — standard Python, no boto3</span>
+    <span class="cm"># Process files in a directory, standard Python, no boto3</span>
     data_files = os.listdir(<span class="st">"/mnt/data/incoming/"</span>)
 
     <span class="ky">for</span> filename <span class="ky">in</span> data_files:
@@ -632,7 +632,7 @@ config/  data/  logs/  assets/
             data = json.load(f)
             <span class="cm"># process data...</span>
 
-        <span class="cm"># Move processed files — standard file operations</span>
+        <span class="cm"># Move processed files, standard file operations</span>
         os.rename(filepath, filepath.replace(<span class="st">"/incoming/"</span>, <span class="st">"/processed/"</span>))
 
     <span class="ky">return</span> {<span class="st">"processed"</span>: len(data_files)}</pre>
@@ -645,20 +645,20 @@ config/  data/  logs/  assets/
     <p>The classic pain: data lives in S3, but training frameworks (PyTorch, TensorFlow) expect a file path. Previously you'd copy to FSx for Lustre, train, then copy results back. With S3 Files, mount the bucket directly. The training job reads data from the mount at ~1ms latency. Checkpoints and model outputs write back to S3 automatically. No copy step, no FSx management, no sync scripts.</p>
 
     <h3>2. Shared Config Across a Cluster</h3>
-    <p>Config files, feature flags, model weights — things that multiple pods or instances need to read. Instead of baking them into images or using a sidecar that polls S3, mount the bucket. Update the file in S3, it appears in the mount within seconds across all nodes.</p>
+    <p>Config files, feature flags, model weights, things that multiple pods or instances need to read. Instead of baking them into images or using a sidecar that polls S3, mount the bucket. Update the file in S3, it appears in the mount within seconds across all nodes.</p>
 
     <h3>3. Log Processing and ETL</h3>
-    <p>Lambda functions that process incoming files no longer need to download from S3 to <code>/tmp</code>. Mount the bucket, read from <code>/mnt/data/incoming/</code>, write processed results to <code>/mnt/data/output/</code>. The files move from one S3 prefix to another — through standard file operations, not SDK calls.</p>
+    <p>Lambda functions that process incoming files no longer need to download from S3 to <code>/tmp</code>. Mount the bucket, read from <code>/mnt/data/incoming/</code>, write processed results to <code>/mnt/data/output/</code>. The files move from one S3 prefix to another, through standard file operations, not SDK calls.</p>
 
     <h3>4. AI Agents and Tool-Using LLMs</h3>
-    <p>AI agents that interact with file-based tools (Python scripts, shell commands, code interpreters) can now access S3 data through a file system interface. The agent doesn't need S3-specific tooling — it uses standard file operations. Mount the bucket into the agent's sandbox and it can read, write, and organise files naturally.</p>
+    <p>AI agents that interact with file-based tools (Python scripts, shell commands, code interpreters) can now access S3 data through a file system interface. The agent doesn't need S3-specific tooling, it uses standard file operations. Mount the bucket into the agent's sandbox and it can read, write, and organise files naturally.</p>
 
     <h2 id="what-to-watch">What to Watch Out For</h2>
 
     <ul>
       <li><strong>Sync is not instant.</strong> File system → S3 sync takes minutes, not milliseconds. If your workflow depends on a file appearing in S3 immediately after writing, you'll need to account for this delay. S3 → file system sync is faster (seconds) but still not real-time.</li>
       <li><strong>Close-to-open consistency.</strong> Changes are visible to other clients after the file is closed. If pod A writes to a file and pod B reads it, pod B sees the update only after pod A closes the file. This is standard NFS semantics, but it matters for concurrent workloads.</li>
-      <li><strong>General purpose buckets only.</strong> S3 Files works with general purpose buckets — not directory buckets (S3 Express One Zone). If your data is in Express One Zone for latency reasons, you can't use S3 Files on it.</li>
+      <li><strong>General purpose buckets only.</strong> S3 Files works with general purpose buckets, not directory buckets (S3 Express One Zone). If your data is in Express One Zone for latency reasons, you can't use S3 Files on it.</li>
       <li><strong>Cost is additive.</strong> You pay for S3 storage + S3 Files high-performance storage + S3 requests during sync + NFS I/O. For read-heavy, sequential workloads where latency doesn't matter, plain S3 with Mountpoint may still be cheaper.</li>
       <li><strong>Security groups matter.</strong> The mount target needs a security group that allows TCP 2049 (NFS) from your compute resources. If your EKS nodes are in a different security group than your EC2 instances, both groups need ingress rules.</li>
       <li><strong>EFS utils required.</strong> The <code>amazon-efs-utils</code> package must be installed on your instances or baked into your AMI. AWS-provided AMIs have it preinstalled, but custom images may not.</li>
@@ -678,13 +678,13 @@ config/  data/  logs/  assets/
       <tbody>
         <tr>
           <td><strong>S3 Files</strong></td>
-          <td class="good">Data that lives in S3 and needs file system access — ML, shared config, Lambda processing</td>
+          <td class="good">Data that lives in S3 and needs file system access, ML, shared config, Lambda processing</td>
           <td>NFS v4.1+</td>
           <td>~1ms (active)</td>
         </tr>
         <tr>
           <td><strong>EFS</strong></td>
-          <td>File-native workloads that don't need S3 as the source of truth — CMS, web content, home directories</td>
+          <td>File-native workloads that don't need S3 as the source of truth, CMS, web content, home directories</td>
           <td>NFS v4.1</td>
           <td>~0.5ms</td>
         </tr>
@@ -696,7 +696,7 @@ config/  data/  logs/  assets/
         </tr>
         <tr>
           <td><strong>Mountpoint for S3</strong></td>
-          <td>Read-heavy, sequential access to S3 — data lakes, analytics, large file reads (no write support)</td>
+          <td>Read-heavy, sequential access to S3, data lakes, analytics, large file reads (no write support)</td>
           <td>FUSE</td>
           <td>~10-50ms</td>
         </tr>
@@ -710,19 +710,19 @@ config/  data/  logs/  assets/
     <h2 id="takeaways">Key Takeaways</h2>
 
     <ol>
-      <li><strong>S3 Files makes any general purpose bucket mountable as an NFS v4.1+ file system</strong> — from EC2, EKS, ECS, and Lambda</li>
-      <li><strong>Bidirectional sync is automatic</strong> — writes on the file system appear in S3 within minutes, S3 changes appear in the file system within seconds</li>
+      <li><strong>S3 Files makes any general purpose bucket mountable as an NFS v4.1+ file system</strong>, from EC2, EKS, ECS, and Lambda</li>
+      <li><strong>Bidirectional sync is automatic</strong>, writes on the file system appear in S3 within minutes, S3 changes appear in the file system within seconds</li>
       <li><strong>~1ms latency for active data</strong> via a high-performance storage tier, with cold data served directly from S3</li>
-      <li><strong>Multi-attach with ReadWriteMany</strong> — multiple pods, instances, or functions can mount the same file system concurrently</li>
-      <li><strong>Uses the EFS CSI driver in EKS</strong> — if you already run EFS volumes, the driver is already installed</li>
-      <li><strong>This is not Mountpoint for S3</strong> — Mountpoint is read-heavy FUSE; S3 Files is a full read/write NFS file system with sub-millisecond latency</li>
-      <li><strong>Available in all commercial regions today</strong> — no preview, no waitlist</li>
+      <li><strong>Multi-attach with ReadWriteMany</strong>, multiple pods, instances, or functions can mount the same file system concurrently</li>
+      <li><strong>Uses the EFS CSI driver in EKS</strong>, if you already run EFS volumes, the driver is already installed</li>
+      <li><strong>This is not Mountpoint for S3</strong>, Mountpoint is read-heavy FUSE; S3 Files is a full read/write NFS file system with sub-millisecond latency</li>
+      <li><strong>Available in all commercial regions today</strong>, no preview, no waitlist</li>
     </ol>
 
     <h2 id="reference">Reference</h2>
     <ul>
-      <li>AWS announcement: <a href="https://aws.amazon.com/blogs/aws/launching-s3-files-making-s3-buckets-accessible-as-file-systems/" target="_blank" rel="noopener">Launching S3 Files, making S3 buckets accessible as file systems</a> — AWS Blog, April 2026</li>
-      <li>Related: <a href="/blog/s3-regional-namespaces">AWS S3 Bucket Naming Just Changed Forever</a> — our earlier deep-dive on S3 account-regional namespaces</li>
+      <li>AWS announcement: <a href="https://aws.amazon.com/blogs/aws/launching-s3-files-making-s3-buckets-accessible-as-file-systems/" target="_blank" rel="noopener">Launching S3 Files, making S3 buckets accessible as file systems</a>, AWS Blog, April 2026</li>
+      <li>Related: <a href="/blog/s3-regional-namespaces">AWS S3 Bucket Naming Just Changed Forever</a>, our earlier deep-dive on S3 account-regional namespaces</li>
     </ul>
 
   </article>

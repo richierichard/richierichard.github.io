@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infracost for Terraform: Catching AWS Cost Surprises Before They Hit Production · Richie Richard Rajkumar</title>
+
+<meta name="description" content="A practical guide to running Infracost against Terraform for AWS: CLI basics, usage-based estimates, GitHub Actions integration with PR cost diffs, policy guardrails, and where it still falls short.">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://www.richierichard.com/blog/infracost-terraform-aws">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.richierichard.com/blog/infracost-terraform-aws">
+<meta property="og:title" content="Infracost for Terraform: Catching AWS Cost Surprises Before They Hit Production · Richie Richard Rajkumar">
+<meta property="og:description" content="CLI basics, usage-based estimates, GitHub Actions integration with PR cost diffs, policy guardrails, and where Infracost still falls short.">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+
+<style>
+/* ── ARTICLE PAGE ── */
+.article-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 7rem 2rem 5rem;
+  position: relative;
+  z-index: 1;
+}
+.article-top { max-width: 960px; }
+
+.article-intro {
+  max-width: 960px;
+  margin-bottom: 2.5rem;
+  color: var(--text);
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+.article-intro p { margin-bottom: 1.25rem; }
+.article-intro code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+
+.article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  margin-bottom: 2.5rem;
+  transition: color 0.2s;
+}
+.article-back:hover { color: var(--accent); }
+
+.article-header { margin-bottom: 2.5rem; }
+.article-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.article-tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.2);
+  letter-spacing: 0.04em;
+}
+body.light .article-tag { border-color: rgba(2,132,199,0.25); }
+
+.article-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.article-title span { color: var(--accent); }
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.article-meta-dot { opacity: 0.3; }
+
+.article-hero {
+  width: 100%;
+  max-width: 960px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+}
+
+.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 2.5rem 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 6rem;
+}
+.article-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 1.75rem 0 0.5rem;
+}
+.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.article-body li { margin-bottom: 0.4rem; color: var(--text); }
+.article-body strong { color: var(--text); font-weight: 700; }
+.article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+.article-body pre {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.article-body code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+.article-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 1em;
+}
+.article-body pre .cm { color: var(--muted); }
+.article-body pre .ky { color: var(--accent); }
+.article-body pre .st { color: #f9a8d4; }
+.article-body pre .nm { color: #fde68a; }
+
+.callout {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+.callout strong { color: var(--accent); }
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
+}
+.compare-table th {
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.compare-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .good { color: var(--accent); font-weight: 700; }
+.compare-table .bad  { color: #f87171; }
+
+.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+
+.article-footer {
+  max-width: 960px;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.article-author { display: flex; align-items: center; gap: 0.85rem; }
+.author-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
+  flex-shrink: 0;
+}
+.author-name { font-weight: 700; font-size: 0.9rem; }
+.author-role { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--accent); color: var(--accent);
+  font-weight: 700; font-size: 0.85rem; text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #000; }
+</style>
+</head>
+<body class="light">
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
+    <span class="nav-logo-divider"></span>
+    <span class="nav-logo-right">
+      <span class="nav-logo-name-line"><span class="nav-logo-name">Richie Richard </span><span class="nav-logo-surname">Rajkumar</span></span>
+      <span class="nav-logo-tag">build <span class="nav-logo-arrow">▸</span> scale <span class="nav-logo-arrow">▸</span> secure</span>
+    </span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Dark</span>
+  </button>
+</nav>
+
+<div class="article-page">
+
+  <div class="article-top">
+    <a href="/blog" class="article-back">← Back to Blog</a>
+    <header class="article-header">
+      <div class="article-tags">
+        <span class="article-tag">AWS</span>
+        <span class="article-tag">Terraform</span>
+        <span class="article-tag">FinOps</span>
+        <span class="article-tag">Cost Engineering</span>
+        <span class="article-tag">DevOps</span>
+        <span class="article-tag">Infrastructure</span>
+        <span class="article-tag">Platform Engineering</span>
+      </div>
+      <h1 class="article-title">Infracost for Terraform: <span>Catching AWS Cost Surprises Before They Hit Production</span></h1>
+      <div class="article-meta">
+        <span>Richie Richard Rajkumar</span>
+        <span class="article-meta-dot">·</span>
+        <span>May 2026</span>
+        <span class="article-meta-dot">·</span>
+        <span>11 min read</span>
+      </div>
+    </header>
+  </div>
+
+  <div class="article-hero">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 360" width="760" height="360" style="width:100%;height:auto;display:block;">
+      <defs>
+        <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0a0c10"/>
+          <stop offset="100%" stop-color="#12151c"/>
+        </linearGradient>
+        <marker id="arrow-blue" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+          <polygon points="0 0, 7 2.5, 0 5" fill="#38bdf8"/>
+        </marker>
+      </defs>
+      <rect width="760" height="360" fill="url(#bg-grad)"/>
+
+      <!-- TITLE -->
+      <text x="380" y="28" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">SHIFT COST LEFT · TERRAFORM PR → COST DIFF</text>
+
+      <!-- STAGE 1: Terraform plan -->
+      <rect x="40" y="80" width="180" height="120" rx="10" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.8"/>
+      <text x="130" y="100" font-family="'Nunito',sans-serif" font-size="12" fill="#a78bfa" text-anchor="middle" font-weight="800">terraform plan</text>
+      <text x="130" y="116" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">main.tf · variables.tf</text>
+      <line x1="55" y1="128" x2="205" y2="128" stroke="#2a3040" stroke-width="0.5"/>
+      <text x="60" y="144" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80">+ aws_eks_cluster.prod</text>
+      <text x="60" y="158" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80">+ aws_nat_gateway.az_a</text>
+      <text x="60" y="172" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80">+ aws_nat_gateway.az_b</text>
+      <text x="60" y="186" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80">+ aws_nat_gateway.az_c</text>
+
+      <!-- Arrow 1 -->
+      <line x1="225" y1="140" x2="295" y2="140" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-blue)"/>
+      <text x="260" y="132" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">plan.json</text>
+
+      <!-- STAGE 2: Infracost -->
+      <rect x="305" y="80" width="180" height="120" rx="10" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="395" y="100" font-family="'Nunito',sans-serif" font-size="12" fill="#38bdf8" text-anchor="middle" font-weight="800">infracost</text>
+      <text x="395" y="116" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">pricing API · usage file</text>
+      <line x1="320" y1="128" x2="470" y2="128" stroke="#2a3040" stroke-width="0.5"/>
+      <text x="395" y="146" font-family="'Fira Code',monospace" font-size="7.5" fill="#fde68a" text-anchor="middle">EKS control plane</text>
+      <text x="395" y="160" font-family="'Fira Code',monospace" font-size="7.5" fill="#fde68a" text-anchor="middle">3× NAT Gateway</text>
+      <text x="395" y="174" font-family="'Fira Code',monospace" font-size="7.5" fill="#fde68a" text-anchor="middle">data transfer (usage.yml)</text>
+      <text x="395" y="190" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">→ $/month</text>
+
+      <!-- Arrow 2 -->
+      <line x1="490" y1="140" x2="560" y2="140" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-blue)"/>
+      <text x="525" y="132" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">diff</text>
+
+      <!-- STAGE 3: PR comment -->
+      <rect x="570" y="80" width="160" height="120" rx="10" fill="#1a1e28" stroke="#4ade80" stroke-width="0.8"/>
+      <text x="650" y="100" font-family="'Nunito',sans-serif" font-size="11" fill="#4ade80" text-anchor="middle" font-weight="800">PR comment</text>
+      <text x="650" y="115" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">GitHub Actions</text>
+      <line x1="585" y1="127" x2="715" y2="127" stroke="#2a3040" stroke-width="0.5"/>
+      <text x="650" y="143" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">Baseline:  $1,240</text>
+      <text x="650" y="157" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">This PR:   $2,118</text>
+      <text x="650" y="172" font-family="'Fira Code',monospace" font-size="8.5" fill="#f87171" text-anchor="middle" font-weight="700">+$878 /month</text>
+      <text x="650" y="190" font-family="'Fira Code',monospace" font-size="7" fill="#fbbf24" text-anchor="middle">policy: review required</text>
+
+      <!-- BOTTOM ROW: Coverage strip -->
+      <rect x="40" y="232" width="690" height="86" rx="10" fill="rgba(56,189,248,0.04)" stroke="#38bdf8" stroke-width="0.6" stroke-dasharray="4 2"/>
+      <text x="385" y="252" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle" letter-spacing="1">AWS RESOURCES PRICED · A SAMPLE</text>
+
+      <text x="80"  y="278" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">EC2 instances</text>
+      <text x="80"  y="294" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">EKS clusters / Fargate</text>
+      <text x="80"  y="310" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">EBS volumes / snapshots</text>
+
+      <text x="245" y="278" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">RDS · Aurora · DynamoDB</text>
+      <text x="245" y="294" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">S3 (storage + requests)</text>
+      <text x="245" y="310" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">CloudFront · ALB · NLB</text>
+
+      <text x="425" y="278" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">Lambda · API Gateway</text>
+      <text x="425" y="294" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">SQS · SNS · Kinesis</text>
+      <text x="425" y="310" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">CloudWatch · X-Ray</text>
+
+      <text x="585" y="278" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">NAT Gateway · VPN</text>
+      <text x="585" y="294" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">Route 53 · ACM</text>
+      <text x="585" y="310" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">+ 1,000 more resources</text>
+
+      <!-- Bottom tagline -->
+      <text x="380" y="345" font-family="'Nunito',sans-serif" font-size="11" fill="#38bdf8" text-anchor="middle" font-weight="700">Cost Becomes a Review Signal, Not a Quarterly Surprise</text>
+    </svg>
+  </div><!-- /article-hero -->
+
+  <div class="article-intro">
+    <p>Most teams discover their AWS cost mistakes the same way: a monthly bill arrives, someone in finance circles a line item in red, and an engineer is sent spelunking through CloudWatch and Cost Explorer to find out which Terraform PR added the surprise. The cost was decided weeks ago, in a pull request, but nobody knew the price tag until the invoice landed.</p>
+    <p><strong>Infracost</strong> closes that gap. It reads a Terraform plan, prices every resource against the AWS public catalogue, and emits a cost estimate before <code>terraform apply</code> ever runs. Drop it into GitHub Actions and every PR gets a comment showing the dollar delta: what your change adds or removes from the monthly bill. Cost stops being a quarterly surprise and becomes a review signal, like a failing test or a security scan.</p>
+  </div>
+
+  <article class="article-body">
+
+    <h2 id="the-problem">The Problem: Cost Lags the Code</h2>
+
+    <p>The standard cost workflow at most companies looks like this: an engineer writes Terraform, opens a PR, gets approvals on the technical changes, merges, and applies. Three weeks later, someone notices the bill went up. By then the architecture is in production, the on-call rotation has been changed, and rolling it back means a migration, not a revert.</p>
+
+    <p>The information needed to prevent that exists at PR time. The plan output already lists every resource being created. The AWS pricing catalogue is public. The only thing missing is the glue: a tool that joins them and posts the number where reviewers will actually see it.</p>
+
+    <div class="callout">
+      <strong>The mental shift:</strong> Treat cost like security or correctness. Both shifted left over the last decade. Static analysis catches vulnerabilities at PR time, type checkers catch bugs at PR time. Cost is the next signal to move from end-of-month reports to inline review feedback.
+    </div>
+
+    <h2 id="what-infracost-does">What Infracost Actually Does</h2>
+
+    <p>Infracost is a single Go binary plus a pricing service. You point it at a Terraform directory or a plan JSON file, and it returns a monthly cost estimate for the resources in scope.</p>
+
+    <h3>Install and Connect</h3>
+
+    <pre><span class="cm"># macOS</span>
+brew install infracost
+
+<span class="cm"># Linux (one-liner)</span>
+curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+
+<span class="cm"># One-time auth: registers the CLI with the free pricing API</span>
+infracost auth login</pre>
+
+    <p>The pricing data lives in Infracost's hosted catalogue. The CLI sends a hashed query (resource type + region + size), receives prices, and computes the estimate locally. <strong>Your Terraform code and state never leave your machine.</strong> Only the resource metadata needed to look up prices does.</p>
+
+    <h3>The Two Commands That Matter</h3>
+
+    <p><code>infracost breakdown</code> shows the total monthly cost for what your Terraform <em>would</em> create:</p>
+
+    <pre>$ infracost breakdown --path .
+
+ Name                                Monthly Qty  Unit         Monthly Cost
+ aws_eks_cluster.prod
+ ├─ EKS cluster                                1  hours              $73.00
+ └─ EKS extended support                       1  hours               $0.00
+
+ aws_nat_gateway.az_a
+ ├─ NAT gateway                              730  hours              $32.85
+ └─ Data processed                  Monthly cost depends on usage: $0.045 per GB
+
+ aws_eks_node_group.workers
+ ├─ Instance usage (m5.xlarge × 3)         2,190  hours             $420.48
+ └─ EBS storage (50 GB × 3)                  150  GB-month            $15.00
+
+<span class="ky">PROJECT TOTAL</span>                                                  <span class="nm">$1,240.84</span></pre>
+
+    <p><code>infracost diff</code> shows what <em>changes</em> between the current state and the planned state. This is the one you run in CI:</p>
+
+    <pre>$ infracost diff --path .
+
+~ aws_eks_node_group.workers
+  +$280.32 ($420.48 → $700.80)
+    ~ Instance usage (m5.xlarge → m5.2xlarge × 3)
+
++ aws_nat_gateway.az_b
+  +$32.85
++ aws_nat_gateway.az_c
+  +$32.85
+
+<span class="ky">Monthly cost change for project</span>
+Amount:  <span class="bad">+$346.02</span> ($1,240.84 → $1,586.86)
+Percent: <span class="bad">+27%</span></pre>
+
+    <p>That's the entire core API. Everything else (CI integration, policies, dashboards) is built on top of these two outputs.</p>
+
+    <h2 id="aws-coverage">AWS Resources It Understands</h2>
+
+    <p>Infracost prices over 1,000 AWS resources. The ones you'll hit most often:</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Covered Resources</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Compute</strong></td>
+          <td>EC2 (on-demand, Spot, Reserved-aware), Auto Scaling Groups, EBS, Lambda, Fargate</td>
+        </tr>
+        <tr>
+          <td><strong>Kubernetes</strong></td>
+          <td>EKS control plane, node groups, Fargate profiles, EKS extended support</td>
+        </tr>
+        <tr>
+          <td><strong>Databases</strong></td>
+          <td>RDS (all engines), Aurora (incl. Serverless v2), DynamoDB (provisioned + on-demand), ElastiCache</td>
+        </tr>
+        <tr>
+          <td><strong>Storage</strong></td>
+          <td>S3 (storage tiers + requests + transfer), EFS, FSx, EBS snapshots</td>
+        </tr>
+        <tr>
+          <td><strong>Networking</strong></td>
+          <td>ALB, NLB, NAT Gateway, VPN, Direct Connect, CloudFront, Route 53, Transit Gateway</td>
+        </tr>
+        <tr>
+          <td><strong>Messaging</strong></td>
+          <td>SQS, SNS, Kinesis, MSK, EventBridge</td>
+        </tr>
+        <tr>
+          <td><strong>Observability</strong></td>
+          <td>CloudWatch (logs, metrics, alarms), X-Ray, OpenSearch</td>
+        </tr>
+        <tr>
+          <td><strong>Edge & security</strong></td>
+          <td>WAF, ACM, Secrets Manager, KMS, GuardDuty, CloudTrail</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The pricing model is split into two parts: <strong>fixed costs</strong> that Infracost can derive entirely from the plan (e.g., an EC2 instance running 730 hours/month is deterministic) and <strong>usage-based costs</strong> that Infracost can't know without you telling it (e.g., how many S3 PUT requests, how much Lambda invocation time, how many gigabytes of data transfer).</p>
+
+    <h2 id="usage-file">Usage-Based Estimates</h2>
+
+    <p>This is where most first-time users get caught. Run <code>infracost breakdown</code> on a Lambda-heavy stack and the output cheerfully reports "Monthly cost depends on usage" for every resource that scales with traffic. The estimate is technically correct but useless. It tells you nothing about what you'll actually pay.</p>
+
+    <p>The fix is an <code>infracost-usage.yml</code> file that supplies the missing numbers:</p>
+
+    <pre><span class="cm"># infracost-usage.yml</span>
+<span class="ky">version</span>: <span class="nm">0.1</span>
+<span class="ky">resource_usage</span>:
+  <span class="ky">aws_lambda_function.api</span>:
+    <span class="ky">monthly_requests</span>: <span class="nm">8000000</span>
+    <span class="ky">request_duration_ms</span>: <span class="nm">120</span>
+
+  <span class="ky">aws_s3_bucket.uploads</span>:
+    <span class="ky">standard</span>:
+      <span class="ky">storage_gb</span>: <span class="nm">2500</span>
+      <span class="ky">monthly_tier_1_requests</span>: <span class="nm">500000</span>   <span class="cm"># PUT, COPY, POST, LIST</span>
+      <span class="ky">monthly_tier_2_requests</span>: <span class="nm">2000000</span>  <span class="cm"># GET, SELECT</span>
+
+  <span class="ky">aws_nat_gateway.az_a</span>:
+    <span class="ky">monthly_data_processed_gb</span>: <span class="nm">3000</span>
+
+  <span class="ky">aws_dynamodb_table.sessions</span>:
+    <span class="ky">monthly_write_request_units</span>: <span class="nm">10000000</span>
+    <span class="ky">monthly_read_request_units</span>:  <span class="nm">40000000</span>
+    <span class="ky">storage_gb</span>: <span class="nm">120</span></pre>
+
+    <p>Feed it back in: <code>infracost breakdown --path . --usage-file infracost-usage.yml</code>. Now the estimate accounts for the variable costs that often dominate the bill: Lambda invocations, NAT Gateway data processing, DynamoDB request units, CloudFront transfer.</p>
+
+    <div class="callout">
+      <strong>Where to get the numbers:</strong> CloudWatch metrics for the existing prod workload, Cost Explorer's usage breakdown, or the application's own metrics. The numbers don't need to be perfect; order-of-magnitude is enough to surface bad architecture decisions. A NAT Gateway processing 50 TB/month versus 500 GB/month is the same Terraform resource but a 100× cost difference.
+    </div>
+
+    <h2 id="github-actions">GitHub Actions Integration</h2>
+
+    <p>This is where Infracost becomes part of the development workflow. The official action runs <code>infracost diff</code> on every PR and posts a comment showing the cost delta. Reviewers see the dollar impact next to the code changes, and nobody has to remember to run the CLI locally.</p>
+
+    <h3>The Minimum Viable Workflow</h3>
+
+    <pre><span class="cm"># .github/workflows/infracost.yml</span>
+<span class="ky">name</span>: Infracost
+<span class="ky">on</span>:
+  <span class="ky">pull_request</span>:
+    <span class="ky">paths</span>:
+      - <span class="st">'**.tf'</span>
+      - <span class="st">'**.tfvars'</span>
+      - <span class="st">'infracost-usage.yml'</span>
+
+<span class="ky">jobs</span>:
+  <span class="ky">infracost</span>:
+    <span class="ky">runs-on</span>: <span class="st">ubuntu-latest</span>
+    <span class="ky">permissions</span>:
+      <span class="ky">contents</span>: <span class="st">read</span>
+      <span class="ky">pull-requests</span>: <span class="st">write</span>
+    <span class="ky">steps</span>:
+      - <span class="ky">uses</span>: <span class="st">actions/checkout@v4</span>
+        <span class="ky">with</span>: { <span class="ky">ref</span>: <span class="st">'${{ github.event.pull_request.base.ref }}'</span> }
+
+      - <span class="ky">uses</span>: <span class="st">infracost/actions/setup@v3</span>
+        <span class="ky">with</span>: { <span class="ky">api-key</span>: <span class="st">'${{ secrets.INFRACOST_API_KEY }}'</span> }
+
+      <span class="cm"># Baseline: cost of the base branch</span>
+      - <span class="ky">run</span>: |
+          infracost breakdown --path=terraform/ \
+            --format=json \
+            --usage-file=terraform/infracost-usage.yml \
+            --out-file=/tmp/infracost-base.json
+
+      <span class="cm"># Check out the PR branch and compute the diff</span>
+      - <span class="ky">uses</span>: <span class="st">actions/checkout@v4</span>
+      - <span class="ky">run</span>: |
+          infracost diff --path=terraform/ \
+            --compare-to=/tmp/infracost-base.json \
+            --format=json \
+            --usage-file=terraform/infracost-usage.yml \
+            --out-file=/tmp/infracost.json
+
+      <span class="cm"># Post a sticky comment on the PR</span>
+      - <span class="ky">run</span>: |
+          infracost comment github --path=/tmp/infracost.json \
+            --repo=$GITHUB_REPOSITORY \
+            --pull-request=${{ github.event.pull_request.number }} \
+            --github-token=${{ github.token }} \
+            --behavior=update</pre>
+
+    <p>The <code>--behavior=update</code> flag is the important one. Without it, every push to the PR posts a new comment and the conversation thread becomes unreadable. With it, Infracost edits the same comment in place so reviewers always see the current state.</p>
+
+    <h3>What the PR Comment Looks Like</h3>
+
+    <pre>💰 Infracost report
+
+Monthly cost will increase by <span class="bad">$878 ↑</span>
+
+┌──────────────────────────────────────┬───────────┬───────────┬─────────┐
+│ Project                              │ Cost diff │ Baseline  │ Usage   │
+├──────────────────────────────────────┼───────────┼───────────┼─────────┤
+│ terraform/                           │  <span class="bad">+$878</span>    │  $1,240   │ +71%    │
+└──────────────────────────────────────┴───────────┴───────────┴─────────┘
+
+<span class="ky">Changed resources</span>:
+~ aws_eks_node_group.workers
+  +$280   (m5.xlarge × 3 → m5.2xlarge × 3)
++ aws_rds_cluster.analytics
+  +$565   (Aurora PostgreSQL, db.r6g.xlarge × 2)
++ aws_nat_gateway.az_b
+   +$33   (730 hours + 3 TB processed)</pre>
+
+    <p>Reviewers can collapse it like any other long comment. The diff is rendered in monospace so the numbers line up, and the percentage gives an at-a-glance sense of whether this PR is a rounding error or a serious change.</p>
+
+    <h2 id="policies">Cost Policies as Code</h2>
+
+    <p>A comment is a nudge, not a guardrail. To actually <em>block</em> a PR (say, when someone tries to merge a $5,000/month change without an architecture review), you need policy enforcement. Infracost supports two approaches.</p>
+
+    <h3>Built-In Threshold Checks</h3>
+
+    <p>The simplest: fail the workflow if the diff crosses a threshold.</p>
+
+    <pre>      - <span class="ky">name</span>: <span class="st">Fail on large cost increases</span>
+        <span class="ky">run</span>: |
+          DIFF=$(jq -r '.diffTotalMonthlyCost' /tmp/infracost.json)
+          THRESHOLD=500
+          if (( $(echo "$DIFF > $THRESHOLD" | bc -l) )); then
+            echo "::error::PR adds \$$DIFF/month (threshold: \$$THRESHOLD)"
+            echo "Request review from #finops in Slack before merging."
+            exit 1
+          fi</pre>
+
+    <p>Pair this with branch protection requiring the workflow to pass, and any PR over $500/month is blocked until a designated reviewer overrides it (typically by adding a label that the workflow checks for and skips on).</p>
+
+    <h3>OPA / Rego for Richer Rules</h3>
+
+    <p>For more nuanced rules (e.g. "block PRs that create a NAT Gateway in more than two AZs", "warn if any new RDS instance is larger than db.r6g.xlarge", "require approval if the change adds Spot capacity over 50% of the cluster"), use Open Policy Agent against the Infracost JSON output:</p>
+
+    <pre><span class="cm"># cost-policy.rego</span>
+<span class="ky">package</span> infracost
+
+<span class="ky">deny</span>[msg] {
+  resource := input.projects[_].breakdown.resources[_]
+  resource.resourceType == <span class="st">"aws_nat_gateway"</span>
+  count_nat_gateways &gt; <span class="nm">2</span>
+  msg := <span class="st">"More than 2 NAT Gateways. Use VPC endpoints or a single NAT with TGW"</span>
+}
+
+<span class="ky">warn</span>[msg] {
+  resource := input.projects[_].breakdown.resources[_]
+  resource.resourceType == <span class="st">"aws_db_instance"</span>
+  resource.monthlyCost &gt; <span class="nm">800</span>
+  msg := sprintf(<span class="st">"RDS instance %s costs $%.0f/month, confirm sizing"</span>,
+                 [resource.name, resource.monthlyCost])
+}</pre>
+
+    <p>Run <code>opa eval --data cost-policy.rego --input /tmp/infracost.json</code> in the workflow and fail on any <code>deny</code> result. The same Rego rules can live alongside your security policies: one engine, one policy directory, two domains.</p>
+
+    <h2 id="infracost-cloud">Infracost Cloud: The Dashboard Layer</h2>
+
+    <p>The free CLI is enough for most use cases. Infracost Cloud (paid tier) adds organisation-wide visibility on top: every PR's cost diff is pushed to a dashboard so platform teams can see trends across repos, identify the cost-heavy projects, and review policy violations across the fleet rather than per-PR.</p>
+
+    <p>It's useful at scale (when you have 40 Terraform repos and want to know which teams are driving cost growth), but for a single repo, the GitHub PR comment is usually all you need. Start with the free CLI; reach for the Cloud tier when you outgrow the per-repo view.</p>
+
+    <h2 id="war-story">A Cooked War Story</h2>
+
+    <div class="callout">
+      <strong>The PR that wasn't:</strong> A platform team I worked with rolled out Infracost on a Friday afternoon, the "low risk" deploy window. On Monday morning, the first PR of the week was a junior engineer adding a "small" Aurora cluster for a new analytics service. The PR comment showed <strong>+$2,340/month</strong>. The engineer had picked <code>db.r6g.4xlarge</code> from a copy-pasted module without realising the parent module's default was eight-core. Code review would have caught it eventually, but only when someone with Aurora pricing in their head reviewed it. Infracost caught it in 90 seconds. The engineer dropped the instance size to <code>db.r6g.large</code>, the cost dropped to $290/month, and the PR merged the same day.
+    </div>
+
+    <p>The pattern that played out wasn't dramatic. No $50k disaster averted, no executive escalation. It was just a small, ordinary mistake getting caught at the right moment. Multiply that by every PR over a quarter and the compounding effect is significant. Cost discipline isn't built by catching the one catastrophic change; it's built by surfacing the dozens of mid-sized ones that would otherwise slip through.</p>
+
+    <h2 id="limitations">Where It Falls Short</h2>
+
+    <p>Infracost is excellent at what it does, but it isn't a complete FinOps platform. The honest limitations:</p>
+
+    <ul>
+      <li><strong>It prices what Terraform creates, not what's running.</strong> Resources provisioned outside Terraform (Console clickops, CloudFormation, Pulumi) are invisible. If 30% of your AWS spend is unmanaged infrastructure, Infracost only sees the other 70%.</li>
+      <li><strong>Usage estimates depend on the usage file.</strong> No <code>infracost-usage.yml</code> means S3 storage, Lambda invocations, NAT Gateway transfer, and CloudFront data are reported as "depends on usage" with no dollar figure. Garbage in, garbage out, and "no input" is the most common form of garbage.</li>
+      <li><strong>It doesn't model commitments.</strong> Savings Plans, Reserved Instances, and EDP discounts aren't reflected in the estimate. Infracost shows on-demand prices, which is the worst case. Your actual bill is usually lower (sometimes by 30–60%), but the diff <em>direction</em> is still accurate.</li>
+      <li><strong>It can't see runtime dynamics.</strong> An autoscaling group sized 1–100 is priced at its minimum unless you set the usage file to a realistic average. Karpenter NodePools are priced at zero until pods actually request capacity. Spot pricing is approximated from on-demand.</li>
+      <li><strong>Module-heavy plans need care.</strong> Deeply nested modules sometimes confuse the resource matcher. Run <code>infracost breakdown --show-skipped</code> periodically to see which resources Infracost couldn't price; it's usually obvious which ones matter.</li>
+    </ul>
+
+    <p>None of this disqualifies it. Treat the number as <em>directional</em>, not exact. The point isn't to predict your bill to the dollar; it's to surface order-of-magnitude mistakes before they ship.</p>
+
+    <h2 id="takeaways">Key Takeaways</h2>
+
+    <ol>
+      <li><strong>Cost is a shift-left problem.</strong> The information needed to prevent surprises exists at PR time. Infracost is the glue between Terraform plans and AWS pricing.</li>
+      <li><strong>Two commands cover 90% of usage.</strong> <code>infracost breakdown</code> for total cost, <code>infracost diff</code> for change. Everything else builds on these.</li>
+      <li><strong>Write a usage file.</strong> Without <code>infracost-usage.yml</code>, variable costs (Lambda, S3 requests, NAT data, DynamoDB units) are invisible. With it, you see what actually matters.</li>
+      <li><strong>GitHub Actions integration is the productivity multiplier.</strong> A sticky PR comment with <code>--behavior=update</code> puts cost where reviewers already look.</li>
+      <li><strong>Comments nudge, policies block.</strong> Use threshold checks for blunt guardrails, Rego for nuanced rules. Both run on the same JSON output.</li>
+      <li><strong>It prices Terraform, not your bill.</strong> Unmanaged resources, commitments, and runtime dynamics aren't modelled. Treat the number as directional: accurate enough to catch architecture mistakes, not accurate enough to forecast invoices.</li>
+      <li><strong>Start with the free CLI.</strong> Add Infracost Cloud only when you need organisation-wide visibility. For a single repo, the PR comment is enough.</li>
+    </ol>
+
+    <h2 id="reference">Reference</h2>
+    <ul>
+      <li>Infracost docs: <a href="https://www.infracost.io/docs/" target="_blank" rel="noopener">infracost.io/docs</a></li>
+      <li>GitHub Actions: <a href="https://github.com/infracost/actions" target="_blank" rel="noopener">github.com/infracost/actions</a></li>
+      <li>Usage file reference: <a href="https://www.infracost.io/docs/features/usage_based_resources/" target="_blank" rel="noopener">Usage-based resources</a></li>
+      <li>Supported AWS resources: <a href="https://www.infracost.io/docs/supported_resources/aws/" target="_blank" rel="noopener">infracost.io/docs/supported_resources/aws</a></li>
+      <li>Policy examples (Rego + native): <a href="https://www.infracost.io/docs/features/cost_policies/" target="_blank" rel="noopener">Cost policies</a></li>
+      <li>Related: <a href="/blog/eks-spot-instances">EKS Spot Instances: Cutting Kubernetes Compute Costs</a>, the kind of architecture decision Infracost surfaces at PR time</li>
+    </ul>
+
+  </article>
+
+  <div class="article-divider"></div>
+  <footer class="article-footer">
+    <div class="article-author">
+      <div class="author-avatar">R³</div>
+      <div>
+        <div class="author-name">Richie Richard Rajkumar</div>
+        <div class="author-role">Infrastructure Architect · Platform Leader · Berlin</div>
+      </div>
+    </div>
+    <a href="/blog" class="back-btn">← All articles</a>
+  </footer>
+
+</div><!-- /article-page -->
+
+<script src="/js/main.js"></script>
+</body>
+</html>
