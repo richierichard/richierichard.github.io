@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blog — Richie Richard Rajkumar</title>
+<title>Blog · Richie Richard Rajkumar</title>
 
 <meta name="description" content="Writings on DevOps, platform engineering, cloud infrastructure, and building things that scale.">
 <meta name="author" content="Richie Richard Rajkumar">
@@ -335,44 +335,47 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
       <div class="sidebar-section-label">// by topic</div>
       <div class="tag-filter-list">
         <button class="tag-filter-btn active" data-tag="all">
-          All posts <span class="tag-filter-count" id="count-all">9</span>
+          All posts <span class="tag-filter-count" id="count-all">10</span>
         </button>
         <button class="tag-filter-btn" data-tag="ai">
           AI <span class="tag-filter-count" id="count-ai">2</span>
         </button>
         <button class="tag-filter-btn" data-tag="aws">
-          AWS <span class="tag-filter-count" id="count-aws">7</span>
+          AWS <span class="tag-filter-count" id="count-aws">8</span>
         </button>
         <button class="tag-filter-btn" data-tag="cost-engineering">
-          Cost Engineering <span class="tag-filter-count" id="count-cost-engineering">4</span>
+          Cost Engineering <span class="tag-filter-count" id="count-cost-engineering">5</span>
         </button>
         <button class="tag-filter-btn" data-tag="devops">
-          DevOps <span class="tag-filter-count" id="count-devops">9</span>
+          DevOps <span class="tag-filter-count" id="count-devops">10</span>
         </button>
         <button class="tag-filter-btn" data-tag="finops">
-          FinOps <span class="tag-filter-count" id="count-finops">1</span>
+          FinOps <span class="tag-filter-count" id="count-finops">2</span>
         </button>
         <button class="tag-filter-btn" data-tag="gitops">
           GitOps <span class="tag-filter-count" id="count-gitops">1</span>
         </button>
         <button class="tag-filter-btn" data-tag="infrastructure">
-          Infrastructure <span class="tag-filter-count" id="count-infrastructure">6</span>
+          Infrastructure <span class="tag-filter-count" id="count-infrastructure">7</span>
         </button>
         <button class="tag-filter-btn" data-tag="kubernetes">
           Kubernetes <span class="tag-filter-count" id="count-kubernetes">7</span>
         </button>
         <button class="tag-filter-btn" data-tag="platform-engineering">
-          Platform Engineering <span class="tag-filter-count" id="count-platform-engineering">7</span>
+          Platform Engineering <span class="tag-filter-count" id="count-platform-engineering">8</span>
         </button>
         <button class="tag-filter-btn" data-tag="s3">
           S3 <span class="tag-filter-count" id="count-s3">2</span>
+        </button>
+        <button class="tag-filter-btn" data-tag="terraform">
+          Terraform <span class="tag-filter-count" id="count-terraform">1</span>
         </button>
       </div>
 
       <div class="sidebar-divider"></div>
 
       <div class="sidebar-stat">
-        <span class="sidebar-stat-number" id="visible-count">9</span>
+        <span class="sidebar-stat-number" id="visible-count">10</span>
         <span class="sidebar-stat-label">articles published</span>
       </div>
 
@@ -394,6 +397,32 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
           <p>Writing about Kubernetes cost optimisation, GitOps patterns, and platform engineering at scale. Check back soon.</p>
         </div>
       </div>
+
+      <!-- ARTICLE: Infracost for Terraform -->
+      <a href="/blog/infracost-terraform-aws" class="post-card reveal"
+         data-tags="aws terraform finops cost-engineering devops infrastructure platform-engineering"
+         data-title="infracost for terraform catching aws cost surprises before they hit production"
+         data-excerpt="a practical guide to running infracost against terraform for aws cli basics usage based estimates github actions integration with pr cost diffs policy guardrails and where it still falls short">
+        <div>
+          <div class="post-tags">
+            <span class="post-tag">AWS</span>
+            <span class="post-tag">Terraform</span>
+            <span class="post-tag">FinOps</span>
+            <span class="post-tag">Cost Engineering</span>
+            <span class="post-tag">DevOps</span>
+            <span class="post-tag">Infrastructure</span>
+            <span class="post-tag">Platform Engineering</span>
+          </div>
+          <div class="post-title">Infracost for Terraform: Catching AWS Cost Surprises Before They Hit Production</div>
+          <div class="post-excerpt">A practical guide to running Infracost against Terraform for AWS, CLI basics, usage-based estimates, GitHub Actions integration with PR cost diffs, policy guardrails, and where it still falls short.</div>
+          <div class="post-meta">
+            <span>May 2026</span>
+            <span>·</span>
+            <span>11 min read</span>
+          </div>
+        </div>
+        <div class="post-arrow">→</div>
+      </a>
 
       <!-- ARTICLE: Helm to Kustomize -->
       <a href="/blog/helm-to-kustomize" class="post-card reveal"
@@ -458,7 +487,7 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
             <span class="post-tag">Platform Engineering</span>
           </div>
           <div class="post-title">Karpenter on EKS: Right-Sized Nodes in 60 Seconds</div>
-          <div class="post-excerpt">Stop managing Auto Scaling Groups. Karpenter provisions right-sized EC2 instances in seconds, detects drift automatically, consolidates underused nodes, and handles Spot interruptions natively — all from two Kubernetes CRDs.</div>
+          <div class="post-excerpt">Stop managing Auto Scaling Groups. Karpenter provisions right-sized EC2 instances in seconds, detects drift automatically, consolidates underused nodes, and handles Spot interruptions natively, all from two Kubernetes CRDs.</div>
           <div class="post-meta">
             <span>May 2026</span>
             <span>·</span>
@@ -483,7 +512,7 @@ body.light .post-tag { border-color: rgba(2,132,199,0.25); }
             <span class="post-tag">Platform Engineering</span>
           </div>
           <div class="post-title">KEDA on EKS: Event-Driven Scaling with SQS Queue Depth</div>
-          <div class="post-excerpt">Stop scaling Kubernetes workers on CPU. Use KEDA to scale pods based on SQS queue depth — from zero to hundreds, with EKS Pod Identity, ScaledObjects, ScaledJobs, and production hardening tips.</div>
+          <div class="post-excerpt">Stop scaling Kubernetes workers on CPU. Use KEDA to scale pods based on SQS queue depth, from zero to hundreds, with EKS Pod Identity, ScaledObjects, ScaledJobs, and production hardening tips.</div>
           <div class="post-meta">
             <span>May 2026</span>
             <span>·</span>

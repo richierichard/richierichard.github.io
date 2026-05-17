@@ -28,7 +28,8 @@ richierichard.github.io/
 │   ├── eks-scaling-with-keda.html         # Article: KEDA Event-Driven Scaling with SQS (April 2026)
 │   ├── eks-scaling-with-karpenter.html    # Article: Karpenter Node Scaling on EKS (May 2026)
 │   ├── eks-cluster-autoscaler-vs-karpenter.html # Article: CAS vs Karpenter Comparison (May 2026)
-│   └── helm-to-kustomize.html                  # Article: Helm to Kustomize Migration (May 2026)
+│   ├── helm-to-kustomize.html                  # Article: Helm to Kustomize Migration (May 2026)
+│   └── infracost-terraform-aws.html            # Article: Infracost for Terraform on AWS (May 2026)
 ├── CNAME                    # GitHub Pages artefact (no longer used by Vercel)
 └── README.md
 ```
@@ -63,7 +64,7 @@ Notes:
 - Hero heading is a statement ("Building cloud platforms that scale organisations, not just systems.") not the name
 - Hero CTA buttons: "Start a conversation" (primary) + "View experience" (outline)
 - Profile photo in a framed card (`.hero-photo-frame`) with decorative accent circles, bio caption, and social icon links (LinkedIn, GitHub, X)
-- Em-dashes (`—`) are not used in index.html; use commas, periods, or semicolons instead
+- **Em-dashes (`—`) are not used anywhere** in user-facing HTML: not in `index.html`, `about.html`, `blog.html`, or any `blog/*.html` article. This applies to prose, headings, SVG labels, `<title>` tags, and meta tags. Use commas, periods, semicolons, colons, or parentheses depending on context. For title separators (e.g. `Title · Author`) and SVG label dividers, use the middle dot `·` (U+00B7), which matches the existing `article-meta-dot` style. En-dashes (`–`) for numeric ranges like `30–60%` or `3–5 minutes` are correct typography and may stay.
 
 ## Side navigation (index.html only)
 A fixed right-side dot navigator (`.side-nav` div, NOT a `<nav>` element — avoid `<nav>` or it inherits the top nav styles).
@@ -101,7 +102,7 @@ Full blog listing with client-side search and tag filtering.
 - Tag filter buttons with post counts (e.g., `AWS (2)`, `Kubernetes (2)`)
 - Active tag highlighted; "All posts" is default
 - "Articles published" stat counter
-- Tags: AWS, Cost Engineering, DevOps, FinOps, GitOps, Infrastructure, Kubernetes, Platform Engineering, S3 (alphabetical order)
+- Tags: AWS, Cost Engineering, DevOps, FinOps, GitOps, Infrastructure, Kubernetes, Platform Engineering, S3, Terraform (alphabetical order)
 
 **Post cards:**
 - Each card is an `<a>` with `data-tags`, `data-title`, `data-excerpt` attributes for filtering
@@ -160,6 +161,7 @@ Each article is a standalone HTML file in the `blog/` directory with:
 | `eks-scaling-with-karpenter` | Karpenter on EKS: Right-Sized Nodes in 60 Seconds | May 2026 | Kubernetes, AWS, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
 | `eks-cluster-autoscaler-vs-karpenter` | Cluster Autoscaler vs Karpenter: Choosing the Right Node Scaler for EKS | May 2026 | Kubernetes, AWS, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
 | `helm-to-kustomize` | From Helm to Kustomize: Why We Ditched Templates for Overlays | May 2026 | Kubernetes, DevOps, GitOps, Platform Engineering |
+| `infracost-terraform-aws` | Infracost for Terraform: Catching AWS Cost Surprises Before They Hit Production | May 2026 | AWS, Terraform, FinOps, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
 
 ## favicon.svg
 - SVG favicon, transparent background, green R³ in Courier New bold

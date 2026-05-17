@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>From Helm to Kustomize: Why We Ditched Templates for Overlays — Richie Richard Rajkumar</title>
+<title>From Helm to Kustomize: Why We Ditched Templates for Overlays · Richie Richard Rajkumar</title>
 
-<meta name="description" content="We used Helm for everything — third-party installs and internal apps. Then Go template spaghetti, values.yaml indirection, and debugging rendered output became the problem. Here's why we moved our internal deployments to Kustomize and where Helm still earns its place.">
+<meta name="description" content="We used Helm for everything, third-party installs and internal apps. Then Go template spaghetti, values.yaml indirection, and debugging rendered output became the problem. Here's why we moved our internal deployments to Kustomize and where Helm still earns its place.">
 <meta name="author" content="Richie Richard Rajkumar">
 <link rel="canonical" href="https://www.richierichard.com/blog/helm-to-kustomize">
 
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://www.richierichard.com/blog/helm-to-kustomize">
-<meta property="og:title" content="From Helm to Kustomize: Why We Ditched Templates for Overlays — Richie Richard Rajkumar">
+<meta property="og:title" content="From Helm to Kustomize: Why We Ditched Templates for Overlays · Richie Richard Rajkumar">
 <meta property="og:description" content="We used Helm for everything. Then Go template complexity became the problem. Here's why we moved internal deployments to Kustomize and where Helm still earns its place.">
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -290,7 +290,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <rect width="760" height="420" fill="url(#bg-grad)"/>
 
       <!-- TITLE -->
-      <text x="380" y="26" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">KUBERNETES DEPLOYMENT — TWO PHILOSOPHIES</text>
+      <text x="380" y="26" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">KUBERNETES DEPLOYMENT · TWO PHILOSOPHIES</text>
 
       <!-- DIVIDER -->
       <line x1="380" y1="40" x2="380" y2="370" stroke="#7a8099" stroke-width="0.5" stroke-dasharray="4 4"/>
@@ -322,7 +322,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <rect x="50" y="298" width="280" height="62" rx="8" fill="rgba(248,113,113,0.05)" stroke="#f87171" stroke-width="0.6"/>
       <text x="190" y="316" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">{{ if .Values.ingress.enabled }}</text>
       <text x="190" y="332" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">{{- toYaml .Values.resources | nindent 12 }}</text>
-      <text x="190" y="348" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">Templates render YAML — but aren't YAML</text>
+      <text x="190" y="348" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">Templates render YAML · but aren't YAML</text>
 
       <!-- RIGHT: KUSTOMIZE -->
       <text x="570" y="58" font-family="'Nunito',sans-serif" font-size="14" fill="#4ade80" text-anchor="middle" font-weight="800">Kustomize</text>
@@ -357,8 +357,8 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   </div><!-- /article-hero -->
 
   <div class="article-intro">
-    <p>We used Helm for everything. Third-party tools, internal applications, background workers, cron jobs — if it deployed to Kubernetes, it was a Helm chart. That's how most teams start. Helm is the default packaging tool for Kubernetes, and when you're setting up your first cluster, <code>helm install</code> is the fastest way to get things running.</p>
-    <p>Then we started maintaining our own charts. Go template logic crept in. <code>values.yaml</code> files grew to 200+ lines. Engineers spent more time debugging template rendering than writing actual Kubernetes manifests. The tool that was supposed to simplify deployments became the thing slowing them down. We moved our internal application deployments to Kustomize — and the complexity dropped overnight. Here's what drove the switch, what we gained, what we lost, and where Helm still earns its place.</p>
+    <p>We used Helm for everything. Third-party tools, internal applications, background workers, cron jobs, if it deployed to Kubernetes, it was a Helm chart. That's how most teams start. Helm is the default packaging tool for Kubernetes, and when you're setting up your first cluster, <code>helm install</code> is the fastest way to get things running.</p>
+    <p>Then we started maintaining our own charts. Go template logic crept in. <code>values.yaml</code> files grew to 200+ lines. Engineers spent more time debugging template rendering than writing actual Kubernetes manifests. The tool that was supposed to simplify deployments became the thing slowing them down. We moved our internal application deployments to Kustomize, and the complexity dropped overnight. Here's what drove the switch, what we gained, what we lost, and where Helm still earns its place.</p>
   </div>
 
   <article class="article-body">
@@ -368,14 +368,14 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
     <p>Before the critique: Helm solves real problems, and it does some things better than any alternative.</p>
 
     <ul>
-      <li><strong>Package management for Kubernetes.</strong> Helm charts package an entire application — Deployments, Services, ConfigMaps, RBAC, CRDs — into a versioned, distributable unit. <code>helm install cert-manager</code> installs 15+ resources with correct dependencies in one command. No other tool does this as well.</li>
+      <li><strong>Package management for Kubernetes.</strong> Helm charts package an entire application, Deployments, Services, ConfigMaps, RBAC, CRDs, into a versioned, distributable unit. <code>helm install cert-manager</code> installs 15+ resources with correct dependencies in one command. No other tool does this as well.</li>
       <li><strong>Third-party ecosystem.</strong> Every major Kubernetes project ships a Helm chart: AWS Load Balancer Controller, Prometheus, ArgoCD, KEDA, Karpenter, cert-manager. The chart authors handle the complexity of configuring their software correctly. You provide values; they handle the templates.</li>
-      <li><strong>Release management.</strong> Helm tracks releases — what version is deployed, what values were used, when it was installed. <code>helm rollback</code> reverts to a previous release. <code>helm history</code> shows the audit trail. This state tracking is genuinely useful for operational visibility.</li>
-      <li><strong>Lifecycle hooks.</strong> Pre-install jobs, post-upgrade migrations, pre-delete cleanup. Helm hooks let chart authors encode operational logic — run a database migration before the new deployment rolls out, clean up resources before deletion.</li>
+      <li><strong>Release management.</strong> Helm tracks releases, what version is deployed, what values were used, when it was installed. <code>helm rollback</code> reverts to a previous release. <code>helm history</code> shows the audit trail. This state tracking is genuinely useful for operational visibility.</li>
+      <li><strong>Lifecycle hooks.</strong> Pre-install jobs, post-upgrade migrations, pre-delete cleanup. Helm hooks let chart authors encode operational logic, run a database migration before the new deployment rolls out, clean up resources before deletion.</li>
     </ul>
 
     <div class="callout">
-      <strong>Helm is excellent at distributing other people's complexity.</strong> When you're consuming a chart someone else wrote, Helm's templating power is a feature — the chart author parameterised their application so you can configure it with values. The problem starts when <em>you</em> become the chart author for your own applications.
+      <strong>Helm is excellent at distributing other people's complexity.</strong> When you're consuming a chart someone else wrote, Helm's templating power is a feature, the chart author parameterised their application so you can configure it with values. The problem starts when <em>you</em> become the chart author for your own applications.
     </div>
 
     <h2 id="where-helm-hurts">Where Helm Started Hurting</h2>
@@ -401,13 +401,13 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         {{- end }}
       {{- end }}</pre>
 
-    <p>Every engineer on the team has been burned by <code>nindent</code>. The indentation in the rendered output depends on where the template directive sits in the file, not where the YAML should logically be indented. A miscount produces valid YAML with wrong structure — the pod spec gets a field at the wrong level, and you don't find out until <code>kubectl apply</code> fails or, worse, the pod starts with wrong configuration.</p>
+    <p>Every engineer on the team has been burned by <code>nindent</code>. The indentation in the rendered output depends on where the template directive sits in the file, not where the YAML should logically be indented. A miscount produces valid YAML with wrong structure, the pod spec gets a field at the wrong level, and you don't find out until <code>kubectl apply</code> fails or, worse, the pod starts with wrong configuration.</p>
 
     <h3>The values.yaml Indirection Problem</h3>
 
     <p>To understand what a Helm chart deploys, you need to hold two files in your head simultaneously: the template and the values. Neither makes sense alone. The template is full of <code>{{ .Values.something }}</code> placeholders. The values file is a flat list of keys with no indication of where they're used.</p>
 
-    <pre><span class="cm"># values.yaml — what does this mean without reading the template?</span>
+    <pre><span class="cm"># values.yaml, what does this mean without reading the template?</span>
 <span class="ky">replicaCount</span>: <span class="nm">3</span>
 <span class="ky">image</span>:
   <span class="ky">repository</span>: <span class="st">my-registry/api</span>
@@ -439,11 +439,11 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <p>Internal Helm charts accumulate complexity over time. Someone adds a conditional <code>if .Values.monitoring.enabled</code>. Someone else adds a <code>range</code> over sidecar containers. A third person adds helpers for label generation. Six months later, the chart has more template logic than actual Kubernetes configuration, and modifying it requires understanding the entire template dependency graph.</p>
 
-    <p>We had a chart for an internal API service that was 400 lines of Go templates to produce 120 lines of YAML. The ratio was inverted — more scaffolding than output.</p>
+    <p>We had a chart for an internal API service that was 400 lines of Go templates to produce 120 lines of YAML. The ratio was inverted, more scaffolding than output.</p>
 
     <h2 id="enter-kustomize">Enter Kustomize</h2>
 
-    <p>Kustomize takes the opposite approach: <strong>no templating</strong>. You write plain, valid Kubernetes YAML. For environment-specific differences, you write patches — small YAML fragments that modify specific fields. Kustomize merges them using strategic merge patches.</p>
+    <p>Kustomize takes the opposite approach: <strong>no templating</strong>. You write plain, valid Kubernetes YAML. For environment-specific differences, you write patches, small YAML fragments that modify specific fields. Kustomize merges them using strategic merge patches.</p>
 
     <h3>The Structure</h3>
 
@@ -468,7 +468,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <h3>The Base: Plain YAML</h3>
 
-    <pre><span class="cm"># base/deployment.yaml — this is real, valid, runnable YAML</span>
+    <pre><span class="cm"># base/deployment.yaml, this is real, valid, runnable YAML</span>
 <span class="ky">apiVersion</span>: apps/v1
 <span class="ky">kind</span>: Deployment
 <span class="ky">metadata</span>:
@@ -541,7 +541,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
             <span class="ky">limits</span>:
               <span class="ky">memory</span>: <span class="st">"2Gi"</span></pre>
 
-    <p>The production overlay says: take the base, set the namespace to <code>production</code>, update the image tag to <code>v1.5.0</code>, increase replicas to 5, and bump resource requests. That's it. Every file is valid YAML. The patches only contain what's different — not a copy of the entire manifest.</p>
+    <p>The production overlay says: take the base, set the namespace to <code>production</code>, update the image tag to <code>v1.5.0</code>, increase replicas to 5, and bump resource requests. That's it. Every file is valid YAML. The patches only contain what's different, not a copy of the entire manifest.</p>
 
     <div class="callout">
       <strong>The key insight:</strong> With Helm, you start with templates and add values to make them concrete. With Kustomize, you start with concrete YAML and add patches to make it vary. Starting concrete is easier to understand, easier to debug, and easier to review in a pull request.
@@ -552,11 +552,11 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
     <p>It wasn't one thing. It was the accumulation of friction across the team:</p>
 
     <ol>
-      <li><strong>Onboarding time.</strong> New engineers needed to learn Go templating, Helm's value resolution order, and our chart conventions before they could deploy their first service. With Kustomize, the base is just Kubernetes YAML — if you know <code>kubectl</code>, you know the base. Overlays are small patches. The learning curve dropped from days to hours.</li>
-      <li><strong>Pull request reviews.</strong> Reviewing a Helm values change required mentally rendering the template to understand the impact. Reviewing a Kustomize patch is reviewing YAML — the diff shows exactly what changes in the final output. <code>kubectl kustomize overlays/prod | kubectl diff -f -</code> shows the exact cluster impact before merging.</li>
-      <li><strong>GitOps compatibility.</strong> ArgoCD and Flux both support Kustomize natively. Our GitOps pipeline renders <code>kustomize build</code> and applies the result. With Helm, ArgoCD needs to run <code>helm template</code> at sync time, which means the rendered output isn't visible in Git — it's computed at deploy time. Kustomize output is deterministic and inspectable.</li>
-      <li><strong>The 80/20 rule.</strong> 80% of our internal charts used maybe 5% of Helm's capabilities — basic value substitution for image tags, replica counts, and resource limits. We were paying the complexity cost of a full templating engine to do what strategic merge patches handle natively.</li>
-      <li><strong>Drift between environments.</strong> With Helm, environment differences were scattered across multiple <code>values-*.yaml</code> files. With Kustomize, each overlay directory is self-contained — <code>ls overlays/prod/</code> shows you every deviation from the base. No mental merging required.</li>
+      <li><strong>Onboarding time.</strong> New engineers needed to learn Go templating, Helm's value resolution order, and our chart conventions before they could deploy their first service. With Kustomize, the base is just Kubernetes YAML, if you know <code>kubectl</code>, you know the base. Overlays are small patches. The learning curve dropped from days to hours.</li>
+      <li><strong>Pull request reviews.</strong> Reviewing a Helm values change required mentally rendering the template to understand the impact. Reviewing a Kustomize patch is reviewing YAML, the diff shows exactly what changes in the final output. <code>kubectl kustomize overlays/prod | kubectl diff -f -</code> shows the exact cluster impact before merging.</li>
+      <li><strong>GitOps compatibility.</strong> ArgoCD and Flux both support Kustomize natively. Our GitOps pipeline renders <code>kustomize build</code> and applies the result. With Helm, ArgoCD needs to run <code>helm template</code> at sync time, which means the rendered output isn't visible in Git, it's computed at deploy time. Kustomize output is deterministic and inspectable.</li>
+      <li><strong>The 80/20 rule.</strong> 80% of our internal charts used maybe 5% of Helm's capabilities, basic value substitution for image tags, replica counts, and resource limits. We were paying the complexity cost of a full templating engine to do what strategic merge patches handle natively.</li>
+      <li><strong>Drift between environments.</strong> With Helm, environment differences were scattered across multiple <code>values-*.yaml</code> files. With Kustomize, each overlay directory is self-contained, <code>ls overlays/prod/</code> shows you every deviation from the base. No mental merging required.</li>
     </ol>
 
     <h2 id="comparison-table">Head-to-Head Comparison</h2>
@@ -603,12 +603,12 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         <tr>
           <td><strong>Package distribution</strong></td>
           <td class="good">Chart repos, OCI registries, versioned releases</td>
-          <td class="bad">No native packaging — just directories in Git</td>
+          <td class="bad">No native packaging, just directories in Git</td>
         </tr>
         <tr>
           <td><strong>Release management</strong></td>
           <td class="good">Built-in: history, rollback, status tracking</td>
-          <td class="bad">None — delegate to GitOps tool or kubectl</td>
+          <td class="bad">None, delegate to GitOps tool or kubectl</td>
         </tr>
         <tr>
           <td><strong>Lifecycle hooks</strong></td>
@@ -617,8 +617,8 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         </tr>
         <tr>
           <td><strong>Third-party software</strong></td>
-          <td class="good">Dominant — every K8s project ships charts</td>
-          <td>Growing — but Helm charts are still the standard</td>
+          <td class="good">Dominant, every K8s project ships charts</td>
+          <td>Growing, but Helm charts are still the standard</td>
         </tr>
         <tr>
           <td><strong>Tooling required</strong></td>
@@ -628,7 +628,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         <tr>
           <td><strong>GitOps fit</strong></td>
           <td>Supported but rendered at sync time</td>
-          <td class="good">Native — output is deterministic and in Git</td>
+          <td class="good">Native, output is deterministic and in Git</td>
         </tr>
       </tbody>
     </table>
@@ -638,15 +638,15 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
     <p>We didn't delete Helm. We stopped <em>writing</em> Helm charts. We still <em>consume</em> them for third-party software:</p>
 
     <ul>
-      <li><strong>KEDA</strong> — <code>helm install keda kedacore/keda</code></li>
-      <li><strong>Karpenter</strong> — <code>helm install karpenter oci://public.ecr.aws/karpenter/karpenter</code></li>
-      <li><strong>cert-manager</strong> — complex CRD lifecycle that Helm handles well</li>
-      <li><strong>AWS Load Balancer Controller</strong> — ALB/NLB provisioning, TargetGroupBinding CRDs, IAM integration</li>
-      <li><strong>Prometheus / kube-prometheus-stack</strong> — hundreds of resources, dependencies between components</li>
-      <li><strong>External Secrets Operator</strong> — CRDs + RBAC + webhook configuration</li>
+      <li><strong>KEDA</strong>, <code>helm install keda kedacore/keda</code></li>
+      <li><strong>Karpenter</strong>, <code>helm install karpenter oci://public.ecr.aws/karpenter/karpenter</code></li>
+      <li><strong>cert-manager</strong>, complex CRD lifecycle that Helm handles well</li>
+      <li><strong>AWS Load Balancer Controller</strong>, ALB/NLB provisioning, TargetGroupBinding CRDs, IAM integration</li>
+      <li><strong>Prometheus / kube-prometheus-stack</strong>, hundreds of resources, dependencies between components</li>
+      <li><strong>External Secrets Operator</strong>, CRDs + RBAC + webhook configuration</li>
     </ul>
 
-    <p>These are all cases where the chart author has encoded significant operational knowledge into the templates. Installing Prometheus from plain YAML would mean managing 50+ resources and understanding their dependencies. The Helm chart does that for you. This is Helm at its best — distributing other people's complexity.</p>
+    <p>These are all cases where the chart author has encoded significant operational knowledge into the templates. Installing Prometheus from plain YAML would mean managing 50+ resources and understanding their dependencies. The Helm chart does that for you. This is Helm at its best, distributing other people's complexity.</p>
 
     <div class="callout">
       <strong>The rule we follow:</strong> Consume Helm charts for software you didn't write. Use Kustomize for software you did write. Helm is a package manager; Kustomize is a deployment tool. They solve different problems.
@@ -656,7 +656,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <p>In practice, most teams end up with a hybrid approach. Here's the model that works for us:</p>
 
-    <pre><span class="cm"># Repository structure — hybrid Helm + Kustomize</span>
+    <pre><span class="cm"># Repository structure, hybrid Helm + Kustomize</span>
 <span class="ky">infrastructure/</span>
   <span class="ky">helm-releases/</span>             <span class="cm"># Third-party charts managed by Helm</span>
     <span class="st">karpenter/</span>
@@ -669,12 +669,12 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <span class="st">values.yaml</span>
 
 <span class="ky">applications/</span>
-  <span class="ky">api-server/</span>                <span class="cm"># Internal app — Kustomize</span>
+  <span class="ky">api-server/</span>                <span class="cm"># Internal app, Kustomize</span>
     <span class="st">base/</span>
     <span class="st">overlays/dev/</span>
     <span class="st">overlays/staging/</span>
     <span class="st">overlays/prod/</span>
-  <span class="ky">worker-service/</span>            <span class="cm"># Internal app — Kustomize</span>
+  <span class="ky">worker-service/</span>            <span class="cm"># Internal app, Kustomize</span>
     <span class="st">base/</span>
     <span class="st">overlays/dev/</span>
     <span class="st">overlays/staging/</span>
@@ -686,7 +686,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <p>Kustomize isn't just patches. A few built-in features that replaced common Helm patterns for us:</p>
 
-    <pre><span class="cm"># kustomization.yaml — built-in features</span>
+    <pre><span class="cm"># kustomization.yaml, built-in features</span>
 <span class="ky">apiVersion</span>: kustomize.config.k8s.io/v1beta1
 <span class="ky">kind</span>: Kustomization
 
@@ -722,10 +722,10 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
     <p>We didn't migrate everything at once. We followed a pragmatic approach:</p>
 
     <ol>
-      <li><strong>Stop writing new Helm charts.</strong> Any new service gets a Kustomize base + overlays from day one. This is the easiest step — no migration, just a new convention.</li>
-      <li><strong>Convert the simplest charts first.</strong> Services with minimal template logic — basically just value substitution for image tags and replicas. <code>helm template</code> the chart, clean up the output, and that becomes your Kustomize base. One afternoon per service.</li>
+      <li><strong>Stop writing new Helm charts.</strong> Any new service gets a Kustomize base + overlays from day one. This is the easiest step, no migration, just a new convention.</li>
+      <li><strong>Convert the simplest charts first.</strong> Services with minimal template logic, basically just value substitution for image tags and replicas. <code>helm template</code> the chart, clean up the output, and that becomes your Kustomize base. One afternoon per service.</li>
       <li><strong>Tackle complex charts last.</strong> Charts with conditionals, loops, and helper functions. These take longer because you need to decide: does the conditional become a separate overlay, or does the feature just get included in the base? Usually the answer is "include it in the base, it's always on anyway."</li>
-      <li><strong>Don't migrate third-party charts.</strong> cert-manager, AWS Load Balancer Controller, Prometheus — these stay as Helm releases. The chart authors maintain them better than you could with raw YAML.</li>
+      <li><strong>Don't migrate third-party charts.</strong> cert-manager, AWS Load Balancer Controller, Prometheus, these stay as Helm releases. The chart authors maintain them better than you could with raw YAML.</li>
     </ol>
 
     <pre><span class="cm"># Quick conversion: Helm chart → Kustomize base</span>
@@ -754,18 +754,18 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <ol>
       <li><strong>Helm is a package manager. Kustomize is a deployment tool.</strong> They solve different problems. Use Helm to install software you didn't write. Use Kustomize to deploy software you did write.</li>
-      <li><strong>Go templates are the tax you pay for Helm's power.</strong> For third-party charts, that tax is worth it — the chart author paid it, not you. For internal apps, the tax compounds: every engineer on the team pays it every time they touch the chart.</li>
+      <li><strong>Go templates are the tax you pay for Helm's power.</strong> For third-party charts, that tax is worth it, the chart author paid it, not you. For internal apps, the tax compounds: every engineer on the team pays it every time they touch the chart.</li>
       <li><strong>Kustomize starts with valid YAML.</strong> The base is a complete, runnable deployment. Overlays only contain what changes per environment. Every file is valid YAML that your editor, linter, and <code>kubectl</code> understand natively.</li>
       <li><strong>The hybrid model works.</strong> <code>helm-releases/</code> for third-party software, <code>applications/</code> with Kustomize for internal apps. ArgoCD or Flux handles both. Each tool is used where it's strongest.</li>
       <li><strong>Pull request reviews get dramatically easier.</strong> Kustomize diffs show the actual YAML change. Helm diffs show values that need mental rendering to understand the impact.</li>
-      <li><strong>configMapGenerator and secretGenerator replace annotation hacks.</strong> Content-hash suffixed names force rollouts on config changes — no checksum annotation template required.</li>
+      <li><strong>configMapGenerator and secretGenerator replace annotation hacks.</strong> Content-hash suffixed names force rollouts on config changes, no checksum annotation template required.</li>
       <li><strong>Migration is incremental.</strong> Stop writing new charts first. Convert simple charts next. Tackle complex ones last. Don't touch third-party charts.</li>
-      <li><strong>The simplicity is the point.</strong> Kustomize doesn't have hooks, release history, or a chart repository. That's not a gap — it's a design choice. If you need those, use Helm. If you don't, why pay the complexity?</li>
+      <li><strong>The simplicity is the point.</strong> Kustomize doesn't have hooks, release history, or a chart repository. That's not a gap, it's a design choice. If you need those, use Helm. If you don't, why pay the complexity?</li>
     </ol>
 
     <h2 id="reference">Reference</h2>
     <ul>
-      <li>Kustomize docs: <a href="https://kustomize.io/" target="_blank" rel="noopener">kustomize.io</a> — official documentation</li>
+      <li>Kustomize docs: <a href="https://kustomize.io/" target="_blank" rel="noopener">kustomize.io</a>, official documentation</li>
       <li>Kustomize built-in features: <a href="https://kubectl.docs.kubernetes.io/references/kustomize/" target="_blank" rel="noopener">kubectl.docs.kubernetes.io/references/kustomize</a></li>
       <li>Helm docs: <a href="https://helm.sh/docs/" target="_blank" rel="noopener">helm.sh</a></li>
       <li>ArgoCD with Kustomize: <a href="https://argo-cd.readthedocs.io/en/stable/user-guide/kustomize/" target="_blank" rel="noopener">ArgoCD Kustomize integration</a></li>

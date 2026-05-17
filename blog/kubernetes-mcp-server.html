@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Talk to Your Cluster: Kubernetes MCP Server in Practice — Richie Richard Rajkumar</title>
+<title>Talk to Your Cluster: Kubernetes MCP Server in Practice · Richie Richard Rajkumar</title>
 
 <meta name="description" content="The Kubernetes MCP Server lets AI assistants like Claude interact with your clusters using natural language. Here's how to set it up, what it can actually do, and where it fits in a real workflow.">
 <meta name="author" content="Richie Richard Rajkumar">
@@ -11,7 +11,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://www.richierichard.com/blog/kubernetes-mcp-server">
-<meta property="og:title" content="Talk to Your Cluster: Kubernetes MCP Server in Practice — Richie Richard Rajkumar">
+<meta property="og:title" content="Talk to Your Cluster: Kubernetes MCP Server in Practice · Richie Richard Rajkumar">
 <meta property="og:description" content="The Kubernetes MCP Server lets AI assistants like Claude interact with your clusters using natural language. Setup, real examples, and production guardrails.">
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -426,15 +426,15 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   </div><!-- /article-hero -->
 
   <div class="article-intro">
-    <p>If you've spent any time operating Kubernetes clusters, you know the drill: <code>kubectl get pods -n production | grep -v Running</code>, then <code>kubectl describe pod</code>, then <code>kubectl logs</code>, then <code>kubectl get events --sort-by=.lastTimestamp</code> — and you're five commands deep before you even understand what went wrong. What if you could just <em>ask</em>?</p>
-    <p>The <strong>Kubernetes MCP Server</strong> is an open-source tool that connects AI assistants (Claude, VS Code Copilot, Cursor) directly to the Kubernetes API via the <a href="https://modelcontextprotocol.io/">Model Context Protocol</a>. It's written in Go, talks to the K8s API natively — no kubectl wrapper — and turns natural language into real cluster operations. I've been running it against staging and production for three weeks. Here's what actually works, what surprised me, and how to set it up without accidentally deleting your prod namespace.</p>
+    <p>If you've spent any time operating Kubernetes clusters, you know the drill: <code>kubectl get pods -n production | grep -v Running</code>, then <code>kubectl describe pod</code>, then <code>kubectl logs</code>, then <code>kubectl get events --sort-by=.lastTimestamp</code>, and you're five commands deep before you even understand what went wrong. What if you could just <em>ask</em>?</p>
+    <p>The <strong>Kubernetes MCP Server</strong> is an open-source tool that connects AI assistants (Claude, VS Code Copilot, Cursor) directly to the Kubernetes API via the <a href="https://modelcontextprotocol.io/">Model Context Protocol</a>. It's written in Go, talks to the K8s API natively, no kubectl wrapper, and turns natural language into real cluster operations. I've been running it against staging and production for three weeks. Here's what actually works, what surprised me, and how to set it up without accidentally deleting your prod namespace.</p>
   </div>
 
   <article class="article-body">
 
     <h2 id="what-is-mcp">What Is MCP and Why Does It Matter for Kubernetes?</h2>
 
-    <p>The <strong>Model Context Protocol (MCP)</strong> is an open standard that lets AI models call external tools in a structured way. Instead of the AI generating kubectl commands for you to copy-paste, MCP lets the AI <em>execute</em> operations directly against your cluster through a well-defined interface — with guardrails you control.</p>
+    <p>The <strong>Model Context Protocol (MCP)</strong> is an open standard that lets AI models call external tools in a structured way. Instead of the AI generating kubectl commands for you to copy-paste, MCP lets the AI <em>execute</em> operations directly against your cluster through a well-defined interface, with guardrails you control.</p>
 
     <p>The <code>kubernetes-mcp-server</code> implements this protocol specifically for Kubernetes. It exposes your cluster's state and operations as MCP tools that any compatible AI assistant can invoke. Think of it as giving your AI assistant a kubeconfig and the knowledge to use it intelligently.</p>
 
@@ -450,7 +450,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         <tr>
           <td>Investigating a crash</td>
           <td class="bad">4-6 sequential commands, manual correlation</td>
-          <td class="good">"Why is the payment pod crashing?" — one question</td>
+          <td class="good">"Why is the payment pod crashing?", one question</td>
         </tr>
         <tr>
           <td>Cross-namespace audit</td>
@@ -476,14 +476,14 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
     </table>
 
     <div class="callout">
-      <strong>Key point:</strong> This is not a kubectl wrapper that parses text output. It's a native Go binary that communicates directly with the Kubernetes API server using client-go. The difference matters — you get structured data, proper error handling, and no parsing fragility.
+      <strong>Key point:</strong> This is not a kubectl wrapper that parses text output. It's a native Go binary that communicates directly with the Kubernetes API server using client-go. The difference matters, you get structured data, proper error handling, and no parsing fragility.
     </div>
 
     <h2 id="setup">Setting It Up in 5 Minutes</h2>
 
     <p>The server runs as a local process that your AI assistant connects to via stdio. Prerequisites: a working kubeconfig and cluster access.</p>
 
-    <h3>Step 1 — Verify Cluster Access</h3>
+    <h3>Step 1, Verify Cluster Access</h3>
 
     <pre><span class="cm"># Make sure you can talk to your cluster</span>
 <span class="ky">$</span> kubectl get nodes
@@ -492,28 +492,28 @@ node-pool-01   Ready    &lt;none&gt;          45d   v1.30.2
 node-pool-02   Ready    &lt;none&gt;          45d   v1.30.2
 node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
 
-    <h3>Step 2 — Install the Server</h3>
+    <h3>Step 2, Install the Server</h3>
 
     <p>Pick your preferred method. npm is the fastest for local use:</p>
 
-    <pre><span class="cm"># Option 1 — npm (no build required)</span>
+    <pre><span class="cm"># Option 1, npm (no build required)</span>
 <span class="ky">$</span> npm install -g kubernetes-mcp-server
 
-<span class="cm"># Option 2 — Python</span>
+<span class="cm"># Option 2, Python</span>
 <span class="ky">$</span> pip install kubernetes-mcp-server
 
-<span class="cm"># Option 3 — Download the binary directly</span>
+<span class="cm"># Option 3, Download the binary directly</span>
 <span class="ky">$</span> curl -L https://github.com/containers/kubernetes-mcp-server/releases/latest/download/kubernetes-mcp-server-$(uname -s)-$(uname -m) -o /usr/local/bin/kubernetes-mcp-server
 <span class="ky">$</span> chmod +x /usr/local/bin/kubernetes-mcp-server
 
-<span class="cm"># Option 4 — Helm (for running inside the cluster)</span>
+<span class="cm"># Option 4, Helm (for running inside the cluster)</span>
 <span class="ky">$</span> helm install k8s-mcp oci://ghcr.io/containers/kubernetes-mcp-server/helm/kubernetes-mcp-server</pre>
 
-    <h3>Step 3 — Configure Your AI Client</h3>
+    <h3>Step 3, Configure Your AI Client</h3>
 
     <p>Add the MCP server to your client's configuration. Here's what it looks like for Claude Desktop, VS Code, and Cursor:</p>
 
-    <pre><span class="cm">// Claude Desktop — ~/.claude/claude_desktop_config.json</span>
+    <pre><span class="cm">// Claude Desktop, ~/.claude/claude_desktop_config.json</span>
 {
   <span class="ky">"mcpServers"</span>: {
     <span class="st">"kubernetes"</span>: {
@@ -523,7 +523,7 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
   }
 }
 
-<span class="cm">// VS Code — .vscode/mcp.json</span>
+<span class="cm">// VS Code, .vscode/mcp.json</span>
 {
   <span class="ky">"servers"</span>: {
     <span class="st">"kubernetes"</span>: {
@@ -539,9 +539,9 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
 
     <h2 id="real-examples">Real-World Examples: What It Actually Looks Like</h2>
 
-    <p>Here are real conversations I've had with Claude while the MCP server was connected. These aren't hypothetical — they're from actual incident triage and daily operations.</p>
+    <p>Here are real conversations I've had with Claude while the MCP server was connected. These aren't hypothetical, they're from actual incident triage and daily operations.</p>
 
-    <h3>Example 1 — Finding Unhealthy Pods Across All Namespaces</h3>
+    <h3>Example 1, Finding Unhealthy Pods Across All Namespaces</h3>
 
     <div class="conversation">
       <div class="human">You:</div>
@@ -549,11 +549,11 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
       <div class="ai">Claude:</div>
       <div class="msg">I found 3 pods in non-healthy states:
         <br><br>
-        <code>payments/payment-processor-7d4f8b-xk2mn</code> — <strong>CrashLoopBackOff</strong> (12 restarts, last restart 3m ago)
+        <code>payments/payment-processor-7d4f8b-xk2mn</code>, <strong>CrashLoopBackOff</strong> (12 restarts, last restart 3m ago)
         <br>
-        <code>monitoring/prometheus-node-exporter-9p2ql</code> — <strong>Pending</strong> (insufficient CPU, requested 500m but node has 120m available)
+        <code>monitoring/prometheus-node-exporter-9p2ql</code>, <strong>Pending</strong> (insufficient CPU, requested 500m but node has 120m available)
         <br>
-        <code>batch/daily-report-28847201-wt5kz</code> — <strong>Error</strong> (exit code 137, OOMKilled)
+        <code>batch/daily-report-28847201-wt5kz</code>, <strong>Error</strong> (exit code 137, OOMKilled)
         <br><br>
         The payment-processor has been crash-looping since 14:32 UTC. Want me to pull its logs?
       </div>
@@ -566,7 +566,7 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
 <span class="ky">$</span> kubectl get events -n payments --sort-by=.lastTimestamp
 <span class="cm"># ... and so on for each pod</span></pre>
 
-    <h3>Example 2 — Debugging an OOMKilled Container</h3>
+    <h3>Example 2, Debugging an OOMKilled Container</h3>
 
     <div class="conversation">
       <div class="human">You:</div>
@@ -582,11 +582,11 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
         Reason: OOMKilled | Exit code: 137<br>
         Terminated at: 2026-04-08T06:00:47Z
         <br><br>
-        The container was killed at exactly the 512Mi limit. Looking at the pod's previous runs, 3 of the last 5 executions were OOMKilled. The successful runs used ~480Mi peak — this container is right at the edge. I'd recommend bumping the limit to at least <code>768Mi</code> and the request to <code>512Mi</code>.
+        The container was killed at exactly the 512Mi limit. Looking at the pod's previous runs, 3 of the last 5 executions were OOMKilled. The successful runs used ~480Mi peak, this container is right at the edge. I'd recommend bumping the limit to at least <code>768Mi</code> and the request to <code>512Mi</code>.
       </div>
     </div>
 
-    <h3>Example 3 — Helm Release Inspection</h3>
+    <h3>Example 3, Helm Release Inspection</h3>
 
     <div class="conversation">
       <div class="human">You:</div>
@@ -595,17 +595,17 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
       <div class="msg">Found 14 Helm releases across 6 namespaces:
         <br><br>
         <strong>Failed (1):</strong><br>
-        <code>monitoring/kube-prometheus-stack</code> — v62.3.0 → v63.1.0 upgrade <strong>failed</strong> (last attempted 2h ago). The release is still running v62.3.0. Error: "cannot patch CRD servicemonitors.monitoring.coreos.com"
+        <code>monitoring/kube-prometheus-stack</code>, v62.3.0 → v63.1.0 upgrade <strong>failed</strong> (last attempted 2h ago). The release is still running v62.3.0. Error: "cannot patch CRD servicemonitors.monitoring.coreos.com"
         <br><br>
         <strong>Pending (1):</strong><br>
-        <code>ingress/nginx-ingress</code> — upgrade to v4.11.3 is <strong>pending-upgrade</strong> since 09:14 UTC
+        <code>ingress/nginx-ingress</code>, upgrade to v4.11.3 is <strong>pending-upgrade</strong> since 09:14 UTC
         <br><br>
         <strong>Deployed (12):</strong><br>
         All healthy. Oldest release: <code>cert-manager</code> v1.16.1, deployed 62 days ago.
       </div>
     </div>
 
-    <h3>Example 4 — Multi-Cluster Comparison</h3>
+    <h3>Example 4, Multi-Cluster Comparison</h3>
 
     <p>If your kubeconfig has multiple contexts, the MCP server can operate across them:</p>
 
@@ -626,7 +626,7 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
       </div>
     </div>
 
-    <h3>Example 5 — Scaling a Deployment (Write Mode)</h3>
+    <h3>Example 5, Scaling a Deployment (Write Mode)</h3>
 
     <p>With <code>--read-only</code> removed, the MCP server can perform mutations:</p>
 
@@ -637,13 +637,13 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
       <div class="msg">
         Scaled <code>production/api-gateway</code> from 5 → 8 replicas.
         <br><br>
-        Current rollout status: 8/8 replicas available (all new pods scheduled and running within 45 seconds). No resource pressure detected on the node pool — the cluster has 12 allocatable CPU cores and 28Gi memory remaining.
+        Current rollout status: 8/8 replicas available (all new pods scheduled and running within 45 seconds). No resource pressure detected on the node pool, the cluster has 12 allocatable CPU cores and 28Gi memory remaining.
       </div>
     </div>
 
     <h2 id="production-guardrails">Production Guardrails: Don't Skip This Section</h2>
 
-    <p>Connecting an AI assistant to your production cluster without guardrails is asking for trouble. The MCP server has several safety mechanisms — use all of them.</p>
+    <p>Connecting an AI assistant to your production cluster without guardrails is asking for trouble. The MCP server has several safety mechanisms, use all of them.</p>
 
     <h3>Read-Only Mode</h3>
 
@@ -705,7 +705,7 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
 
     <h2 id="workflow-patterns">Three Workflow Patterns That Changed How I Operate</h2>
 
-    <h3>Pattern 1 — Morning Cluster Health Check</h3>
+    <h3>Pattern 1, Morning Cluster Health Check</h3>
 
     <p>Instead of a checklist of kubectl commands, I start the day with one prompt:</p>
 
@@ -731,7 +731,7 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
 
     <p>That replaces six separate kubectl + jq pipelines I used to run manually every morning.</p>
 
-    <h3>Pattern 2 — Incident Triage Runbook</h3>
+    <h3>Pattern 2, Incident Triage Runbook</h3>
 
     <p>When a PagerDuty alert fires for a failing pod, I paste the alert context and let the MCP server run the investigation:</p>
 
@@ -743,7 +743,7 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
         <strong>Root cause identified:</strong> The pod is crash-looping due to an invalid database connection string.
         <br><br>
         <strong>Logs (last 100 lines):</strong><br>
-        <code>FATAL: password authentication failed for user "payment_svc"</code> — repeated 12 times since 14:32 UTC.
+        <code>FATAL: password authentication failed for user "payment_svc"</code>, repeated 12 times since 14:32 UTC.
         <br><br>
         <strong>ConfigMap <code>payment-processor-config</code>:</strong><br>
         Last modified: 14:29 UTC (3 minutes before the crash loop started). The <code>DB_HOST</code> value was changed from <code>postgres-primary.db.svc</code> to <code>postgres-replica.db.svc</code>. The replica may require different credentials.
@@ -752,7 +752,7 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
       </div>
     </div>
 
-    <h3>Pattern 3 — Pre-Deploy Validation</h3>
+    <h3>Pattern 3, Pre-Deploy Validation</h3>
 
     <div class="conversation">
       <div class="human">You:</div>
@@ -761,9 +761,9 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
       <div class="msg">
         <strong>Pre-deploy check for api-gateway v2.14.0:</strong>
         <br><br>
-        Current version: <code>v2.13.1</code>, 5/5 replicas healthy, last rollout completed 3 days ago — clean baseline.
+        Current version: <code>v2.13.1</code>, 5/5 replicas healthy, last rollout completed 3 days ago, clean baseline.
         <br><br>
-        Node capacity for +3 pods: The api-gateway requests 250m CPU and 512Mi per pod. The cluster has 4200m CPU and 12Gi memory allocatable — room for 16 additional pods. No concern here.
+        Node capacity for +3 pods: The api-gateway requests 250m CPU and 512Mi per pod. The cluster has 4200m CPU and 12Gi memory allocatable, room for 16 additional pods. No concern here.
         <br><br>
         Image: <code>ghcr.io/acme/api-gateway:v2.14.0</code> exists (pushed 2 hours ago, 142MB). Ready to deploy.
       </div>
@@ -776,9 +776,9 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
     <ul>
       <li><strong>No real-time streaming.</strong> You can't <code>tail -f</code> logs through the MCP server. It fetches a snapshot. For live log tailing during incidents, you still need <code>kubectl logs -f</code> or a log aggregator like Loki.</li>
       <li><strong>CRD awareness is limited.</strong> It can list and describe custom resources, but it doesn't understand the semantics of your ArgoCD Applications or Istio VirtualServices the way it understands core Kubernetes resources.</li>
-      <li><strong>No port-forwarding.</strong> You can't ask it to set up a port-forward for debugging. That's inherently interactive and long-lived — not a good fit for the request/response MCP model.</li>
+      <li><strong>No port-forwarding.</strong> You can't ask it to set up a port-forward for debugging. That's inherently interactive and long-lived, not a good fit for the request/response MCP model.</li>
       <li><strong>Context window limits.</strong> If you ask for logs from a pod that outputs 50,000 lines, the AI's context window becomes the bottleneck, not the MCP server. Be specific: "last 100 lines" or "lines containing ERROR".</li>
-      <li><strong>Audit trail.</strong> The MCP server doesn't log what operations were performed. For production write access, you need your own audit logging — Kubernetes audit logs cover the API calls, but the MCP server itself is stateless.</li>
+      <li><strong>Audit trail.</strong> The MCP server doesn't log what operations were performed. For production write access, you need your own audit logging, Kubernetes audit logs cover the API calls, but the MCP server itself is stateless.</li>
     </ul>
 
     <h2 id="who-benefits">Who Benefits Most</h2>
@@ -818,17 +818,17 @@ node-pool-03   Ready    &lt;none&gt;          45d   v1.30.2</pre>
     <h2 id="getting-started">Getting Started Checklist</h2>
 
     <ol>
-      <li><strong>Install the binary</strong> — <code>npm install -g kubernetes-mcp-server</code> is the fastest path</li>
-      <li><strong>Start in read-only mode</strong> — add <code>--read-only</code> to your MCP config and explore for a week before considering write access</li>
-      <li><strong>Scope your kubeconfig</strong> — only include the contexts you actually want the AI to access. Don't point it at every cluster in your org</li>
-      <li><strong>Block sensitive resources</strong> — use a TOML config to block Secrets, ServiceAccounts, and RBAC resources from queries</li>
-      <li><strong>Add RBAC as a second layer</strong> — even with <code>--read-only</code>, use a dedicated service account with minimal ClusterRole bindings</li>
-      <li><strong>Test against staging first</strong> — run it against a non-production cluster for at least a few days. Get a feel for what it surfaces and how it interprets ambiguous requests</li>
-      <li><strong>Graduate to selective writes</strong> — when you're confident, enable write mode with <code>--disable-delete --disable-exec</code> so you can scale and patch but can't destroy</li>
+      <li><strong>Install the binary</strong>, <code>npm install -g kubernetes-mcp-server</code> is the fastest path</li>
+      <li><strong>Start in read-only mode</strong>, add <code>--read-only</code> to your MCP config and explore for a week before considering write access</li>
+      <li><strong>Scope your kubeconfig</strong>, only include the contexts you actually want the AI to access. Don't point it at every cluster in your org</li>
+      <li><strong>Block sensitive resources</strong>, use a TOML config to block Secrets, ServiceAccounts, and RBAC resources from queries</li>
+      <li><strong>Add RBAC as a second layer</strong>, even with <code>--read-only</code>, use a dedicated service account with minimal ClusterRole bindings</li>
+      <li><strong>Test against staging first</strong>, run it against a non-production cluster for at least a few days. Get a feel for what it surfaces and how it interprets ambiguous requests</li>
+      <li><strong>Graduate to selective writes</strong>, when you're confident, enable write mode with <code>--disable-delete --disable-exec</code> so you can scale and patch but can't destroy</li>
     </ol>
 
     <div class="callout">
-      <strong>My take:</strong> The Kubernetes MCP Server isn't going to replace kubectl — and it shouldn't. What it does is eliminate the tedious multi-step investigation workflows that eat up time during incidents and daily operations. The value isn't in any single query — it's in the compounding effect of being able to ask follow-up questions that automatically correlate across pods, events, logs, and node state. The productivity difference is most visible during on-call: instead of context-switching between terminal tabs, you stay in one conversation and let the AI assemble the picture. Start read-only, scope it tight, and let it earn your trust incrementally.
+      <strong>My take:</strong> The Kubernetes MCP Server isn't going to replace kubectl, and it shouldn't. What it does is eliminate the tedious multi-step investigation workflows that eat up time during incidents and daily operations. The value isn't in any single query, it's in the compounding effect of being able to ask follow-up questions that automatically correlate across pods, events, logs, and node state. The productivity difference is most visible during on-call: instead of context-switching between terminal tabs, you stay in one conversation and let the AI assemble the picture. Start read-only, scope it tight, and let it earn your trust incrementally.
     </div>
 
     <h2 id="reference">Reference</h2>

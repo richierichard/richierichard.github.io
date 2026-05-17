@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cluster Autoscaler vs Karpenter: Choosing the Right Node Scaler for EKS — Richie Richard Rajkumar</title>
+<title>Cluster Autoscaler vs Karpenter: Choosing the Right Node Scaler for EKS · Richie Richard Rajkumar</title>
 
 <meta name="description" content="A practical decision framework for choosing between Cluster Autoscaler and Karpenter on EKS. Covers architecture differences, feature-by-feature comparison, when to use which, and how to migrate from CAS to Karpenter.">
 <meta name="author" content="Richie Richard Rajkumar">
@@ -11,7 +11,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://www.richierichard.com/blog/eks-cluster-autoscaler-vs-karpenter">
-<meta property="og:title" content="Cluster Autoscaler vs Karpenter: Choosing the Right Node Scaler for EKS — Richie Richard Rajkumar">
+<meta property="og:title" content="Cluster Autoscaler vs Karpenter: Choosing the Right Node Scaler for EKS · Richie Richard Rajkumar">
 <meta property="og:description" content="A practical decision framework for choosing between Cluster Autoscaler and Karpenter on EKS. Architecture differences, feature comparison, when to use which, and migration guidance.">
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -298,7 +298,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <rect width="760" height="420" fill="url(#bg-grad)"/>
 
       <!-- TITLE -->
-      <text x="380" y="26" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">EKS NODE SCALING — TWO ARCHITECTURES COMPARED</text>
+      <text x="380" y="26" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">EKS NODE SCALING · TWO ARCHITECTURES COMPARED</text>
 
       <!-- DIVIDER LINE -->
       <line x1="380" y1="40" x2="380" y2="365" stroke="#7a8099" stroke-width="0.5" stroke-dasharray="4 4"/>
@@ -373,13 +373,13 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <text x="570" y="344" font-family="'Fira Code',monospace" font-size="7" fill="#fbbf24" text-anchor="middle">AWS-only · GA since 2023</text>
 
       <!-- Bottom tagline -->
-      <text x="380" y="408" font-family="'Nunito',sans-serif" font-size="11" fill="#38bdf8" text-anchor="middle" font-weight="700">Same Goal — Scale Nodes for Pending Pods — Different Architecture</text>
+      <text x="380" y="408" font-family="'Nunito',sans-serif" font-size="11" fill="#38bdf8" text-anchor="middle" font-weight="700">Same Goal · Scale Nodes for Pending Pods · Different Architecture</text>
     </svg>
   </div><!-- /article-hero -->
 
   <div class="article-intro">
     <p>Both Cluster Autoscaler and Karpenter solve the same fundamental problem: when pods can't schedule because there's no node with enough capacity, provision a new one. When nodes sit idle, remove them. But they approach this problem from opposite directions. Cluster Autoscaler asks "which of my pre-defined node groups should I scale?" Karpenter asks "what does this specific pod actually need?"</p>
-    <p>That architectural difference ripples through everything — provisioning speed, instance selection, cost efficiency, operational overhead, and how the system reacts when things change. This article is a practical decision framework: when each autoscaler is the right choice, where each one falls short, and how to migrate if you decide to switch.</p>
+    <p>That architectural difference ripples through everything, provisioning speed, instance selection, cost efficiency, operational overhead, and how the system reacts when things change. This article is a practical decision framework: when each autoscaler is the right choice, where each one falls short, and how to migrate if you decide to switch.</p>
   </div>
 
   <article class="article-body">
@@ -390,9 +390,9 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <h3>Cluster Autoscaler: The ASG Intermediary</h3>
 
-    <p>Cluster Autoscaler (CAS) manages nodes indirectly through Auto Scaling Groups. You define ASGs ahead of time — each with a launch template specifying instance types, an AMI, networking config, and min/max bounds. When pods go Pending, CAS evaluates which ASG can accommodate them and increases that group's desired capacity. The ASG then launches an instance using its launch template.</p>
+    <p>Cluster Autoscaler (CAS) manages nodes indirectly through Auto Scaling Groups. You define ASGs ahead of time, each with a launch template specifying instance types, an AMI, networking config, and min/max bounds. When pods go Pending, CAS evaluates which ASG can accommodate them and increases that group's desired capacity. The ASG then launches an instance using its launch template.</p>
 
-    <p>This means every scaling decision is filtered through the ASG abstraction. CAS doesn't pick the instance type — the ASG does. CAS doesn't know about AMIs — the launch template does. CAS doesn't handle interruptions — a separate DaemonSet (Node Termination Handler) does. CAS orchestrates ASGs; the ASGs manage the actual infrastructure.</p>
+    <p>This means every scaling decision is filtered through the ASG abstraction. CAS doesn't pick the instance type, the ASG does. CAS doesn't know about AMIs, the launch template does. CAS doesn't handle interruptions, a separate DaemonSet (Node Termination Handler) does. CAS orchestrates ASGs; the ASGs manage the actual infrastructure.</p>
 
     <h3>Karpenter: Direct Provisioning</h3>
 
@@ -428,8 +428,8 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         </tr>
         <tr>
           <td><strong>Instance selection</strong></td>
-          <td class="bad">Fixed per ASG — chosen at group creation</td>
-          <td class="good">Dynamic — optimal type chosen per scheduling decision</td>
+          <td class="bad">Fixed per ASG, chosen at group creation</td>
+          <td class="good">Dynamic, optimal type chosen per scheduling decision</td>
         </tr>
         <tr>
           <td><strong>Bin packing</strong></td>
@@ -438,13 +438,13 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         </tr>
         <tr>
           <td><strong>Consolidation</strong></td>
-          <td class="bad">Passive — removes underused nodes after cooldown</td>
-          <td class="good">Active — replaces underused nodes with cheaper ones</td>
+          <td class="bad">Passive, removes underused nodes after cooldown</td>
+          <td class="good">Active, replaces underused nodes with cheaper ones</td>
         </tr>
         <tr>
           <td><strong>Drift detection</strong></td>
-          <td class="bad">None — outdated AMIs stay until manual replacement</td>
-          <td class="good">Automatic — replaces nodes when AMI/config diverges</td>
+          <td class="bad">None, outdated AMIs stay until manual replacement</td>
+          <td class="good">Automatic, replaces nodes when AMI/config diverges</td>
         </tr>
         <tr>
           <td><strong>Node expiration</strong></td>
@@ -454,12 +454,12 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         <tr>
           <td><strong>Spot interruptions</strong></td>
           <td class="bad">Requires Node Termination Handler DaemonSet</td>
-          <td class="good">Native — pre-provisions replacement before drain</td>
+          <td class="good">Native, pre-provisions replacement before drain</td>
         </tr>
         <tr>
           <td><strong>Scale-down speed</strong></td>
           <td class="bad">10-min default cooldown, then evaluation</td>
-          <td class="good">Configurable — as fast as 30 seconds after underuse</td>
+          <td class="good">Configurable, as fast as 30 seconds after underuse</td>
         </tr>
         <tr>
           <td><strong>Configuration model</strong></td>
@@ -469,12 +469,12 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         <tr>
           <td><strong>GPU / ML workloads</strong></td>
           <td class="bad">Dedicated ASG per GPU type (g5, p4d, etc.)</td>
-          <td class="good">Single NodePool — Karpenter provisions GPUs on demand</td>
+          <td class="good">Single NodePool, Karpenter provisions GPUs on demand</td>
         </tr>
         <tr>
           <td><strong>Descheduler / rebalancing</strong></td>
           <td class="bad">Requires separate Descheduler component</td>
-          <td class="good">Built-in — active consolidation rebalances workloads</td>
+          <td class="good">Built-in, active consolidation rebalances workloads</td>
         </tr>
         <tr>
           <td><strong>Multi-architecture</strong></td>
@@ -488,8 +488,8 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         </tr>
         <tr>
           <td><strong>Managed node groups</strong></td>
-          <td class="good">Native support — works with EKS managed node groups</td>
-          <td>Not applicable — manages instances directly</td>
+          <td class="good">Native support, works with EKS managed node groups</td>
+          <td>Not applicable, manages instances directly</td>
         </tr>
         <tr>
           <td><strong>Maturity</strong></td>
@@ -505,45 +505,45 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <p>CAS detects pending pods, evaluates ASGs, calls the ASG API to increase desired capacity, the ASG evaluates its launch template, requests an EC2 instance, the instance boots, and the kubelet registers. Each step adds latency. Karpenter collapses this to: detect pending pods, compute optimal instance, call EC2 Fleet API, instance boots, kubelet registers. Fewer hops, fewer API calls, no intermediary evaluation.</p>
 
-    <p>This matters most during sudden scale-ups — a burst of queue messages triggering 20 new pods, a traffic spike doubling your API replicas, or a CI pipeline scheduling 50 build jobs. With CAS, those pods sit Pending for minutes. With Karpenter, they're running in about a minute.</p>
+    <p>This matters most during sudden scale-ups, a burst of queue messages triggering 20 new pods, a traffic spike doubling your API replicas, or a CI pipeline scheduling 50 build jobs. With CAS, those pods sit Pending for minutes. With Karpenter, they're running in about a minute.</p>
 
     <h3>Instance Selection: Fixed vs Dynamic</h3>
 
-    <p>With CAS, you pre-define instance types per ASG. If your ASG is configured for <code>m5.xlarge</code>, every node from that group is an <code>m5.xlarge</code> — even when the pending pod only needs 500m CPU and 512Mi. You're paying for 4 vCPU and 16 GiB to run a pod that needs a fraction of that.</p>
+    <p>With CAS, you pre-define instance types per ASG. If your ASG is configured for <code>m5.xlarge</code>, every node from that group is an <code>m5.xlarge</code>, even when the pending pod only needs 500m CPU and 512Mi. You're paying for 4 vCPU and 16 GiB to run a pod that needs a fraction of that.</p>
 
     <p>Karpenter evaluates the pod's actual resource requests and picks the cheapest instance that fits. A pod requesting 500m CPU gets a <code>m5.large</code> (2 vCPU). A pod requesting 4 CPU gets an <code>m5.xlarge</code>. A GPU workload gets a <code>g5.xlarge</code>. The decision is per-pod, per-moment, based on current pricing and availability.</p>
 
     <h3>Consolidation: Passive Removal vs Active Replacement</h3>
 
-    <p>CAS scale-down works by identifying nodes that are underutilised (below 50% by default), checking if their pods can be rescheduled elsewhere, and removing the node after a cooldown period. It's passive — it only removes nodes, it never replaces them with better-sized alternatives.</p>
+    <p>CAS scale-down works by identifying nodes that are underutilised (below 50% by default), checking if their pods can be rescheduled elsewhere, and removing the node after a cooldown period. It's passive, it only removes nodes, it never replaces them with better-sized alternatives.</p>
 
-    <p>Karpenter's consolidation is active. It doesn't just ask "is this node underused?" — it asks "could these pods fit on fewer or cheaper nodes?" If three <code>m5.xlarge</code> nodes are each running two small pods, Karpenter provisions one <code>m5.large</code>, moves the pods, and terminates all three. The workload keeps running; the infrastructure shrinks. See <a href="/blog/eks-scaling-with-karpenter#consolidation">Karpenter on EKS: Consolidation</a> for detailed examples.</p>
+    <p>Karpenter's consolidation is active. It doesn't just ask "is this node underused?", it asks "could these pods fit on fewer or cheaper nodes?" If three <code>m5.xlarge</code> nodes are each running two small pods, Karpenter provisions one <code>m5.large</code>, moves the pods, and terminates all three. The workload keeps running; the infrastructure shrinks. See <a href="/blog/eks-scaling-with-karpenter#consolidation">Karpenter on EKS: Consolidation</a> for detailed examples.</p>
 
     <h3>Drift Detection: Manual Pipelines vs Automatic</h3>
 
-    <p>CAS has no concept of drift. When AWS publishes a new EKS-optimised AMI, your existing nodes keep running the old one. To update, you modify the launch template, trigger a rolling replacement, and wait for nodes to cycle. Most teams build CI/CD pipelines specifically for this — an AMI tracker, a Terraform apply, a rolling update, and monitoring to confirm success.</p>
+    <p>CAS has no concept of drift. When AWS publishes a new EKS-optimised AMI, your existing nodes keep running the old one. To update, you modify the launch template, trigger a rolling replacement, and wait for nodes to cycle. Most teams build CI/CD pipelines specifically for this, an AMI tracker, a Terraform apply, a rolling update, and monitoring to confirm success.</p>
 
-    <p>Karpenter detects AMI drift automatically. Set <code>alias: al2023@latest</code> in your EC2NodeClass, and when a new AMI is published, Karpenter marks affected nodes as drifted and gracefully replaces them — provisioning a new node first, then draining the old one. No pipeline, no manual intervention. See <a href="/blog/eks-scaling-with-karpenter#drift-detection">Karpenter on EKS: Drift Detection</a> for the full flow.</p>
+    <p>Karpenter detects AMI drift automatically. Set <code>alias: al2023@latest</code> in your EC2NodeClass, and when a new AMI is published, Karpenter marks affected nodes as drifted and gracefully replaces them, provisioning a new node first, then draining the old one. No pipeline, no manual intervention. See <a href="/blog/eks-scaling-with-karpenter#drift-detection">Karpenter on EKS: Drift Detection</a> for the full flow.</p>
 
     <h3>Spot Handling: Bolted-On vs Built-In</h3>
 
-    <p>CAS needs the AWS Node Termination Handler (NTH) — a DaemonSet you install on every node — to detect Spot interruption events and drain pods before termination. NTH is a separate project to install, configure, upgrade, and monitor. When an interruption happens, NTH drains the node, pods go Pending, and only then does CAS start provisioning a replacement. See <a href="/blog/eks-spot-instances#handling-interruptions">EKS Spot Instances: Handling Interruptions</a> for the NTH setup.</p>
+    <p>CAS needs the AWS Node Termination Handler (NTH), a DaemonSet you install on every node, to detect Spot interruption events and drain pods before termination. NTH is a separate project to install, configure, upgrade, and monitor. When an interruption happens, NTH drains the node, pods go Pending, and only then does CAS start provisioning a replacement. See <a href="/blog/eks-spot-instances#handling-interruptions">EKS Spot Instances: Handling Interruptions</a> for the NTH setup.</p>
 
-    <p>Karpenter watches for interruption events natively via SQS. When an interruption is detected, it <strong>pre-provisions a replacement node before draining</strong> the affected one. By the time pods are evicted, the new node is already ready. It also responds to rebalance recommendations — an early signal that arrives minutes before the actual interruption — giving even more time for graceful migration. See <a href="/blog/eks-scaling-with-karpenter#spot-interruptions">Karpenter on EKS: Spot Interruptions</a> for details.</p>
+    <p>Karpenter watches for interruption events natively via SQS. When an interruption is detected, it <strong>pre-provisions a replacement node before draining</strong> the affected one. By the time pods are evicted, the new node is already ready. It also responds to rebalance recommendations, an early signal that arrives minutes before the actual interruption, giving even more time for graceful migration. See <a href="/blog/eks-scaling-with-karpenter#spot-interruptions">Karpenter on EKS: Spot Interruptions</a> for details.</p>
 
     <h3>GPU and ML Workloads: Dedicated ASGs vs Dynamic Provisioning</h3>
 
-    <p>With CAS, GPU workloads require dedicated ASGs — one for <code>g5.xlarge</code>, another for <code>p4d.24xlarge</code>, each with its own launch template, min/max bounds, and scaling configuration. If you run multiple GPU types for different ML workloads (training vs inference), the number of ASGs multiplies. Each ASG is another piece of infrastructure to manage and keep right-sized.</p>
+    <p>With CAS, GPU workloads require dedicated ASGs, one for <code>g5.xlarge</code>, another for <code>p4d.24xlarge</code>, each with its own launch template, min/max bounds, and scaling configuration. If you run multiple GPU types for different ML workloads (training vs inference), the number of ASGs multiplies. Each ASG is another piece of infrastructure to manage and keep right-sized.</p>
 
-    <p>Karpenter handles GPU instances like any other instance type. List GPU families in your NodePool requirements, and Karpenter provisions the right GPU instance when an ML pod with a <code>nvidia.com/gpu</code> resource request goes Pending. Pair this with KEDA for queue-driven ML pipelines (Kubeflow, SageMaker jobs) and you get fully event-driven GPU scaling — GPU nodes appear when training jobs are queued, and disappear when training completes.</p>
+    <p>Karpenter handles GPU instances like any other instance type. List GPU families in your NodePool requirements, and Karpenter provisions the right GPU instance when an ML pod with a <code>nvidia.com/gpu</code> resource request goes Pending. Pair this with KEDA for queue-driven ML pipelines (Kubeflow, SageMaker jobs) and you get fully event-driven GPU scaling, GPU nodes appear when training jobs are queued, and disappear when training completes.</p>
 
     <h3>Pre-Warming: Cluster Overprovisioner</h3>
 
-    <p>Both autoscalers have a cold-start window — 3–5 minutes for CAS, ~60 seconds for Karpenter. For latency-sensitive workloads where even 60 seconds is too long, the <strong>Cluster Overprovisioner</strong> pattern eliminates the wait entirely.</p>
+    <p>Both autoscalers have a cold-start window, 3–5 minutes for CAS, ~60 seconds for Karpenter. For latency-sensitive workloads where even 60 seconds is too long, the <strong>Cluster Overprovisioner</strong> pattern eliminates the wait entirely.</p>
 
-    <p>The technique: run low-priority <strong>pause pods</strong> (dummy containers using the <code>registry.k8s.io/pause</code> image) that reserve node capacity but consume no CPU. When real pods go Pending, Kubernetes evicts pause pods first — they have the lowest PriorityClass — and schedules application pods on the already-warm node instantly. The evicted pause pods then trigger new node provisioning in the background.</p>
+    <p>The technique: run low-priority <strong>pause pods</strong> (dummy containers using the <code>registry.k8s.io/pause</code> image) that reserve node capacity but consume no CPU. When real pods go Pending, Kubernetes evicts pause pods first, they have the lowest PriorityClass, and schedules application pods on the already-warm node instantly. The evicted pause pods then trigger new node provisioning in the background.</p>
 
-    <p>With CAS, this is one of the few ways to get fast scaling — you're essentially pre-paying for spare capacity so real pods never wait for ASG provisioning. With Karpenter, it's optional but useful for strict SLA workloads. A <strong>Proportional Autoscaler</strong> can scale the number of pause pods with your cluster size, so the warm buffer grows as your fleet grows and shrinks when it contracts. See <a href="/blog/eks-scaling-with-karpenter#cluster-overprovisioner">Karpenter on EKS: Cluster Overprovisioner</a> for the full setup.</p>
+    <p>With CAS, this is one of the few ways to get fast scaling, you're essentially pre-paying for spare capacity so real pods never wait for ASG provisioning. With Karpenter, it's optional but useful for strict SLA workloads. A <strong>Proportional Autoscaler</strong> can scale the number of pause pods with your cluster size, so the warm buffer grows as your fleet grows and shrinks when it contracts. See <a href="/blog/eks-scaling-with-karpenter#cluster-overprovisioner">Karpenter on EKS: Cluster Overprovisioner</a> for the full setup.</p>
 
     <h2 id="when-cas">When Cluster Autoscaler Is the Right Choice</h2>
 
@@ -551,21 +551,21 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <ul>
       <li><strong>Multi-cloud or cloud-agnostic strategy.</strong> CAS is a CNCF project that works on AWS, GCP, Azure, and other providers. If you run Kubernetes across multiple clouds, CAS gives you one autoscaler with the same configuration model everywhere. Karpenter is AWS-only.</li>
-      <li><strong>EKS managed node groups with AMI control.</strong> If your organisation mandates managed node groups for compliance or operational reasons, CAS integrates natively. Karpenter provisions self-managed instances — you get more control but lose the managed node group lifecycle.</li>
+      <li><strong>EKS managed node groups with AMI control.</strong> If your organisation mandates managed node groups for compliance or operational reasons, CAS integrates natively. Karpenter provisions self-managed instances, you get more control but lose the managed node group lifecycle.</li>
       <li><strong>Small, stable clusters with predictable workloads.</strong> If you have 2–3 node groups, fixed instance types, no Spot, and workloads that don't change much, CAS works fine. The overhead of managing ASGs is low when there are only a few of them.</li>
-      <li><strong>Existing automation that works.</strong> If you have Terraform modules, monitoring dashboards, runbooks, and a team trained on CAS — and scaling isn't a pain point — switching to Karpenter is a cost with no immediate benefit. Don't migrate for migration's sake.</li>
+      <li><strong>Existing automation that works.</strong> If you have Terraform modules, monitoring dashboards, runbooks, and a team trained on CAS, and scaling isn't a pain point, switching to Karpenter is a cost with no immediate benefit. Don't migrate for migration's sake.</li>
       <li><strong>Restricted environments.</strong> GovCloud, air-gapped clusters, or environments with tight IAM restrictions. CAS needs fewer permissions than Karpenter (no SQS, no EventBridge, no EC2 Fleet API). In environments where every IAM action is audited and approved, CAS's simpler permission model is easier to get through security review.</li>
     </ul>
 
     <div class="callout">
-      <strong>The honest assessment:</strong> If CAS is working and scaling isn't a pain point, there's no urgent reason to migrate. CAS is proven, stable, and well-understood. The case for Karpenter is strongest when you're hitting CAS's limitations — slow provisioning, poor bin-packing, Spot management overhead, or manual AMI patching.
+      <strong>The honest assessment:</strong> If CAS is working and scaling isn't a pain point, there's no urgent reason to migrate. CAS is proven, stable, and well-understood. The case for Karpenter is strongest when you're hitting CAS's limitations, slow provisioning, poor bin-packing, Spot management overhead, or manual AMI patching.
     </div>
 
     <h2 id="when-karpenter">When Karpenter Is the Clear Winner</h2>
 
     <ul>
-      <li><strong>You run Spot Instances.</strong> Native interruption handling, pre-provisioned replacements, rebalance recommendation support — Karpenter's Spot story is significantly better than CAS + NTH. If Spot is a meaningful part of your cost strategy, this alone justifies the switch.</li>
-      <li><strong>You need fast provisioning.</strong> Workloads that scale rapidly — event-driven processing, CI/CD, auto-scaling APIs — benefit from 60-second node provisioning instead of 3–5 minutes.</li>
+      <li><strong>You run Spot Instances.</strong> Native interruption handling, pre-provisioned replacements, rebalance recommendation support, Karpenter's Spot story is significantly better than CAS + NTH. If Spot is a meaningful part of your cost strategy, this alone justifies the switch.</li>
+      <li><strong>You need fast provisioning.</strong> Workloads that scale rapidly, event-driven processing, CI/CD, auto-scaling APIs, benefit from 60-second node provisioning instead of 3–5 minutes.</li>
       <li><strong>You care about node utilisation and cost.</strong> Active consolidation means Karpenter continuously right-sizes your fleet. CAS leaves underused nodes running until the cooldown expires and conditions are met. Teams typically see 20–40% better node utilisation after switching.</li>
       <li><strong>You want automated AMI patching.</strong> Drift detection eliminates the AMI update pipeline entirely. If your team spends hours per month on node patching, Karpenter gives that time back.</li>
       <li><strong>You're managing too many ASGs.</strong> If you have 5+ ASGs with different instance types, architectures, and capacity types, the operational overhead is real. Karpenter replaces them with 1–3 NodePools.</li>
@@ -604,7 +604,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
     <ul>
       <li><strong>Use taints on Karpenter NodePools.</strong> Karpenter nodes get a taint that only pods with the matching toleration can be scheduled on. CAS nodes remain untainted. Workloads you want on Karpenter get the toleration; everything else stays on CAS nodes.</li>
-      <li><strong>Use <code>nodeAffinity</code> to prefer Karpenter nodes.</strong> A softer approach — pods prefer Karpenter-provisioned nodes but fall back to CAS nodes if Karpenter can't provision (e.g., hitting limits).</li>
+      <li><strong>Use <code>nodeAffinity</code> to prefer Karpenter nodes.</strong> A softer approach, pods prefer Karpenter-provisioned nodes but fall back to CAS nodes if Karpenter can't provision (e.g., hitting limits).</li>
       <li><strong>Karpenter should not manage ASG-backed nodes.</strong> Karpenter ignores nodes it didn't provision. CAS ignores nodes without ASG tags. They coexist cleanly as long as you don't mix their concerns.</li>
     </ul>
 
@@ -659,12 +659,12 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
     </table>
 
     <div class="callout">
-      <strong>Don't rush Phase 3.</strong> Run both autoscalers in parallel for at least 2–4 weeks. Let Karpenter handle real traffic patterns — weekday spikes, weekend lulls, batch processing peaks. Only decommission CAS once you're confident Karpenter handles all scenarios correctly.
+      <strong>Don't rush Phase 3.</strong> Run both autoscalers in parallel for at least 2–4 weeks. Let Karpenter handle real traffic patterns, weekday spikes, weekend lulls, batch processing peaks. Only decommission CAS once you're confident Karpenter handles all scenarios correctly.
     </div>
 
     <h2 id="eks-auto-mode">EKS Auto Mode: Managed Karpenter</h2>
 
-    <p>If you're choosing Karpenter for a new cluster, consider <strong>EKS Auto Mode</strong>. Since December 2024, it runs Karpenter as a managed component of the EKS control plane — AWS handles installation, upgrades, and operational health. You still define <code>NodePool</code> and <code>EC2NodeClass</code> the same way. The tradeoff is less visibility and customisation, but zero Karpenter operational overhead.</p>
+    <p>If you're choosing Karpenter for a new cluster, consider <strong>EKS Auto Mode</strong>. Since December 2024, it runs Karpenter as a managed component of the EKS control plane, AWS handles installation, upgrades, and operational health. You still define <code>NodePool</code> and <code>EC2NodeClass</code> the same way. The tradeoff is less visibility and customisation, but zero Karpenter operational overhead.</p>
 
     <p>EKS Auto Mode is not an option if you need to run a specific Karpenter version, customise controller settings, or use Karpenter features before they're available in the managed version. For most teams starting fresh, it's the simplest path.</p>
 
@@ -695,22 +695,22 @@ Multi-cloud?
     <h2 id="takeaways">Key Takeaways</h2>
 
     <ol>
-      <li><strong>Karpenter replaces four components with one.</strong> Cluster Autoscaler, node groups, Node Termination Handler, and Descheduler — all replaced by a single controller with two CRDs. Fewer moving parts, fewer failure modes.</li>
+      <li><strong>Karpenter replaces four components with one.</strong> Cluster Autoscaler, node groups, Node Termination Handler, and Descheduler, all replaced by a single controller with two CRDs. Fewer moving parts, fewer failure modes.</li>
       <li><strong>Different architecture, not just different features.</strong> CAS manages ASGs (infrastructure-first). Karpenter provisions instances directly (workload-first). This structural difference is why Karpenter can right-size, consolidate, detect drift, and handle Spot natively.</li>
       <li><strong>Karpenter wins on speed, cost, and operational simplicity.</strong> 60-second provisioning, active consolidation, drift detection, native Spot handling, and two CRDs instead of multiple ASGs + launch templates + NTH.</li>
       <li><strong>CAS wins on portability and maturity.</strong> Cloud-agnostic (AWS, GCP, Azure), battle-tested since 2016, works with managed node groups, and has a simpler IAM footprint.</li>
       <li><strong>Don't migrate for migration's sake.</strong> If CAS is working and scaling isn't a pain point, there's no urgent reason to switch. Migrate when you hit concrete limitations.</li>
       <li><strong>Spot workloads are the strongest case for Karpenter.</strong> Native interruption handling with pre-provisioned replacements is meaningfully better than CAS + NTH.</li>
       <li><strong>You can run both during migration.</strong> Install Karpenter alongside CAS, use taints or affinity to steer workloads, and migrate gradually over 2–4 weeks.</li>
-      <li><strong>EKS Auto Mode is the simplest path for new clusters.</strong> Managed Karpenter with zero operational overhead — same CRDs, AWS handles the rest.</li>
+      <li><strong>EKS Auto Mode is the simplest path for new clusters.</strong> Managed Karpenter with zero operational overhead, same CRDs, AWS handles the rest.</li>
     </ol>
 
     <h2 id="reference">Reference</h2>
     <ul>
-      <li>Karpenter deep-dive: <a href="/blog/eks-scaling-with-karpenter">Karpenter on EKS: Right-Sized Nodes in 60 Seconds</a> — setup, drift detection, consolidation, expiration, Spot handling</li>
-      <li>Spot strategy: <a href="/blog/eks-spot-instances">EKS Spot Instances: A Practical Guide to Cutting Your Kubernetes Compute Costs</a> — hybrid vs full Spot, CAS config, NTH setup</li>
+      <li>Karpenter deep-dive: <a href="/blog/eks-scaling-with-karpenter">Karpenter on EKS: Right-Sized Nodes in 60 Seconds</a>, setup, drift detection, consolidation, expiration, Spot handling</li>
+      <li>Spot strategy: <a href="/blog/eks-spot-instances">EKS Spot Instances: A Practical Guide to Cutting Your Kubernetes Compute Costs</a>, hybrid vs full Spot, CAS config, NTH setup</li>
       <li>Karpenter docs: <a href="https://karpenter.sh/docs/" target="_blank" rel="noopener">karpenter.sh</a></li>
-      <li>Cluster Autoscaler: <a href="https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler" target="_blank" rel="noopener">github.com/kubernetes/autoscaler</a> — CNCF project</li>
+      <li>Cluster Autoscaler: <a href="https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler" target="_blank" rel="noopener">github.com/kubernetes/autoscaler</a>, CNCF project</li>
       <li>EKS Auto Mode: <a href="https://docs.aws.amazon.com/eks/latest/userguide/auto-mode.html" target="_blank" rel="noopener">EKS Auto Mode documentation</a></li>
       <li>KEDA + Karpenter: <a href="/blog/eks-scaling-with-karpenter#keda-integration">Full event-driven pipeline setup</a></li>
     </ul>

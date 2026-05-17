@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AWS S3 Account-Regional Namespaces — Richie Richard Rajkumar</title>
+<title>AWS S3 Account-Regional Namespaces · Richie Richard Rajkumar</title>
 
 <meta name="description" content="AWS changed how S3 bucket naming works in March 2026. Here's what shifted, what breaks, and what every DevOps engineer needs to update in their infrastructure.">
 <meta name="author" content="Richie Richard Rajkumar">
@@ -11,7 +11,7 @@
 
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://www.richierichard.com/blog/s3-regional-namespaces">
-<meta property="og:title" content="AWS S3 Account-Regional Namespaces — Richie Richard Rajkumar">
+<meta property="og:title" content="AWS S3 Account-Regional Namespaces · Richie Richard Rajkumar">
 <meta property="og:description" content="AWS changed how S3 bucket naming works in March 2026. Here's what shifted, what breaks, and what every DevOps engineer needs to update.">
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -307,7 +307,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
           <rect width="760" height="320" fill="url(#bg-grad)"/>
 
           <!-- LEFT: OLD (global namespace) -->
-          <text x="190" y="36" font-family="'Fira Code',monospace" font-size="11" fill="#7a8099" text-anchor="middle" letter-spacing="2">BEFORE — GLOBAL NAMESPACE</text>
+          <text x="190" y="36" font-family="'Fira Code',monospace" font-size="11" fill="#7a8099" text-anchor="middle" letter-spacing="2">BEFORE · GLOBAL NAMESPACE</text>
           <!-- Globe circle -->
           <circle cx="190" cy="160" r="72" fill="none" stroke="#f87171" stroke-width="1.5" stroke-dasharray="6 3" opacity="0.6"/>
           <circle cx="190" cy="160" r="72" fill="rgba(248,113,113,0.04)"/>
@@ -333,10 +333,10 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
           <text x="380" y="170" font-family="'Fira Code',monospace" font-size="18" fill="rgba(255,255,255,0.1)" text-anchor="middle">→</text>
 
           <!-- RIGHT: NEW (account-regional namespace) -->
-          <text x="570" y="36" font-family="'Fira Code',monospace" font-size="11" fill="#7a8099" text-anchor="middle" letter-spacing="2">AFTER — ACCOUNT-REGIONAL</text>
+          <text x="570" y="36" font-family="'Fira Code',monospace" font-size="11" fill="#7a8099" text-anchor="middle" letter-spacing="2">AFTER · ACCOUNT-REGIONAL</text>
           <!-- Format legend -->
           <rect x="400" y="44" width="340" height="16" rx="4" fill="rgba(56,189,248,0.07)"/>
-          <text x="570" y="56" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle" opacity="0.75">prefix — accountId — region — an</text>
+          <text x="570" y="56" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle" opacity="0.75">prefix · accountId · region · an</text>
           <!-- Account A box -->
           <rect x="408" y="68" width="325" height="76" rx="8" fill="rgba(56,189,248,0.05)" stroke="#38bdf8" stroke-width="1.2" opacity="0.8"/>
           <text x="570" y="85" font-family="'Fira Code',monospace" font-size="9" fill="#38bdf8" text-anchor="middle" letter-spacing="1" opacity="0.8">ACCOUNT 111122223333 · eu-west-1</text>
@@ -357,8 +357,8 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
   </div><!-- /article-hero -->
 
   <div class="article-intro">
-    <p>If you manage AWS infrastructure at any meaningful scale, you've probably felt the friction of S3's global bucket namespace. Names like <code>my-company-prod-data-eu-west-1-2024</code> exist not because engineers love verbose names — they exist because someone already claimed <code>data</code>, <code>assets</code>, <code>backups</code>, and every other sane option years ago. That changed in March 2026.</p>
-    <p>AWS introduced <strong>account-regional namespaces for S3 general purpose buckets</strong>, scoping bucket names to a specific account and region. The mechanism is a structured naming convention — <code>{prefix}-{accountId}-{region}-an</code> — that encodes the namespace directly into the bucket name. Here's what actually changed, what the convention means, and what you need to update in your IaC.</p>
+    <p>If you manage AWS infrastructure at any meaningful scale, you've probably felt the friction of S3's global bucket namespace. Names like <code>my-company-prod-data-eu-west-1-2024</code> exist not because engineers love verbose names, they exist because someone already claimed <code>data</code>, <code>assets</code>, <code>backups</code>, and every other sane option years ago. That changed in March 2026.</p>
+    <p>AWS introduced <strong>account-regional namespaces for S3 general purpose buckets</strong>, scoping bucket names to a specific account and region. The mechanism is a structured naming convention, <code>{prefix}-{accountId}-{region}-an</code>, that encodes the namespace directly into the bucket name. Here's what actually changed, what the convention means, and what you need to update in your IaC.</p>
   </div>
 
   <article class="article-body">
@@ -368,20 +368,20 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         <p>S3 launched in 2006 with a single global namespace. Every bucket name across every AWS account in the world had to be unique. At the time, the S3 user base was small enough that this worked. By 2026, it had become a genuine operational problem:</p>
 
         <ul>
-          <li><strong>Bucket squatting</strong> — attackers registering predictable bucket names (e.g. <code>company-logs</code>, <code>company-backups</code>) before target organisations do. A deleted bucket's name immediately becomes available to anyone globally.</li>
-          <li><strong>Name exhaustion</strong> — short, meaningful names are almost universally taken across the entire AWS customer base</li>
-          <li><strong>Naming anti-patterns</strong> — teams were forced to append account IDs or timestamps to every bucket name just to guarantee uniqueness, creating exactly the pattern the new convention now formalises</li>
-          <li><strong>Multi-account drift</strong> — maintaining consistent naming conventions across dev, staging, and prod accounts was impossible when names had to be globally unique</li>
-          <li><strong>No availability guarantee</strong> — even if you deleted a bucket, another account could immediately claim that name before you recreated it</li>
+          <li><strong>Bucket squatting</strong>, attackers registering predictable bucket names (e.g. <code>company-logs</code>, <code>company-backups</code>) before target organisations do. A deleted bucket's name immediately becomes available to anyone globally.</li>
+          <li><strong>Name exhaustion</strong>, short, meaningful names are almost universally taken across the entire AWS customer base</li>
+          <li><strong>Naming anti-patterns</strong>, teams were forced to append account IDs or timestamps to every bucket name just to guarantee uniqueness, creating exactly the pattern the new convention now formalises</li>
+          <li><strong>Multi-account drift</strong>, maintaining consistent naming conventions across dev, staging, and prod accounts was impossible when names had to be globally unique</li>
+          <li><strong>No availability guarantee</strong>, even if you deleted a bucket, another account could immediately claim that name before you recreated it</li>
         </ul>
 
         <div class="callout">
-          <strong>The core shift:</strong> Bucket names are now scoped to your AWS account and region. Two different accounts can use the same logical prefix in the same region — each gets their own isolated namespace, and the bucket name itself encodes the account and region explicitly.
+          <strong>The core shift:</strong> Bucket names are now scoped to your AWS account and region. Two different accounts can use the same logical prefix in the same region, each gets their own isolated namespace, and the bucket name itself encodes the account and region explicitly.
         </div>
 
         <h2 id="what-changed">What Actually Changed</h2>
 
-        <p>From March 2026, buckets created with the new account-regional namespace use a structured naming convention that encodes the account and region directly into the bucket name. The ARN format is <strong>unchanged</strong> — the uniqueness is achieved through naming, not a new ARN scheme.</p>
+        <p>From March 2026, buckets created with the new account-regional namespace use a structured naming convention that encodes the account and region directly into the bucket name. The ARN format is <strong>unchanged</strong>, the uniqueness is achieved through naming, not a new ARN scheme.</p>
 
         <table class="compare-table">
           <thead>
@@ -394,7 +394,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
           <tbody>
             <tr>
               <td>Uniqueness scope</td>
-              <td class="bad">Global — all accounts worldwide</td>
+              <td class="bad">Global, all accounts worldwide</td>
               <td class="good">Account + region only</td>
             </tr>
             <tr>
@@ -405,16 +405,16 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
             <tr>
               <td>ARN format</td>
               <td><code>arn:aws:s3:::bucket-name</code></td>
-              <td class="good"><code>arn:aws:s3:::bucket-name</code> — unchanged</td>
+              <td class="good"><code>arn:aws:s3:::bucket-name</code>, unchanged</td>
             </tr>
             <tr>
               <td>Name availability guarantee</td>
-              <td class="bad">None — anyone can claim deleted names</td>
-              <td class="good">Guaranteed — scoped to your account</td>
+              <td class="bad">None, anyone can claim deleted names</td>
+              <td class="good">Guaranteed, scoped to your account</td>
             </tr>
             <tr>
               <td>Multi-account consistency</td>
-              <td class="bad">Impossible — names must differ per account</td>
+              <td class="bad">Impossible, names must differ per account</td>
               <td class="good">Same prefix works across all your accounts</td>
             </tr>
             <tr>
@@ -438,17 +438,17 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
         <p>Breaking down the components:</p>
         <ul>
-          <li><strong><code>{prefix}</code></strong> — your logical bucket name, up to 37 characters (leaving room for the suffix within the 63-char total limit)</li>
-          <li><strong><code>{AWS-Account-ID}</code></strong> — your 12-digit account ID, embedded directly in the name</li>
-          <li><strong><code>{AWS-Region}</code></strong> — the full region code where the bucket lives</li>
-          <li><strong><code>-an</code></strong> — the account namespace suffix, required to identify this as an account-regional bucket</li>
+          <li><strong><code>{prefix}</code></strong>, your logical bucket name, up to 37 characters (leaving room for the suffix within the 63-char total limit)</li>
+          <li><strong><code>{AWS-Account-ID}</code></strong>, your 12-digit account ID, embedded directly in the name</li>
+          <li><strong><code>{AWS-Region}</code></strong>, the full region code where the bucket lives</li>
+          <li><strong><code>-an</code></strong>, the account namespace suffix, required to identify this as an account-regional bucket</li>
         </ul>
 
         <div class="callout">
           <strong>Why this format?</strong> By encoding account ID and region into the name, the bucket is globally identifiable without requiring a global uniqueness check. The <code>-an</code> suffix signals to AWS (and to your team) that this bucket lives in an account-scoped namespace rather than the old global pool.
         </div>
 
-        <p>Two different accounts can both create a bucket with the same prefix — the resulting names are different because the account ID differs. Your dev, staging, and prod accounts can all have an <code>app-logs</code> bucket with predictable, consistent naming:</p>
+        <p>Two different accounts can both create a bucket with the same prefix, the resulting names are different because the account ID differs. Your dev, staging, and prod accounts can all have an <code>app-logs</code> bucket with predictable, consistent naming:</p>
 
         <pre><span class="cm"># Dev account (111122223333)</span>
 <span class="nm">app-logs-111122223333-eu-west-1-an</span>
@@ -473,13 +473,13 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
         <h3>CloudFormation</h3>
         <p>Two options depending on whether you want to specify the full name or let CloudFormation build it:</p>
 
-        <pre><span class="cm"># Option 1 — explicit full name (using pseudo-parameters)</span>
+        <pre><span class="cm"># Option 1, explicit full name (using pseudo-parameters)</span>
 <span class="ky">Type</span>: AWS::S3::Bucket
 <span class="ky">Properties</span>:
   <span class="ky">BucketName</span>: !Sub <span class="st">"app-logs-${AWS::AccountId}-${AWS::Region}-an"</span>
   <span class="ky">BucketNamespace</span>: <span class="st">account-regional</span>
 
-<span class="cm"># Option 2 — prefix only, CloudFormation appends the suffix</span>
+<span class="cm"># Option 2, prefix only, CloudFormation appends the suffix</span>
 <span class="ky">Type</span>: AWS::S3::Bucket
 <span class="ky">Properties</span>:
   <span class="ky">BucketNamePrefix</span>: <span class="st">app-logs</span>
@@ -501,7 +501,7 @@ resource <span class="st">"aws_s3_bucket"</span> <span class="st">"app_logs"</sp
         <h3>Boto3 (Python)</h3>
         <p>Pass <code>BucketNamespace</code> in the <code>CreateBucketConfiguration</code> parameter:</p>
 
-        <pre><span class="cm"># boto3 — create an account-regional bucket</span>
+        <pre><span class="cm"># boto3, create an account-regional bucket</span>
 import boto3
 
 s3 = boto3.client(<span class="st">'s3'</span>, region_name=<span class="st">'eu-west-1'</span>)
@@ -515,7 +515,7 @@ s3.create_bucket(
 )</pre>
 
         <h3>Enforcing It via SCP</h3>
-        <p>Lock down your organisation so only account-regional buckets can be created — no one accidentally creates old-style global buckets:</p>
+        <p>Lock down your organisation so only account-regional buckets can be created, no one accidentally creates old-style global buckets:</p>
 
         <pre>{
   <span class="ky">"Sid"</span>: <span class="st">"RequireAccountRegionalBuckets"</span>,
@@ -533,31 +533,31 @@ s3.create_bucket(
 
         <p>A few things that are <em>not</em> affected by this change:</p>
         <ul>
-          <li><strong>ARN format</strong> — remains <code>arn:aws:s3:::bucket-name</code>. No changes to IAM policies referencing bucket ARNs</li>
-          <li><strong>Existing buckets</strong> — they stay on the global namespace; migration is opt-in</li>
-          <li><strong>Performance and cost</strong> — zero impact, this is purely a naming and namespace change</li>
-          <li><strong>S3 APIs</strong> — all existing API operations (GetObject, PutObject, ListBuckets, etc.) work unchanged</li>
-          <li><strong>Access patterns</strong> — presigned URLs, static website hosting, event notifications, replication, and lifecycle rules are unaffected</li>
-          <li><strong>AWS service integrations</strong> — CloudFront, Lambda, Athena, Glue, and all other services that interact with S3 work without modification</li>
+          <li><strong>ARN format</strong>, remains <code>arn:aws:s3:::bucket-name</code>. No changes to IAM policies referencing bucket ARNs</li>
+          <li><strong>Existing buckets</strong>, they stay on the global namespace; migration is opt-in</li>
+          <li><strong>Performance and cost</strong>, zero impact, this is purely a naming and namespace change</li>
+          <li><strong>S3 APIs</strong>, all existing API operations (GetObject, PutObject, ListBuckets, etc.) work unchanged</li>
+          <li><strong>Access patterns</strong>, presigned URLs, static website hosting, event notifications, replication, and lifecycle rules are unaffected</li>
+          <li><strong>AWS service integrations</strong>, CloudFront, Lambda, Athena, Glue, and all other services that interact with S3 work without modification</li>
         </ul>
 
         <div class="callout">
-          <strong>My take:</strong> For 18 years, every DevOps engineer has cargo-culted account IDs and region codes into bucket names manually — precisely because the global namespace forced it. AWS has now formalised that pattern, added the <code>-an</code> suffix, and made the scoping enforceable. The upgrade path is straightforward: adopt the convention for new buckets, use CloudFormation's <code>BucketNamePrefix</code> to generate names automatically, and add an SCP to keep your org clean. Existing buckets need nothing — which means you can move at your own pace.
+          <strong>My take:</strong> For 18 years, every DevOps engineer has cargo-culted account IDs and region codes into bucket names manually, precisely because the global namespace forced it. AWS has now formalised that pattern, added the <code>-an</code> suffix, and made the scoping enforceable. The upgrade path is straightforward: adopt the convention for new buckets, use CloudFormation's <code>BucketNamePrefix</code> to generate names automatically, and add an SCP to keep your org clean. Existing buckets need nothing, which means you can move at your own pace.
         </div>
 
         <h2 id="takeaways">Key Takeaways</h2>
 
         <ol>
-          <li>New account-regional buckets follow the format <code>{prefix}-{accountId}-{region}-an</code> — the naming convention makes the scope explicit</li>
+          <li>New account-regional buckets follow the format <code>{prefix}-{accountId}-{region}-an</code>, the naming convention makes the scope explicit</li>
           <li>The <code>-an</code> suffix is mandatory and identifies the bucket as account-regional, not global</li>
-          <li>ARN format is <strong>unchanged</strong> — <code>arn:aws:s3:::bucket-name</code> still works; no IAM policy rewrites needed</li>
+          <li>ARN format is <strong>unchanged</strong>, <code>arn:aws:s3:::bucket-name</code> still works; no IAM policy rewrites needed</li>
           <li>All creation paths require opting in: pass <code>--bucket-namespace account-regional</code> in the CLI, <code>BucketNamespace: account-regional</code> in CloudFormation, or <code>BucketNamespace</code> in SDK calls</li>
           <li>Use <code>s3:x-amz-bucket-namespace</code> in SCPs to enforce account-regional creation org-wide</li>
-          <li>Existing global-namespace buckets are unaffected — migration is opt-in, no forced cutover</li>
+          <li>Existing global-namespace buckets are unaffected, migration is opt-in, no forced cutover</li>
         </ol>
 
         <h2 id="reference">Reference</h2>
-        <p>AWS announcement: <a href="https://aws.amazon.com/blogs/aws/introducing-account-regional-namespaces-for-amazon-s3-general-purpose-buckets/" target="_blank" rel="noopener">Introducing account regional namespaces for Amazon S3 general purpose buckets</a> — AWS Blog, March 2026.</p>
+        <p>AWS announcement: <a href="https://aws.amazon.com/blogs/aws/introducing-account-regional-namespaces-for-amazon-s3-general-purpose-buckets/" target="_blank" rel="noopener">Introducing account regional namespaces for Amazon S3 general purpose buckets</a>, AWS Blog, March 2026.</p>
 
   </article>
 

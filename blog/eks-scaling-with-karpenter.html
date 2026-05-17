@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Karpenter on EKS: Right-Sized Nodes in 60 Seconds — Richie Richard Rajkumar</title>
+<title>Karpenter on EKS: Right-Sized Nodes in 60 Seconds · Richie Richard Rajkumar</title>
 
-<meta name="description" content="Stop managing Auto Scaling Groups. Karpenter provisions right-sized EC2 instances in seconds, detects drift automatically, consolidates underused nodes, and handles Spot interruptions natively — all from two Kubernetes CRDs.">
+<meta name="description" content="Stop managing Auto Scaling Groups. Karpenter provisions right-sized EC2 instances in seconds, detects drift automatically, consolidates underused nodes, and handles Spot interruptions natively, all from two Kubernetes CRDs.">
 <meta name="author" content="Richie Richard Rajkumar">
 <link rel="canonical" href="https://www.richierichard.com/blog/eks-scaling-with-karpenter">
 
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://www.richierichard.com/blog/eks-scaling-with-karpenter">
-<meta property="og:title" content="Karpenter on EKS: Right-Sized Nodes in 60 Seconds — Richie Richard Rajkumar">
-<meta property="og:description" content="Stop managing Auto Scaling Groups. Karpenter provisions right-sized nodes in seconds, detects drift, consolidates waste, and handles Spot interruptions natively — from two Kubernetes CRDs.">
+<meta property="og:title" content="Karpenter on EKS: Right-Sized Nodes in 60 Seconds · Richie Richard Rajkumar">
+<meta property="og:description" content="Stop managing Auto Scaling Groups. Karpenter provisions right-sized nodes in seconds, detects drift, consolidates waste, and handles Spot interruptions natively, from two Kubernetes CRDs.">
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -298,7 +298,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <rect width="760" height="420" fill="url(#bg-grad)"/>
 
       <!-- TITLE -->
-      <text x="380" y="28" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">KARPENTER — POD-DRIVEN NODE PROVISIONING ON EKS</text>
+      <text x="380" y="28" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">KARPENTER · POD-DRIVEN NODE PROVISIONING ON EKS</text>
 
       <!-- LEFT: PENDING PODS -->
       <rect x="30" y="50" width="195" height="248" rx="12" fill="rgba(248,113,113,0.04)" stroke="#f87171" stroke-width="1" stroke-dasharray="6 3"/>
@@ -320,7 +320,7 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
       <text x="127" y="242" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">cache-warm-1</text>
       <text x="127" y="256" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">cpu: 500m · mem: 1Gi</text>
 
-      <text x="127" y="286" font-family="'Fira Code',monospace" font-size="7" fill="#f87171" text-anchor="middle">Unschedulable — no capacity</text>
+      <text x="127" y="286" font-family="'Fira Code',monospace" font-size="7" fill="#f87171" text-anchor="middle">Unschedulable · no capacity</text>
 
       <!-- CENTER: KARPENTER -->
       <rect x="265" y="55" width="210" height="240" rx="12" fill="rgba(167,139,250,0.05)" stroke="#a78bfa" stroke-width="1.2"/>
@@ -393,63 +393,63 @@ body.light .article-tag { border-color: rgba(2,132,199,0.25); }
 
   <div class="article-intro">
     <p>Your EKS cluster probably scales nodes through Auto Scaling Groups. You've defined launch templates, configured minimum and maximum sizes, picked instance types upfront, and hoped the autoscaler picks the right group when pods go Pending. When you need a new AMI, you update the launch template, trigger a rolling update, and wait. When nodes sit underused, you wait for the scale-down cooldown. Every change is a change to AWS infrastructure, not Kubernetes resources.</p>
-    <p>Karpenter replaces all of that with two Kubernetes custom resources: <code>NodePool</code> and <code>EC2NodeClass</code>. You declare what your workloads need — instance families, capacity types, availability zones — and Karpenter provisions the exact right node in 60 seconds. When the node drifts from your desired spec, it gets replaced automatically. When nodes are underused, they get consolidated without waiting. This guide walks through setting up Karpenter on EKS and the four features that make it genuinely different: drift detection, consolidation, expiration, and native Spot interruption handling.</p>
+    <p>Karpenter replaces all of that with two Kubernetes custom resources: <code>NodePool</code> and <code>EC2NodeClass</code>. You declare what your workloads need, instance families, capacity types, availability zones, and Karpenter provisions the exact right node in 60 seconds. When the node drifts from your desired spec, it gets replaced automatically. When nodes are underused, they get consolidated without waiting. This guide walks through setting up Karpenter on EKS and the four features that make it genuinely different: drift detection, consolidation, expiration, and native Spot interruption handling.</p>
   </div>
 
   <article class="article-body">
 
     <h2 id="why-karpenter">Why Node Scaling Needed a Rethink</h2>
 
-    <p>Traditional node autoscaling in Kubernetes is infrastructure-first. You define node groups ahead of time — each with a fixed set of instance types, a minimum and maximum size, and a launch template. When pods can't schedule, the autoscaler picks one of these pre-defined groups and adds a node from it. When nodes are idle, it waits for a cooldown period and then removes them.</p>
+    <p>Traditional node autoscaling in Kubernetes is infrastructure-first. You define node groups ahead of time, each with a fixed set of instance types, a minimum and maximum size, and a launch template. When pods can't schedule, the autoscaler picks one of these pre-defined groups and adds a node from it. When nodes are idle, it waits for a cooldown period and then removes them.</p>
 
     <p>This model has real friction points that anyone who's operated EKS at scale has felt:</p>
 
     <ul>
-      <li><strong>Instance types are chosen at group creation time, not at scheduling time.</strong> You pick <code>m5.xlarge</code> for your node group, and every node that comes out of it is an <code>m5.xlarge</code> — even when the pending pod only needs 500m CPU and 512Mi memory. You're paying for a 4 vCPU / 16 GiB node to run a pod that needs a fraction of that.</li>
+      <li><strong>Instance types are chosen at group creation time, not at scheduling time.</strong> You pick <code>m5.xlarge</code> for your node group, and every node that comes out of it is an <code>m5.xlarge</code>, even when the pending pod only needs 500m CPU and 512Mi memory. You're paying for a 4 vCPU / 16 GiB node to run a pod that needs a fraction of that.</li>
       <li><strong>Scaling is slow.</strong> The controller detects pending pods, decides which group to scale, calls the ASG API, waits for the EC2 instance to launch, waits for it to join the cluster, and then the pod gets scheduled. End-to-end: 3–5 minutes on a good day.</li>
-      <li><strong>AMI updates require rolling infrastructure changes.</strong> When a new EKS-optimised AMI is released — security patches, kernel updates, runtime upgrades — you update the launch template, then trigger a rolling replace. Nodes running the old AMI stay in the cluster until you explicitly replace them.</li>
+      <li><strong>AMI updates require rolling infrastructure changes.</strong> When a new EKS-optimised AMI is released, security patches, kernel updates, runtime upgrades, you update the launch template, then trigger a rolling replace. Nodes running the old AMI stay in the cluster until you explicitly replace them.</li>
       <li><strong>Consolidation is passive.</strong> Underused nodes only get removed if they fall below a utilisation threshold <em>and</em> the cooldown timer has expired. The controller won't actively move workloads onto fewer, better-fitted nodes. It just removes empty or nearly-empty nodes and hopes the scheduler does the rest.</li>
       <li><strong>Spot interruptions need a separate component.</strong> You need to install and maintain a DaemonSet (AWS Node Termination Handler) on every node to detect Spot interruption warnings and drain pods gracefully. It's another moving part that can break.</li>
-      <li><strong>Pod rebalancing needs yet another component.</strong> When nodes are underused but not empty, pods don't move themselves. You need a separate <a href="https://github.com/kubernetes-sigs/descheduler" target="_blank" rel="noopener">Descheduler</a> to evict and redistribute pods across nodes — another controller to install, configure, and maintain.</li>
+      <li><strong>Pod rebalancing needs yet another component.</strong> When nodes are underused but not empty, pods don't move themselves. You need a separate <a href="https://github.com/kubernetes-sigs/descheduler" target="_blank" rel="noopener">Descheduler</a> to evict and redistribute pods across nodes, another controller to install, configure, and maintain.</li>
     </ul>
 
-    <p>Karpenter was designed at AWS to eliminate these friction points — replacing the Cluster Autoscaler, node groups, Node Termination Handler, and Descheduler with a single controller. Instead of managing node groups, you declare intent — "I need nodes from these instance families, in these AZs, using on-demand or Spot" — and Karpenter handles every decision from there: which instance type, which AZ, when to launch, when to replace, when to consolidate. For a detailed comparison of both approaches and when to choose which, see <a href="/blog/eks-cluster-autoscaler-vs-karpenter">Cluster Autoscaler vs Karpenter</a>.</p>
+    <p>Karpenter was designed at AWS to eliminate these friction points, replacing the Cluster Autoscaler, node groups, Node Termination Handler, and Descheduler with a single controller. Instead of managing node groups, you declare intent, "I need nodes from these instance families, in these AZs, using on-demand or Spot", and Karpenter handles every decision from there: which instance type, which AZ, when to launch, when to replace, when to consolidate. For a detailed comparison of both approaches and when to choose which, see <a href="/blog/eks-cluster-autoscaler-vs-karpenter">Cluster Autoscaler vs Karpenter</a>.</p>
 
     <h2 id="two-resources">The Two Resources That Replace Everything</h2>
 
     <p>Karpenter's entire configuration lives in two Kubernetes custom resources. No ASGs, no launch templates, no managed node groups.</p>
 
-    <h3>NodePool — What Karpenter Is Allowed to Provision</h3>
+    <h3>NodePool, What Karpenter Is Allowed to Provision</h3>
 
     <p>A <code>NodePool</code> defines the constraints and policies for a group of nodes. Think of it as the answer to: "what kinds of nodes can Karpenter create, and how should it manage them?"</p>
 
     <ul>
-      <li><strong>Requirements</strong> — instance types, capacity types (on-demand/spot), architectures, availability zones</li>
-      <li><strong>Limits</strong> — maximum total CPU and memory Karpenter can provision for this pool</li>
-      <li><strong>Disruption policy</strong> — how and when Karpenter consolidates or replaces nodes</li>
-      <li><strong>Expiration</strong> — how long a node can live before it gets recycled</li>
+      <li><strong>Requirements</strong>, instance types, capacity types (on-demand/spot), architectures, availability zones</li>
+      <li><strong>Limits</strong>, maximum total CPU and memory Karpenter can provision for this pool</li>
+      <li><strong>Disruption policy</strong>, how and when Karpenter consolidates or replaces nodes</li>
+      <li><strong>Expiration</strong>, how long a node can live before it gets recycled</li>
     </ul>
 
-    <h3>EC2NodeClass — The AWS-Specific Configuration</h3>
+    <h3>EC2NodeClass, The AWS-Specific Configuration</h3>
 
     <p>An <code>EC2NodeClass</code> defines everything AWS-specific that every node in the pool gets. This is the configuration that would normally live in a launch template:</p>
 
     <ul>
-      <li><strong>AMI selection</strong> — which AMI to use (EKS-optimised, Bottlerocket, custom)</li>
-      <li><strong>Subnets</strong> — which subnets nodes can be placed in</li>
-      <li><strong>Security groups</strong> — which security groups to attach</li>
-      <li><strong>Instance profile</strong> — the IAM instance profile for the node</li>
-      <li><strong>Block device mappings</strong> — disk size and type</li>
-      <li><strong>Tags</strong> — AWS resource tags for cost allocation and management</li>
+      <li><strong>AMI selection</strong>, which AMI to use (EKS-optimised, Bottlerocket, custom)</li>
+      <li><strong>Subnets</strong>, which subnets nodes can be placed in</li>
+      <li><strong>Security groups</strong>, which security groups to attach</li>
+      <li><strong>Instance profile</strong>, the IAM instance profile for the node</li>
+      <li><strong>Block device mappings</strong>, disk size and type</li>
+      <li><strong>Tags</strong>, AWS resource tags for cost allocation and management</li>
     </ul>
 
     <div class="callout">
-      <strong>NodePool is Kubernetes-native. EC2NodeClass is AWS-native.</strong> This separation is intentional. The NodePool defines scheduling constraints using Kubernetes concepts (requirements, taints, labels). The EC2NodeClass defines infrastructure using AWS concepts (AMIs, subnets, security groups). If you ever migrate to a different cloud, only the NodeClass changes — the NodePool stays the same.
+      <strong>NodePool is Kubernetes-native. EC2NodeClass is AWS-native.</strong> This separation is intentional. The NodePool defines scheduling constraints using Kubernetes concepts (requirements, taints, labels). The EC2NodeClass defines infrastructure using AWS concepts (AMIs, subnets, security groups). If you ever migrate to a different cloud, only the NodeClass changes, the NodePool stays the same.
     </div>
 
     <h2 id="installing-karpenter">Installing Karpenter on EKS</h2>
 
-    <p>Karpenter runs as a Deployment in your cluster — typically two replicas for high availability. It needs an IAM role with permissions to manage EC2 instances, and an SQS queue for interruption events.</p>
+    <p>Karpenter runs as a Deployment in your cluster, typically two replicas for high availability. It needs an IAM role with permissions to manage EC2 instances, and an SQS queue for interruption events.</p>
 
     <h3>Prerequisites</h3>
 
@@ -544,8 +544,8 @@ karpenter-5d7f8c4b6-m8n3q   1/1     Running   30s</pre>
     <p>A few things to note:</p>
 
     <ul>
-      <li><strong><code>requirements</code></strong> define what Karpenter is <em>allowed</em> to provision — not what it <em>will</em> provision. Karpenter picks the optimal combination at launch time based on what the pending pods actually need.</li>
-      <li><strong>Mixing capacity types</strong> — listing both <code>on-demand</code> and <code>spot</code> lets Karpenter choose. It prefers Spot for cost optimisation but falls back to on-demand when Spot capacity is unavailable. If you need to guarantee on-demand for specific workloads, create a separate NodePool with only <code>on-demand</code> and use taints/tolerations.</li>
+      <li><strong><code>requirements</code></strong> define what Karpenter is <em>allowed</em> to provision, not what it <em>will</em> provision. Karpenter picks the optimal combination at launch time based on what the pending pods actually need.</li>
+      <li><strong>Mixing capacity types</strong>, listing both <code>on-demand</code> and <code>spot</code> lets Karpenter choose. It prefers Spot for cost optimisation but falls back to on-demand when Spot capacity is unavailable. If you need to guarantee on-demand for specific workloads, create a separate NodePool with only <code>on-demand</code> and use taints/tolerations.</li>
       <li><strong><code>limits</code></strong> are your safety net. They prevent Karpenter from provisioning a runaway number of nodes if something goes wrong (a deployment with <code>replicas: 10000</code> due to a misconfiguration, for example).</li>
       <li><strong><code>weight</code></strong> determines priority when multiple NodePools can satisfy a pod. Higher weight means Karpenter tries this pool first. Useful for preferring Spot over on-demand.</li>
     </ul>
@@ -577,32 +577,32 @@ karpenter-5d7f8c4b6-m8n3q   1/1     Running   30s</pre>
     <span class="ky">Environment</span>: <span class="st">production</span>
     <span class="ky">ManagedBy</span>: <span class="st">karpenter</span></pre>
 
-    <p>The <code>amiSelectorTerms</code> with <code>alias: al2023@latest</code> tells Karpenter to always use the latest EKS-optimised Amazon Linux 2023 AMI. When AWS publishes a new AMI — security patches, kernel updates, runtime upgrades — Karpenter detects that existing nodes are running an older AMI and marks them as <strong>drifted</strong>. More on this in the drift detection section.</p>
+    <p>The <code>amiSelectorTerms</code> with <code>alias: al2023@latest</code> tells Karpenter to always use the latest EKS-optimised Amazon Linux 2023 AMI. When AWS publishes a new AMI, security patches, kernel updates, runtime upgrades, Karpenter detects that existing nodes are running an older AMI and marks them as <strong>drifted</strong>. More on this in the drift detection section.</p>
 
-    <p>Subnets and security groups are selected by tag, not by ID. This means you can add or remove subnets and security groups by updating tags — Karpenter picks up the changes automatically without any resource modifications.</p>
+    <p>Subnets and security groups are selected by tag, not by ID. This means you can add or remove subnets and security groups by updating tags, Karpenter picks up the changes automatically without any resource modifications.</p>
 
     <h2 id="how-provisioning-works">How Provisioning Works</h2>
 
-    <p>When a pod can't schedule because there's no node with enough capacity, here's what Karpenter does — and how fast it does it:</p>
+    <p>When a pod can't schedule because there's no node with enough capacity, here's what Karpenter does, and how fast it does it:</p>
 
-    <pre><span class="cm"># Karpenter provisioning flow — end to end ~60 seconds</span>
+    <pre><span class="cm"># Karpenter provisioning flow, end to end ~60 seconds</span>
 
 <span class="nm">1.</span> Pod goes <span class="st">Pending</span>              <span class="cm"># Scheduler can't find a node</span>
 <span class="nm">2.</span> Karpenter detects the pod     <span class="cm"># Watches the scheduler queue</span>
 <span class="nm">3.</span> Evaluates pod requirements    <span class="cm"># CPU, memory, GPU, tolerations, affinity</span>
 <span class="nm">4.</span> Batches with other pending    <span class="cm"># Groups pods that can share a node</span>
 <span class="nm">5.</span> Selects optimal instance      <span class="cm"># Cheapest type that fits all batched pods</span>
-<span class="nm">6.</span> Calls EC2 Fleet API           <span class="cm"># Direct API call — no ASG intermediary</span>
+<span class="nm">6.</span> Calls EC2 Fleet API           <span class="cm"># Direct API call, no ASG intermediary</span>
 <span class="nm">7.</span> Instance launches              <span class="cm"># ~30 seconds for the EC2 instance</span>
 <span class="nm">8.</span> Kubelet registers the node    <span class="cm"># Node becomes Ready</span>
 <span class="nm">9.</span> Pods scheduled and running    <span class="cm"># Total: ~60 seconds</span></pre>
 
-    <p>Step 4 is where the magic happens. Karpenter doesn't launch one node per pending pod. It batches pods that arrive around the same time and computes the minimum number of nodes that can serve all of them. If you have three pods pending — one needing 2 CPU, one needing 1 CPU, and one needing 500m CPU — Karpenter might launch a single <code>m5.xlarge</code> (4 vCPU) instead of three separate instances.</p>
+    <p>Step 4 is where the magic happens. Karpenter doesn't launch one node per pending pod. It batches pods that arrive around the same time and computes the minimum number of nodes that can serve all of them. If you have three pods pending, one needing 2 CPU, one needing 1 CPU, and one needing 500m CPU, Karpenter might launch a single <code>m5.xlarge</code> (4 vCPU) instead of three separate instances.</p>
 
     <p>This is fundamentally different from ASG-based scaling, where the autoscaler asks "which pre-defined group should I add a node to?" Karpenter asks "what is the cheapest EC2 instance that satisfies these specific pods right now?" The answer changes with every provisioning decision, because Spot pricing, capacity, and pod requirements are all dynamic.</p>
 
     <div class="callout">
-      <strong>Why 60 seconds instead of 3–5 minutes?</strong> Karpenter calls the EC2 Fleet API directly — there's no ASG resize, no launch template evaluation, no Auto Scaling Group cooldown to wait through. The EC2 instance launch itself takes ~30 seconds. The remaining time is kubelet registration and the pod being scheduled. It's the same EC2 underneath — the difference is skipping the ASG intermediary.
+      <strong>Why 60 seconds instead of 3–5 minutes?</strong> Karpenter calls the EC2 Fleet API directly, there's no ASG resize, no launch template evaluation, no Auto Scaling Group cooldown to wait through. The EC2 instance launch itself takes ~30 seconds. The remaining time is kubelet registration and the pod being scheduled. It's the same EC2 underneath, the difference is skipping the ASG intermediary.
     </div>
 
     <h2 id="drift-detection">Drift Detection</h2>
@@ -650,9 +650,9 @@ karpenter-5d7f8c4b6-m8n3q   1/1     Running   30s</pre>
 
     <h3>AMI Drift in Practice</h3>
 
-    <p>This is the most common drift scenario. You set <code>alias: al2023@latest</code> in your EC2NodeClass. AWS publishes a new EKS-optimised AMI with a critical security patch. Here's what happens — without you doing anything:</p>
+    <p>This is the most common drift scenario. You set <code>alias: al2023@latest</code> in your EC2NodeClass. AWS publishes a new EKS-optimised AMI with a critical security patch. Here's what happens, without you doing anything:</p>
 
-    <pre><span class="cm"># AMI drift flow — fully automatic</span>
+    <pre><span class="cm"># AMI drift flow, fully automatic</span>
 
 <span class="nm">1.</span> AWS publishes new EKS AMI     <span class="cm"># e.g., kernel CVE patch</span>
 <span class="nm">2.</span> Karpenter detects the new AMI  <span class="cm"># Polls SSM Parameter Store</span>
@@ -692,7 +692,7 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
 
     <h2 id="consolidation">Consolidation</h2>
 
-    <p>Consolidation is how Karpenter actively optimises your cluster's node usage. It doesn't just remove empty nodes — it analyses whether workloads can be reorganised onto fewer or cheaper nodes, and then makes it happen.</p>
+    <p>Consolidation is how Karpenter actively optimises your cluster's node usage. It doesn't just remove empty nodes, it analyses whether workloads can be reorganised onto fewer or cheaper nodes, and then makes it happen.</p>
 
     <h3>Two Consolidation Policies</h3>
 
@@ -708,12 +708,12 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
         <tr>
           <td><code>WhenEmpty</code></td>
           <td>Only removes nodes that have zero non-daemonset pods</td>
-          <td class="good">Conservative — minimises disruption</td>
+          <td class="good">Conservative, minimises disruption</td>
         </tr>
         <tr>
           <td><code>WhenEmptyOrUnderutilized</code></td>
           <td>Removes empty nodes AND replaces underused ones with smaller/cheaper instances</td>
-          <td class="good">Aggressive — maximises cost savings</td>
+          <td class="good">Aggressive, maximises cost savings</td>
         </tr>
       </tbody>
     </table>
@@ -721,16 +721,16 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
     <p>The <code>WhenEmptyOrUnderutilized</code> policy is where the real value is. Here's a scenario:</p>
 
     <pre><span class="cm"># Before consolidation:</span>
-<span class="ky">Node A</span> (m5.xlarge — 4 vCPU, 16 GiB):  using 1 vCPU, 2 GiB  <span class="nm">(25% utilised)</span>
-<span class="ky">Node B</span> (m5.xlarge — 4 vCPU, 16 GiB):  using 800m, 1.5 GiB   <span class="nm">(20% utilised)</span>
-<span class="ky">Node C</span> (m5.xlarge — 4 vCPU, 16 GiB):  using 500m, 1 GiB     <span class="nm">(12% utilised)</span>
+<span class="ky">Node A</span> (m5.xlarge, 4 vCPU, 16 GiB):  using 1 vCPU, 2 GiB  <span class="nm">(25% utilised)</span>
+<span class="ky">Node B</span> (m5.xlarge, 4 vCPU, 16 GiB):  using 800m, 1.5 GiB   <span class="nm">(20% utilised)</span>
+<span class="ky">Node C</span> (m5.xlarge, 4 vCPU, 16 GiB):  using 500m, 1 GiB     <span class="nm">(12% utilised)</span>
 
 <span class="cm"># Total: 3 × m5.xlarge = $0.576/hr, ~57% of capacity wasted</span>
 
 <span class="cm"># After consolidation:</span>
-<span class="ky">Node X</span> (m5.large — 2 vCPU, 8 GiB):   using 2.3 vCPU, 4.5 GiB  <span class="st">(~75% utilised)</span>
+<span class="ky">Node X</span> (m5.large, 2 vCPU, 8 GiB):   using 2.3 vCPU, 4.5 GiB  <span class="st">(~75% utilised)</span>
 
-<span class="cm"># Total: 1 × m5.large = $0.096/hr — 83% cost reduction</span></pre>
+<span class="cm"># Total: 1 × m5.large = $0.096/hr, 83% cost reduction</span></pre>
 
     <p>Karpenter computed that all pods from Nodes A, B, and C fit on a single <code>m5.large</code>. It provisions the new node, drains the old ones (respecting PDBs), and terminates them. Three underused <code>m5.xlarge</code> instances become one right-sized <code>m5.large</code>.</p>
 
@@ -743,17 +743,17 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
     <p>Set this to <code>60s</code> for aggressive cost optimisation (batch workloads, dev/staging). Set it to <code>300s</code> or higher for production workloads where you want to avoid frequent pod movements during short traffic dips.</p>
 
     <div class="callout">
-      <strong>Consolidation is not just removal — it's replacement.</strong> Traditional scale-down only deletes empty or underused nodes and hopes the scheduler reschedules pods well. Karpenter actively provisions a better-fitted replacement <em>before</em> draining the old nodes. The workload is always running — it just moves to cheaper infrastructure.
+      <strong>Consolidation is not just removal, it's replacement.</strong> Traditional scale-down only deletes empty or underused nodes and hopes the scheduler reschedules pods well. Karpenter actively provisions a better-fitted replacement <em>before</em> draining the old nodes. The workload is always running, it just moves to cheaper infrastructure.
     </div>
 
     <h2 id="expiration">Expiration</h2>
 
-    <p>The <code>expireAfter</code> field on a NodePool forces node recycling after a fixed duration. Every node provisioned by this pool gets a TTL. When it expires, Karpenter replaces the node — regardless of whether it's drifted, underused, or perfectly healthy.</p>
+    <p>The <code>expireAfter</code> field on a NodePool forces node recycling after a fixed duration. Every node provisioned by this pool gets a TTL. When it expires, Karpenter replaces the node, regardless of whether it's drifted, underused, or perfectly healthy.</p>
 
     <pre><span class="ky">spec</span>:
   <span class="ky">template</span>:
     <span class="ky">spec</span>:
-      <span class="ky">expireAfter</span>: <span class="st">720h</span>    <span class="cm"># 30 days — every node gets replaced monthly</span></pre>
+      <span class="ky">expireAfter</span>: <span class="st">720h</span>    <span class="cm"># 30 days, every node gets replaced monthly</span></pre>
 
     <h3>Why Force Replacement of Healthy Nodes?</h3>
 
@@ -767,9 +767,9 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
     <p>The replacement flow is the same as drift: Karpenter provisions a new node, waits for it to become Ready, drains the expiring node (respecting PDBs), and terminates it. Workloads keep running.</p>
 
     <pre><span class="cm"># Common expiration values:</span>
-<span class="ky">expireAfter</span>: <span class="st">336h</span>     <span class="cm"># 14 days — aggressive, good for Spot-heavy pools</span>
-<span class="ky">expireAfter</span>: <span class="st">720h</span>     <span class="cm"># 30 days — balanced, good default for production</span>
-<span class="ky">expireAfter</span>: <span class="st">2160h</span>    <span class="cm"># 90 days — conservative, for stable long-running workloads</span></pre>
+<span class="ky">expireAfter</span>: <span class="st">336h</span>     <span class="cm"># 14 days, aggressive, good for Spot-heavy pools</span>
+<span class="ky">expireAfter</span>: <span class="st">720h</span>     <span class="cm"># 30 days, balanced, good default for production</span>
+<span class="ky">expireAfter</span>: <span class="st">2160h</span>    <span class="cm"># 90 days, conservative, for stable long-running workloads</span></pre>
 
     <div class="callout">
       <strong>Expiration + drift detection = belt and suspenders.</strong> Drift handles reactive replacement (something changed, replace the node). Expiration handles proactive replacement (nothing changed, but it's time for a fresh node anyway). Together, they ensure your fleet never goes stale.
@@ -782,15 +782,15 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
     <h3>What Karpenter Detects</h3>
 
     <ul>
-      <li><strong>Spot Instance interruption warnings</strong> — the 2-minute notice before AWS reclaims the instance</li>
-      <li><strong>EC2 rebalance recommendations</strong> — an early signal that a Spot Instance is at elevated risk of interruption, often arriving minutes before the actual notice</li>
-      <li><strong>Scheduled change health events</strong> — AWS maintenance events that require instance restart or retirement</li>
-      <li><strong>Instance state change notifications</strong> — when an instance is stopped or terminated externally</li>
+      <li><strong>Spot Instance interruption warnings</strong>, the 2-minute notice before AWS reclaims the instance</li>
+      <li><strong>EC2 rebalance recommendations</strong>, an early signal that a Spot Instance is at elevated risk of interruption, often arriving minutes before the actual notice</li>
+      <li><strong>Scheduled change health events</strong>, AWS maintenance events that require instance restart or retirement</li>
+      <li><strong>Instance state change notifications</strong>, when an instance is stopped or terminated externally</li>
     </ul>
 
     <h3>The Interruption Flow</h3>
 
-    <pre><span class="cm"># Spot interruption handling — Karpenter's native flow</span>
+    <pre><span class="cm"># Spot interruption handling, Karpenter's native flow</span>
 
 <span class="nm">1.</span> AWS sends interruption event to SQS    <span class="cm"># 2-minute warning</span>
 <span class="nm">2.</span> Karpenter receives the message           <span class="cm"># Polling the SQS queue</span>
@@ -803,17 +803,17 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
 <span class="cm"># The gap where pods have no node is minimised</span>
 <span class="cm"># because the replacement is already Ready before draining starts</span></pre>
 
-    <p>Step 4 is the critical difference. Karpenter starts launching the replacement node <em>immediately</em> when the interruption event arrives — it doesn't wait for pods to become Pending first. By the time the drain starts, the replacement node is already joining the cluster. This means the window where pods are unscheduled is seconds, not minutes.</p>
+    <p>Step 4 is the critical difference. Karpenter starts launching the replacement node <em>immediately</em> when the interruption event arrives, it doesn't wait for pods to become Pending first. By the time the drain starts, the replacement node is already joining the cluster. This means the window where pods are unscheduled is seconds, not minutes.</p>
 
     <h3>Rebalance Recommendations</h3>
 
-    <p>EC2 rebalance recommendations are an early warning system. AWS sends this signal when a Spot Instance is at elevated risk of interruption — sometimes 5–10 minutes before the actual 2-minute warning. Karpenter acts on these too:</p>
+    <p>EC2 rebalance recommendations are an early warning system. AWS sends this signal when a Spot Instance is at elevated risk of interruption, sometimes 5–10 minutes before the actual 2-minute warning. Karpenter acts on these too:</p>
 
     <pre><span class="cm"># Rebalance recommendation flow:</span>
 
 <span class="nm">1.</span> AWS sends rebalance recommendation     <span class="cm"># "This instance may be interrupted soon"</span>
-<span class="nm">2.</span> Karpenter provisions replacement        <span class="cm"># Proactive — before the 2-min warning</span>
-<span class="nm">3.</span> Replacement becomes Ready               <span class="cm"># Plenty of time — no urgency yet</span>
+<span class="nm">2.</span> Karpenter provisions replacement        <span class="cm"># Proactive, before the 2-min warning</span>
+<span class="nm">3.</span> Replacement becomes Ready               <span class="cm"># Plenty of time, no urgency yet</span>
 <span class="nm">4.</span> Karpenter drains the at-risk node       <span class="cm"># Graceful migration</span>
 <span class="nm">5.</span> If actual interruption comes → handled  <span class="cm"># Pods already moved</span>
 <span class="nm">6.</span> If no interruption → node was replaced  <span class="cm"># Still a good outcome</span></pre>
@@ -826,7 +826,7 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
 
     <h2 id="keda-integration">KEDA + Karpenter: The Full Event-Driven Pipeline</h2>
 
-    <p>Karpenter scales nodes. But what scales the pods? If you're running queue-based workloads — SQS consumers, Kafka processors, batch pipelines — pairing Karpenter with <a href="/blog/eks-scaling-with-keda">KEDA (Kubernetes Event-Driven Autoscaling)</a> creates a fully event-driven scaling pipeline from queue to compute.</p>
+    <p>Karpenter scales nodes. But what scales the pods? If you're running queue-based workloads, SQS consumers, Kafka processors, batch pipelines, pairing Karpenter with <a href="/blog/eks-scaling-with-keda">KEDA (Kubernetes Event-Driven Autoscaling)</a> creates a fully event-driven scaling pipeline from queue to compute.</p>
 
     <p>Here's how they work together:</p>
 
@@ -843,13 +843,13 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
 
 <span class="cm"># Result: zero compute when idle, instant scale-up on demand</span></pre>
 
-    <p>The key insight is that KEDA and Karpenter operate at different layers and complement each other perfectly. KEDA decides <em>how many pods</em> based on the event source (queue depth, Kafka lag, Prometheus metric). Karpenter decides <em>which nodes</em> based on the pods' resource requirements. Neither needs to know about the other — they communicate through the Kubernetes scheduler.</p>
+    <p>The key insight is that KEDA and Karpenter operate at different layers and complement each other perfectly. KEDA decides <em>how many pods</em> based on the event source (queue depth, Kafka lag, Prometheus metric). Karpenter decides <em>which nodes</em> based on the pods' resource requirements. Neither needs to know about the other, they communicate through the Kubernetes scheduler.</p>
 
     <h3>Example: SQS Worker with KEDA and Karpenter</h3>
 
     <p>Here's a complete setup. The <code>ScaledObject</code> tells KEDA to scale the worker Deployment based on SQS queue depth. The NodePool tells Karpenter to provision Spot instances for those workers.</p>
 
-    <pre><span class="cm"># 1. Worker Deployment — starts at 0 replicas (KEDA controls this)</span>
+    <pre><span class="cm"># 1. Worker Deployment, starts at 0 replicas (KEDA controls this)</span>
 <span class="ky">apiVersion</span>: apps/v1
 <span class="ky">kind</span>: Deployment
 <span class="ky">metadata</span>:
@@ -879,7 +879,7 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
               <span class="ky">cpu</span>: <span class="st">"500m"</span>
               <span class="ky">memory</span>: <span class="st">"512Mi"</span></pre>
 
-    <pre><span class="cm"># 2. KEDA ScaledObject — scales based on SQS queue depth</span>
+    <pre><span class="cm"># 2. KEDA ScaledObject, scales based on SQS queue depth</span>
 <span class="ky">apiVersion</span>: keda.sh/v1alpha1
 <span class="ky">kind</span>: ScaledObject
 <span class="ky">metadata</span>:
@@ -898,7 +898,7 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
         <span class="ky">queueLength</span>: <span class="st">"10"</span>
         <span class="ky">awsRegion</span>: <span class="st">"eu-central-1"</span></pre>
 
-    <pre><span class="cm"># 3. Karpenter NodePool — Spot-only pool for batch workers</span>
+    <pre><span class="cm"># 3. Karpenter NodePool, Spot-only pool for batch workers</span>
 <span class="ky">apiVersion</span>: karpenter.sh/v1
 <span class="ky">kind</span>: NodePool
 <span class="ky">metadata</span>:
@@ -932,19 +932,19 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
     <span class="ky">cpu</span>: <span class="st">"100"</span>
     <span class="ky">memory</span>: <span class="st">400Gi</span></pre>
 
-    <p>The taint on the NodePool ensures only batch workers land on these Spot nodes. When the queue is empty, KEDA scales the Deployment to zero, the nodes become empty, and Karpenter consolidates them within 30 seconds. You pay for zero worker compute overnight — not just zero pods, but zero nodes.</p>
+    <p>The taint on the NodePool ensures only batch workers land on these Spot nodes. When the queue is empty, KEDA scales the Deployment to zero, the nodes become empty, and Karpenter consolidates them within 30 seconds. You pay for zero worker compute overnight, not just zero pods, but zero nodes.</p>
 
     <div class="callout">
-      <strong>This is where the real savings happen.</strong> KEDA alone eliminates idle pods. Karpenter alone eliminates overprovisioned nodes. Together, they eliminate idle pods <em>and</em> the nodes they ran on. If your queue-based workloads are idle for 12 hours overnight, that's 12 hours of zero compute cost — not just reduced, but zero.
+      <strong>This is where the real savings happen.</strong> KEDA alone eliminates idle pods. Karpenter alone eliminates overprovisioned nodes. Together, they eliminate idle pods <em>and</em> the nodes they ran on. If your queue-based workloads are idle for 12 hours overnight, that's 12 hours of zero compute cost, not just reduced, but zero.
     </div>
 
     <h2 id="cluster-overprovisioner">Pre-Warming Nodes: Cluster Overprovisioner</h2>
 
-    <p>Karpenter provisions nodes in ~60 seconds — fast, but not instant. For latency-sensitive workloads where even 60 seconds is too long (real-time APIs, game servers, trading platforms), you can combine Karpenter with the <strong>Cluster Overprovisioner</strong> pattern to have warm, empty capacity ready before pods actually need it.</p>
+    <p>Karpenter provisions nodes in ~60 seconds, fast, but not instant. For latency-sensitive workloads where even 60 seconds is too long (real-time APIs, game servers, trading platforms), you can combine Karpenter with the <strong>Cluster Overprovisioner</strong> pattern to have warm, empty capacity ready before pods actually need it.</p>
 
     <h3>How It Works</h3>
 
-    <p>The idea is simple: run low-priority <strong>pause pods</strong> (dummy pods that consume no CPU but reserve node capacity). When real application pods go Pending, Kubernetes evicts the pause pods first — because they have the lowest priority — and schedules the application pods on the now-free capacity. The application pods start immediately on the already-running node. Meanwhile, the evicted pause pods go Pending, triggering Karpenter to provision new warm capacity in the background.</p>
+    <p>The idea is simple: run low-priority <strong>pause pods</strong> (dummy pods that consume no CPU but reserve node capacity). When real application pods go Pending, Kubernetes evicts the pause pods first, because they have the lowest priority, and schedules the application pods on the now-free capacity. The application pods start immediately on the already-running node. Meanwhile, the evicted pause pods go Pending, triggering Karpenter to provision new warm capacity in the background.</p>
 
     <pre><span class="cm"># The pre-warming flow:</span>
 
@@ -959,7 +959,7 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
 
     <h3>Setting Up the Overprovisioner</h3>
 
-    <pre><span class="cm"># 1. PriorityClass — lowest priority, so pause pods get evicted first</span>
+    <pre><span class="cm"># 1. PriorityClass, lowest priority, so pause pods get evicted first</span>
 <span class="ky">apiVersion</span>: scheduling.k8s.io/v1
 <span class="ky">kind</span>: PriorityClass
 <span class="ky">metadata</span>:
@@ -968,7 +968,7 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
 <span class="ky">globalDefault</span>: <span class="nm">false</span>
 <span class="ky">description</span>: <span class="st">"Pause pods for cluster overprovisioning"</span></pre>
 
-    <pre><span class="cm"># 2. Pause pod Deployment — reserves capacity on warm nodes</span>
+    <pre><span class="cm"># 2. Pause pod Deployment, reserves capacity on warm nodes</span>
 <span class="ky">apiVersion</span>: apps/v1
 <span class="ky">kind</span>: Deployment
 <span class="ky">metadata</span>:
@@ -997,9 +997,9 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
 
     <h3>Scaling the Buffer: Proportional Autoscaler</h3>
 
-    <p>A fixed number of pause pods works for stable workloads, but what about growing clusters? If your cluster scales from 6 nodes to 18 nodes, 5 warm slots may not be enough. The <strong>Proportional Autoscaler</strong> (<code>cluster-proportional-autoscaler</code>) scales the overprovisioner Deployment proportionally to your cluster size — maintaining a consistent warm buffer as you grow.</p>
+    <p>A fixed number of pause pods works for stable workloads, but what about growing clusters? If your cluster scales from 6 nodes to 18 nodes, 5 warm slots may not be enough. The <strong>Proportional Autoscaler</strong> (<code>cluster-proportional-autoscaler</code>) scales the overprovisioner Deployment proportionally to your cluster size, maintaining a consistent warm buffer as you grow.</p>
 
-    <pre><span class="cm"># Proportional Autoscaler config — scales pause pods with cluster size</span>
+    <pre><span class="cm"># Proportional Autoscaler config, scales pause pods with cluster size</span>
 <span class="ky">apiVersion</span>: apps/v1
 <span class="ky">kind</span>: Deployment
 <span class="ky">metadata</span>:
@@ -1024,18 +1024,18 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
   <span class="ky">name</span>: <span class="st">overprovisioner-autoscaler</span>
 <span class="ky">data</span>:
   <span class="ky">linear</span>: <span class="st">'{"coresPerReplica":4,"nodesPerReplica":1,"min":2,"max":20}'</span>
-  <span class="cm"># 1 pause pod per node, or 1 per 4 cores — whichever is higher</span>
+  <span class="cm"># 1 pause pod per node, or 1 per 4 cores, whichever is higher</span>
   <span class="cm"># Cluster grows from 6 → 18 nodes, buffer grows from 6 → 18 pause pods</span></pre>
 
-    <p>As your cluster scales up and real pods replace pause pods, the Proportional Autoscaler increases the overprovisioner replica count. Karpenter provisions new nodes for the additional pause pods, maintaining the warm buffer proportionally. When the cluster scales down, the buffer shrinks too — you don't pay for oversized warm capacity during quiet periods.</p>
+    <p>As your cluster scales up and real pods replace pause pods, the Proportional Autoscaler increases the overprovisioner replica count. Karpenter provisions new nodes for the additional pause pods, maintaining the warm buffer proportionally. When the cluster scales down, the buffer shrinks too, you don't pay for oversized warm capacity during quiet periods.</p>
 
     <div class="callout">
-      <strong>When to use overprovisioning:</strong> Most workloads don't need it — 60-second provisioning is fast enough. Use the Cluster Overprovisioner when you have strict latency SLAs (sub-second pod start times), bursty traffic patterns that can't tolerate any cold-start delay, or real-time workloads where even brief scheduling delays impact user experience.
+      <strong>When to use overprovisioning:</strong> Most workloads don't need it, 60-second provisioning is fast enough. Use the Cluster Overprovisioner when you have strict latency SLAs (sub-second pod start times), bursty traffic patterns that can't tolerate any cold-start delay, or real-time workloads where even brief scheduling delays impact user experience.
     </div>
 
     <h2 id="gpu-ml-workloads">GPU and ML Workload Provisioning</h2>
 
-    <p>Karpenter provisions GPU instances the same way it provisions any other instance — dynamically, based on pod resource requests. When a pod requests <code>nvidia.com/gpu: 1</code>, Karpenter evaluates GPU instance families in your NodePool, picks the cheapest available option, and launches it. No dedicated ASG per GPU type, no separate launch template, no pre-provisioned GPU node group sitting idle.</p>
+    <p>Karpenter provisions GPU instances the same way it provisions any other instance, dynamically, based on pod resource requests. When a pod requests <code>nvidia.com/gpu: 1</code>, Karpenter evaluates GPU instance families in your NodePool, picks the cheapest available option, and launches it. No dedicated ASG per GPU type, no separate launch template, no pre-provisioned GPU node group sitting idle.</p>
 
     <h3>GPU NodePool Example</h3>
 
@@ -1059,10 +1059,10 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
         - <span class="ky">key</span>: <span class="st">node.kubernetes.io/instance-type</span>
           <span class="ky">operator</span>: <span class="st">In</span>
           <span class="ky">values</span>:
-            - <span class="st">"g5.xlarge"</span>       <span class="cm"># 1 GPU, 4 vCPU — inference</span>
-            - <span class="st">"g5.2xlarge"</span>      <span class="cm"># 1 GPU, 8 vCPU — medium training</span>
-            - <span class="st">"g5.4xlarge"</span>      <span class="cm"># 1 GPU, 16 vCPU — large training</span>
-            - <span class="st">"p4d.24xlarge"</span>    <span class="cm"># 8 GPUs — distributed training</span>
+            - <span class="st">"g5.xlarge"</span>       <span class="cm"># 1 GPU, 4 vCPU, inference</span>
+            - <span class="st">"g5.2xlarge"</span>      <span class="cm"># 1 GPU, 8 vCPU, medium training</span>
+            - <span class="st">"g5.4xlarge"</span>      <span class="cm"># 1 GPU, 16 vCPU, large training</span>
+            - <span class="st">"p4d.24xlarge"</span>    <span class="cm"># 8 GPUs, distributed training</span>
       <span class="ky">nodeClassRef</span>:
         <span class="ky">group</span>: <span class="st">karpenter.k8s.aws</span>
         <span class="ky">kind</span>: <span class="st">EC2NodeClass</span>
@@ -1075,11 +1075,11 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
     <span class="ky">cpu</span>: <span class="st">"100"</span>
     <span class="ky">memory</span>: <span class="st">400Gi</span></pre>
 
-    <p>The taint ensures only GPU workloads land on these expensive instances. The <code>WhenEmpty</code> consolidation policy avoids disrupting long-running training jobs — GPU nodes are only removed when they're fully idle.</p>
+    <p>The taint ensures only GPU workloads land on these expensive instances. The <code>WhenEmpty</code> consolidation policy avoids disrupting long-running training jobs, GPU nodes are only removed when they're fully idle.</p>
 
     <h3>KEDA + Karpenter for ML Pipelines</h3>
 
-    <p>The combination is particularly powerful for ML workloads. When training jobs or inference requests arrive via SQS, Kafka, or a Kubeflow pipeline, KEDA scales the pods and Karpenter provisions the GPU nodes. When the pipeline drains, pods scale to zero, GPU nodes get consolidated, and you pay nothing. This is the same pattern as the <a href="#keda-integration">KEDA + Karpenter pipeline</a> — but with GPU instances costing $1–30/hr each, the savings from scaling to zero are substantial.</p>
+    <p>The combination is particularly powerful for ML workloads. When training jobs or inference requests arrive via SQS, Kafka, or a Kubeflow pipeline, KEDA scales the pods and Karpenter provisions the GPU nodes. When the pipeline drains, pods scale to zero, GPU nodes get consolidated, and you pay nothing. This is the same pattern as the <a href="#keda-integration">KEDA + Karpenter pipeline</a>, but with GPU instances costing $1–30/hr each, the savings from scaling to zero are substantial.</p>
 
     <div class="callout">
       <strong>GPU instances are expensive to leave idle.</strong> A single <code>g5.xlarge</code> costs ~$1.00/hr on-demand. A <code>p4d.24xlarge</code> costs ~$32/hr. With ASG-based scaling, GPU node groups often have a minimum of 1 to avoid cold-start delays. Karpenter provisions GPU nodes on demand in ~60 seconds, so you can safely set your floor to zero.
@@ -1101,35 +1101,35 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
         <span class="ky">schedule</span>: <span class="st">"0 9 * * 1-5"</span> <span class="cm"># Monday–Friday 9am</span>
         <span class="ky">duration</span>: <span class="st">8h</span>            <span class="cm"># Until 5pm</span></pre>
 
-    <p>The schedule-based budget is powerful — you can tell Karpenter "consolidate and replace nodes overnight, but don't touch anything during business hours." This gives you aggressive cost optimisation without risking production stability during peak traffic.</p>
+    <p>The schedule-based budget is powerful, you can tell Karpenter "consolidate and replace nodes overnight, but don't touch anything during business hours." This gives you aggressive cost optimisation without risking production stability during peak traffic.</p>
 
     <h3>2. The do-not-disrupt Annotation</h3>
 
-    <p>For pods that absolutely cannot be moved — long-running ML training jobs, database leaders during failover, or batch jobs that don't checkpoint — annotate them:</p>
+    <p>For pods that absolutely cannot be moved, long-running ML training jobs, database leaders during failover, or batch jobs that don't checkpoint, annotate them:</p>
 
     <pre><span class="ky">metadata</span>:
   <span class="ky">annotations</span>:
     <span class="ky">karpenter.sh/do-not-disrupt</span>: <span class="st">"true"</span></pre>
 
-    <p>Karpenter will not drain a node that has a pod with this annotation. The node stays until the pod completes or the annotation is removed. Use this sparingly — overuse defeats the purpose of consolidation.</p>
+    <p>Karpenter will not drain a node that has a pod with this annotation. The node stays until the pod completes or the annotation is removed. Use this sparingly, overuse defeats the purpose of consolidation.</p>
 
     <h3>3. Separate NodePools for Different Workload Classes</h3>
 
     <p>Don't put everything in one NodePool. Separate by workload characteristics:</p>
 
-    <pre><span class="cm"># Critical workloads — on-demand only, no aggressive consolidation</span>
+    <pre><span class="cm"># Critical workloads, on-demand only, no aggressive consolidation</span>
 <span class="ky">NodePool</span>: <span class="st">critical</span>
   capacity-type: <span class="st">on-demand</span>
   consolidationPolicy: <span class="st">WhenEmpty</span>
   weight: <span class="nm">100</span>
 
-<span class="cm"># General workloads — spot preferred, active consolidation</span>
+<span class="cm"># General workloads, spot preferred, active consolidation</span>
 <span class="ky">NodePool</span>: <span class="st">general-purpose</span>
   capacity-type: <span class="st">on-demand, spot</span>
   consolidationPolicy: <span class="st">WhenEmptyOrUnderutilized</span>
   weight: <span class="nm">50</span>
 
-<span class="cm"># Batch/dev — spot only, aggressive consolidation, short TTL</span>
+<span class="cm"># Batch/dev, spot only, aggressive consolidation, short TTL</span>
 <span class="ky">NodePool</span>: <span class="st">batch</span>
   capacity-type: <span class="st">spot</span>
   consolidationPolicy: <span class="st">WhenEmptyOrUnderutilized</span>
@@ -1151,7 +1151,7 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
 <span class="ky">karpenter_nodeclaims_terminated_total</span>    <span class="cm"># Nodes removed</span>
 <span class="ky">karpenter_provisioner_scheduling_duration_seconds</span> <span class="cm"># How long scheduling decisions take</span></pre>
 
-    <p>The most important metric is <code>karpenter_nodeclaims_disrupted_total</code> broken down by reason. If you see a spike in <code>drift</code>-reason disruptions, a new AMI was published and your fleet is being updated. If you see frequent <code>consolidation</code> disruptions, your workloads might be scaling up and down rapidly — consider increasing <code>consolidateAfter</code>.</p>
+    <p>The most important metric is <code>karpenter_nodeclaims_disrupted_total</code> broken down by reason. If you see a spike in <code>drift</code>-reason disruptions, a new AMI was published and your fleet is being updated. If you see frequent <code>consolidation</code> disruptions, your workloads might be scaling up and down rapidly, consider increasing <code>consolidateAfter</code>.</p>
 
     <h3>5. Set Resource Limits as a Safety Net</h3>
 
@@ -1161,7 +1161,7 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
   <span class="ky">cpu</span>: <span class="st">"200"</span>       <span class="cm"># No more than 200 vCPUs total in this pool</span>
   <span class="ky">memory</span>: <span class="st">800Gi</span>    <span class="cm"># No more than 800 GiB total memory</span></pre>
 
-    <p>When the limit is reached, new pending pods won't trigger provisioning — they'll stay Pending. Set alerts on pods in Pending state so you can decide whether to increase limits or investigate the source of demand.</p>
+    <p>When the limit is reached, new pending pods won't trigger provisioning, they'll stay Pending. Set alerts on pods in Pending state so you can decide whether to increase limits or investigate the source of demand.</p>
 
     <h2 id="cost-impact">What the Numbers Look Like</h2>
 
@@ -1213,17 +1213,17 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
         </tr>
         <tr>
           <td>Annual savings</td>
-          <td>—</td>
+          <td>,</td>
           <td class="good">~$78,000</td>
         </tr>
       </tbody>
     </table>
 
-    <p>The savings come from three sources: tighter bin-packing (right-sized instances instead of oversized fixed types), active consolidation (fewer underused nodes), and faster Spot recovery (less time paying for replacement capacity). The operational savings — eliminating ASG management, launch template maintenance, NTH upgrades, and AMI patching pipelines — are harder to quantify but just as real.</p>
+    <p>The savings come from three sources: tighter bin-packing (right-sized instances instead of oversized fixed types), active consolidation (fewer underused nodes), and faster Spot recovery (less time paying for replacement capacity). The operational savings, eliminating ASG management, launch template maintenance, NTH upgrades, and AMI patching pipelines, are harder to quantify but just as real.</p>
 
     <h2 id="eks-auto-mode">A Note on EKS Auto Mode</h2>
 
-    <p>Since December 2024, <strong>EKS Auto Mode</strong> runs Karpenter as a fully managed, off-cluster component. AWS manages the Karpenter installation, upgrades, and operational health as part of the EKS control plane. You still define <code>NodePool</code> and <code>EC2NodeClass</code> resources the same way — the declarative API doesn't change.</p>
+    <p>Since December 2024, <strong>EKS Auto Mode</strong> runs Karpenter as a fully managed, off-cluster component. AWS manages the Karpenter installation, upgrades, and operational health as part of the EKS control plane. You still define <code>NodePool</code> and <code>EC2NodeClass</code> resources the same way, the declarative API doesn't change.</p>
 
     <p>If you're setting up a new cluster and want Karpenter with zero operational overhead, EKS Auto Mode is the simplest path. The tradeoff is less visibility into Karpenter's internals and less control over its version and configuration. For most teams, the managed defaults are good enough.</p>
 
@@ -1231,10 +1231,10 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
 
     <ol>
       <li><strong>Two CRDs replace your entire node scaling infrastructure.</strong> <code>NodePool</code> defines what Karpenter is allowed to provision. <code>EC2NodeClass</code> defines the AWS-specific configuration. No ASGs, no launch templates, no managed node groups.</li>
-      <li><strong>Nodes appear in 60 seconds, not 3–5 minutes.</strong> Karpenter calls the EC2 Fleet API directly — no ASG intermediary. It batches pending pods and selects the cheapest instance type that fits them all.</li>
-      <li><strong>Drift detection keeps your fleet current automatically.</strong> When a new AMI is published or you change security groups, Karpenter detects the divergence and gracefully replaces affected nodes — no manual patching pipeline needed.</li>
-      <li><strong>Consolidation actively optimises cost.</strong> Karpenter doesn't just remove empty nodes — it replaces underused nodes with smaller, cheaper ones. Three 25%-utilised <code>m5.xlarge</code> instances become one right-sized <code>m5.large</code>.</li>
-      <li><strong>Expiration guarantees node freshness.</strong> Set <code>expireAfter: 720h</code> and every node gets replaced at least once a month — regardless of drift. Security patching becomes a non-event.</li>
+      <li><strong>Nodes appear in 60 seconds, not 3–5 minutes.</strong> Karpenter calls the EC2 Fleet API directly, no ASG intermediary. It batches pending pods and selects the cheapest instance type that fits them all.</li>
+      <li><strong>Drift detection keeps your fleet current automatically.</strong> When a new AMI is published or you change security groups, Karpenter detects the divergence and gracefully replaces affected nodes, no manual patching pipeline needed.</li>
+      <li><strong>Consolidation actively optimises cost.</strong> Karpenter doesn't just remove empty nodes, it replaces underused nodes with smaller, cheaper ones. Three 25%-utilised <code>m5.xlarge</code> instances become one right-sized <code>m5.large</code>.</li>
+      <li><strong>Expiration guarantees node freshness.</strong> Set <code>expireAfter: 720h</code> and every node gets replaced at least once a month, regardless of drift. Security patching becomes a non-event.</li>
       <li><strong>Spot interruptions are handled natively.</strong> No DaemonSet needed. Karpenter detects interruption events via SQS, pre-provisions replacement nodes before draining, and responds to rebalance recommendations proactively.</li>
       <li><strong>Disruption budgets give you control.</strong> Limit how many nodes are disrupted at once, schedule maintenance windows, and annotate critical pods with <code>do-not-disrupt</code> to prevent unwanted moves.</li>
       <li><strong>Separate NodePools for different workload classes.</strong> On-demand for critical services, mixed for general purpose, Spot-only for batch. Use weights to control priority.</li>
@@ -1244,10 +1244,10 @@ general-ghi789    m6i.large    eu-central-1c     ip-10-0-3-15      True    3d
 
     <h2 id="reference">Reference</h2>
     <ul>
-      <li>Karpenter docs: <a href="https://karpenter.sh/docs/" target="_blank" rel="noopener">karpenter.sh</a> — official documentation for NodePool, EC2NodeClass, and all features</li>
-      <li>Karpenter concepts: <a href="https://karpenter.sh/docs/concepts/" target="_blank" rel="noopener">karpenter.sh/docs/concepts</a> — deep dive on disruption, drift, and consolidation</li>
+      <li>Karpenter docs: <a href="https://karpenter.sh/docs/" target="_blank" rel="noopener">karpenter.sh</a>, official documentation for NodePool, EC2NodeClass, and all features</li>
+      <li>Karpenter concepts: <a href="https://karpenter.sh/docs/concepts/" target="_blank" rel="noopener">karpenter.sh/docs/concepts</a>, deep dive on disruption, drift, and consolidation</li>
       <li>AWS blog: <a href="https://aws.amazon.com/blogs/containers/using-amazon-ec2-spot-instances-with-karpenter/" target="_blank" rel="noopener">Using Amazon EC2 Spot Instances with Karpenter</a></li>
-      <li>EKS Auto Mode: <a href="https://docs.aws.amazon.com/eks/latest/userguide/auto-mode.html" target="_blank" rel="noopener">EKS Auto Mode documentation</a> — managed Karpenter as part of the control plane</li>
+      <li>EKS Auto Mode: <a href="https://docs.aws.amazon.com/eks/latest/userguide/auto-mode.html" target="_blank" rel="noopener">EKS Auto Mode documentation</a>, managed Karpenter as part of the control plane</li>
       <li>Karpenter GitHub: <a href="https://github.com/aws/karpenter-provider-aws" target="_blank" rel="noopener">github.com/aws/karpenter-provider-aws</a></li>
     </ul>
 
