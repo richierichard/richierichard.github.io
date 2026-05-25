@@ -235,3 +235,21 @@ Hosted on **Vercel** (migrated from GitHub Pages).
 - The `CNAME` file is a GitHub Pages artefact and no longer used by Vercel (DNS is managed in Vercel dashboard)
 - Vercel automatically redirects `richierichard.com` → `www.richierichard.com` (apex to www redirect handled at the platform level, no config needed)
 - Local testing with `file://` will not reflect clean URLs — use `vercel dev` CLI or `python3 -m http.server` for local previews
+
+## Claude Memory
+Persistent memory for Claude Code sessions on this project lives in a **private GitHub monorepo** alongside memory for other personal projects, not on local disk, so it survives machine crashes and migrations.
+
+- **Repo**: [`richierichard/claude-memory`](https://github.com/richierichard/claude-memory) (private, monorepo)
+- **Subdir for this project**: `richierichard.github.io/`
+- **Local working copy**: `~/.claude/memory-repo/` (single clone for all projects)
+- **Local symlink**: `~/.claude/projects/-Users-richierichardrajkumar-projects-Personal-richierichard-github-io/memory` → `~/.claude/memory-repo/richierichard.github.io`
+- **Rule**: every memory `Write`/`Edit` is followed by `git add && git commit && git push` in the central clone. Push failures must be surfaced immediately, not silently left local-only.
+
+Restore on a new machine:
+```bash
+git clone https://github.com/richierichard/claude-memory.git ~/.claude/memory-repo
+mkdir -p ~/.claude/projects/-Users-richierichardrajkumar-projects-Personal-richierichard-github-io
+ln -s ~/.claude/memory-repo/richierichard.github.io \
+      ~/.claude/projects/-Users-richierichardrajkumar-projects-Personal-richierichard-github-io/memory
+```
+Memory contains personal context (preferences, project decisions, working-style notes), not secrets. Do not commit API keys, tokens, or credentials there.
