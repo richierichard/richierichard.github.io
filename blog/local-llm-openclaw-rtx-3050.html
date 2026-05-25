@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Cloud Throttling to a Home Server: Self-Hosting OpenClaw with a Local LLM on an OptiPlex 990 · Richie Richard Rajkumar</title>
+
+<meta name="description" content="Why free tiers from Gemini, Groq, and DeepSeek collapse under a heavy MCP agent, how a 2011 Dell OptiPlex 990 with a low-profile RTX 3050 became a personal AI server, and why Qwen 2.5 7B at Q4 beat Gemma 4 E2B for OpenClaw on 6GB of VRAM.">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://www.richierichard.com/blog/local-llm-openclaw-rtx-3050">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.richierichard.com/blog/local-llm-openclaw-rtx-3050">
+<meta property="og:title" content="From Cloud Throttling to a Home Server: Self-Hosting OpenClaw with a Local LLM on an OptiPlex 990 · Richie Richard Rajkumar">
+<meta property="og:description" content="The full story of running OpenClaw on a 2011 Dell SFF workstation with an LP RTX 3050, why cloud free tiers fail for MCP agents, and how Qwen 2.5 7B at Q4 ended up the right model for 6GB VRAM.">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+
+<style>
+/* ── ARTICLE PAGE ── */
+.article-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 7rem 2rem 5rem;
+  position: relative;
+  z-index: 1;
+}
+.article-top { max-width: 960px; }
+
+.article-intro {
+  max-width: 960px;
+  margin-bottom: 2.5rem;
+  color: var(--text);
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+.article-intro p { margin-bottom: 1.25rem; }
+.article-intro code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+
+.article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  margin-bottom: 2.5rem;
+  transition: color 0.2s;
+}
+.article-back:hover { color: var(--accent); }
+
+.article-header { margin-bottom: 2.5rem; }
+.article-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.article-tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.2);
+  letter-spacing: 0.04em;
+}
+body.light .article-tag { border-color: rgba(2,132,199,0.25); }
+
+.article-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.article-title span { color: var(--accent); }
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.article-meta-dot { opacity: 0.3; }
+
+.article-hero {
+  width: 100%;
+  max-width: 960px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+}
+
+.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 2.5rem 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 6rem;
+}
+.article-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 1.75rem 0 0.5rem;
+}
+.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.article-body li { margin-bottom: 0.4rem; color: var(--text); }
+.article-body strong { color: var(--text); font-weight: 700; }
+.article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+.article-body pre {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.article-body code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+.article-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 1em;
+}
+.article-body pre .cm { color: var(--muted); }
+.article-body pre .ky { color: var(--accent); }
+.article-body pre .st { color: #f9a8d4; }
+.article-body pre .nm { color: #fde68a; }
+
+.callout {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+.callout strong { color: var(--accent); }
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
+}
+.compare-table th {
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.compare-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .good { color: var(--accent); font-weight: 700; }
+.compare-table .bad  { color: #f87171; }
+
+.conversation {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+.conversation .msg { margin-bottom: 0.6rem; }
+.conversation .msg:last-child { margin-bottom: 0; }
+.conversation .human { color: var(--accent); }
+.conversation .ai { color: #a78bfa; }
+
+.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+
+.article-footer {
+  max-width: 960px;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.article-author { display: flex; align-items: center; gap: 0.85rem; }
+.author-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
+  flex-shrink: 0;
+}
+.author-name { font-weight: 700; font-size: 0.9rem; }
+.author-role { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--accent); color: var(--accent);
+  font-weight: 700; font-size: 0.85rem; text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #000; }
+</style>
+</head>
+<body class="light">
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
+    <span class="nav-logo-divider"></span>
+    <span class="nav-logo-right">
+      <span class="nav-logo-name-line"><span class="nav-logo-name">Richie Richard </span><span class="nav-logo-surname">Rajkumar</span></span>
+      <span class="nav-logo-tag">build <span class="nav-logo-arrow">▸</span> scale <span class="nav-logo-arrow">▸</span> secure</span>
+    </span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Dark</span>
+  </button>
+</nav>
+
+<div class="article-page">
+
+  <div class="article-top">
+    <a href="/blog" class="article-back">← Back to Blog</a>
+    <header class="article-header">
+      <div class="article-tags">
+        <span class="article-tag">AI</span>
+        <span class="article-tag">DevOps</span>
+        <span class="article-tag">Infrastructure</span>
+        <span class="article-tag">Platform Engineering</span>
+      </div>
+      <h1 class="article-title">From Cloud Throttling to a Home Server: <span>Self-Hosting OpenClaw with a Local LLM on an OptiPlex 990</span></h1>
+      <div class="article-meta">
+        <span>Richie Richard Rajkumar</span>
+        <span class="article-meta-dot">·</span>
+        <span>May 2026</span>
+        <span class="article-meta-dot">·</span>
+        <span>18 min read</span>
+      </div>
+    </header>
+  </div>
+
+  <div class="article-hero">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" width="760" height="400" style="width:100%;height:auto;display:block;">
+      <defs>
+        <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0a0c10"/>
+          <stop offset="100%" stop-color="#12151c"/>
+        </linearGradient>
+        <marker id="arrow-blue" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+          <polygon points="0 0, 7 2.5, 0 5" fill="#38bdf8"/>
+        </marker>
+      </defs>
+      <rect width="760" height="400" fill="url(#bg-grad)"/>
+
+      <!-- TITLE -->
+      <text x="380" y="28" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">PERSONAL AI SERVER · OPTIPLEX 990 + RTX 3050 + OLLAMA + OPENCLAW</text>
+
+      <!-- STAGE 1: Hardware -->
+      <rect x="40" y="70" width="200" height="140" rx="10" fill="#1a1e28" stroke="#fde68a" stroke-width="0.8"/>
+      <text x="140" y="90" font-family="'Nunito',sans-serif" font-size="12" fill="#fde68a" text-anchor="middle" font-weight="800">OptiPlex 990 SFF</text>
+      <text x="140" y="106" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">2011 Dell business desktop</text>
+      <line x1="55" y1="118" x2="225" y2="118" stroke="#2a3040" stroke-width="0.5"/>
+      <text x="55" y="134" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">CPU: i7-2600 · 4c/8t · 3.4GHz</text>
+      <text x="55" y="148" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">RAM: 16 GB DDR3</text>
+      <text x="55" y="162" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">SSD: 500 GB</text>
+      <text x="55" y="176" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">PSU: 240W · LP slot only</text>
+      <text x="55" y="194" font-family="'Fira Code',monospace" font-size="8" fill="#4ade80" font-weight="700">+ RTX 3050 LP · 6GB VRAM</text>
+
+      <!-- Arrow 1 -->
+      <line x1="245" y1="140" x2="305" y2="140" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-blue)"/>
+      <text x="275" y="132" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">CUDA</text>
+
+      <!-- STAGE 2: Ollama -->
+      <rect x="315" y="70" width="200" height="140" rx="10" fill="#1a1e28" stroke="#38bdf8" stroke-width="0.8"/>
+      <text x="415" y="90" font-family="'Nunito',sans-serif" font-size="12" fill="#38bdf8" text-anchor="middle" font-weight="800">Ollama (systemd)</text>
+      <text x="415" y="106" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">:11434 · GPU-accelerated</text>
+      <line x1="330" y1="118" x2="500" y2="118" stroke="#2a3040" stroke-width="0.5"/>
+      <text x="330" y="134" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171">✗ gemma3:e2b · 2B · weak tools</text>
+      <text x="330" y="150" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80">✓ qwen2.5:7b-instruct · chat</text>
+      <text x="330" y="166" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80">✓ qwen2.5-coder:7b · blog</text>
+      <text x="330" y="184" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099">Q4 ≈ 4.5 GB · fits 6 GB VRAM</text>
+
+      <!-- Arrow 2 -->
+      <line x1="520" y1="140" x2="580" y2="140" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-blue)"/>
+      <text x="550" y="132" font-family="'Fira Code',monospace" font-size="6.5" fill="#7a8099" text-anchor="middle">OpenAI API</text>
+
+      <!-- STAGE 3: OpenClaw -->
+      <rect x="590" y="70" width="140" height="140" rx="10" fill="#1a1e28" stroke="#a78bfa" stroke-width="0.8"/>
+      <text x="660" y="90" font-family="'Nunito',sans-serif" font-size="12" fill="#a78bfa" text-anchor="middle" font-weight="800">OpenClaw</text>
+      <text x="660" y="105" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">Docker · MCP gateway</text>
+      <line x1="605" y1="117" x2="715" y2="117" stroke="#2a3040" stroke-width="0.5"/>
+      <text x="660" y="133" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">brave-search</text>
+      <text x="660" y="146" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">github</text>
+      <text x="660" y="159" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">trello</text>
+      <text x="660" y="180" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle" font-weight="700">→ Telegram bot</text>
+
+      <!-- BOTTOM ROW: Cloud throttling -->
+      <rect x="40" y="240" width="690" height="118" rx="10" fill="rgba(248,113,113,0.04)" stroke="#f87171" stroke-width="0.6" stroke-dasharray="4 2"/>
+      <text x="385" y="260" font-family="'Fira Code',monospace" font-size="8" fill="#f87171" text-anchor="middle" letter-spacing="1">WHY NOT CLOUD · FREE TIERS DON'T SURVIVE A HEAVY MCP CLIENT</text>
+
+      <text x="60"  y="284" font-family="'Nunito',sans-serif" font-size="9" fill="#fde68a" font-weight="700">Gemini 2.5 Flash</text>
+      <text x="60"  y="300" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">20 req/day free tier</text>
+      <text x="60"  y="314" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">Onboarding alone burns it</text>
+      <text x="60"  y="330" font-family="'Fira Code',monospace" font-size="7" fill="#f87171">≈ 1 conversation / day</text>
+
+      <text x="240" y="284" font-family="'Nunito',sans-serif" font-size="9" fill="#fde68a" font-weight="700">Groq · Llama 3.3 70B</text>
+      <text x="240" y="300" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">6,000 TPM free limit</text>
+      <text x="240" y="314" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">Single MCP turn ≈ 46K tokens</text>
+      <text x="240" y="330" font-family="'Fira Code',monospace" font-size="7" fill="#f87171">Rate-limited on turn one</text>
+
+      <text x="420" y="284" font-family="'Nunito',sans-serif" font-size="9" fill="#fde68a" font-weight="700">DeepSeek V4 Flash</text>
+      <text x="420" y="300" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">Advertised $5 signup credit</text>
+      <text x="420" y="314" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">Balance: $0 on first call</text>
+      <text x="420" y="330" font-family="'Fira Code',monospace" font-size="7" fill="#f87171">Pay-as-you-go from minute 1</text>
+
+      <text x="600" y="284" font-family="'Nunito',sans-serif" font-size="9" fill="#4ade80" font-weight="700">Local · Qwen 2.5 7B</text>
+      <text x="600" y="300" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">No quota · no API cost</text>
+      <text x="600" y="314" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">~10–25 s per turn</text>
+      <text x="600" y="330" font-family="'Fira Code',monospace" font-size="7" fill="#4ade80">€0.00 / month at scale</text>
+
+      <!-- Bottom tagline -->
+      <text x="380" y="385" font-family="'Nunito',sans-serif" font-size="11" fill="#38bdf8" text-anchor="middle" font-weight="700">A 2011 Desktop, an LP GPU, and an Unlimited AI Assistant for €260</text>
+    </svg>
+  </div><!-- /article-hero -->
+
+  <div class="article-intro">
+    <p>I wanted a personal AI assistant on Telegram. The kind that lives in my pocket, accepts a casual <code>"summarise the Hacker News front page"</code> at 11pm, helps me triage a Trello board on a tram ride, opens a GitHub PR for a blog draft I described in two sentences. Self-hosted, my data, no quotas. The plan was simple: pick a cloud LLM provider, point <a href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener">OpenClaw</a> at it, pair Telegram, done.</p>
+    <p>Three free tiers and one humbling weekend later, I learned that <strong>free-tier cloud LLMs are not built for heavy agent clients</strong>. OpenClaw pushes ~46K tokens of system prompt, identity manifest, and MCP tool definitions <em>before</em> my first character arrives. Gemini's free tier rationed me to one conversation a day. Groq's tokens-per-minute ceiling rejected the very first turn. DeepSeek's "$5 free credit" landed in my account as a flat $0.00.</p>
+    <p>The fix turned out to be a 2011-vintage Dell OptiPlex 990 sitting unused in a cupboard, a €260 low-profile RTX 3050 with 6GB of VRAM, and a careful walk through three models before <code>qwen2.5:7b-instruct</code> earned its place as the household chat model. This is the long version of that story: why the cloud failed, what hardware I picked and why, how Gemma 4 E2B refused to call tools, and why Qwen 2.5 at Q4 turned out to be the sweet spot.</p>
+  </div>
+
+  <article class="article-body">
+
+    <h2 id="glossary">A Quick Glossary Before We Start</h2>
+
+    <p>This post uses a fair amount of LLM-stack jargon. If any of the names below are unfamiliar, here is the one-line version of each.</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Term</th>
+          <th>What it is</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>LLM</strong></td>
+          <td>Large Language Model. A neural network trained on text that can chat, summarise, code, and (with the right plumbing) call tools. ChatGPT, Claude, and Gemini are all LLMs.</td>
+        </tr>
+        <tr>
+          <td><strong>Ollama</strong></td>
+          <td>An open-source runtime that downloads, loads, and serves LLMs on your own machine. Think "Docker, but for language models". You run <code>ollama pull qwen2.5</code>, it fetches the weights, and exposes an OpenAI-compatible API on <code>localhost:11434</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>OpenClaw</strong></td>
+          <td>A self-hosted AI assistant framework. It wraps an LLM with a personality file, persistent memory, a tool registry (via MCP), and a set of chat channels (Telegram, Slack, web). The "body" around the model's "brain".</td>
+        </tr>
+        <tr>
+          <td><strong>MCP</strong></td>
+          <td>Model Context Protocol. An open spec from Anthropic for exposing tools (web search, GitHub, Trello, file systems) to LLMs in a consistent way. An MCP server publishes tools; an MCP-aware LLM calls them. Think "USB for AI tools".</td>
+        </tr>
+        <tr>
+          <td><strong>Gemma 4 E2B</strong></td>
+          <td>Google's small open-weights model. "E2B" is the Edge 2B-parameter variant, sized for phones and low-VRAM devices. Fast, but too small for reliable agentic tool calling (as we'll see).</td>
+        </tr>
+        <tr>
+          <td><strong>Qwen 2.5</strong></td>
+          <td>Alibaba's open-weights model family. We use two variants: <code>qwen2.5:7b-instruct</code> (general chat + tool use) and <code>qwen2.5-coder:7b</code> (code-tuned, for the blog-writer agent). Both are 7B parameters and fit 6GB of VRAM at Q4 quantization.</td>
+        </tr>
+        <tr>
+          <td><strong>Gemini 2.5 Flash</strong></td>
+          <td>Google's cloud-hosted small-fast LLM. Free tier of 20 requests/day on the public API. We hit a wall with it (see below) but keep it around for one specific job.</td>
+        </tr>
+        <tr>
+          <td><strong>Groq (Llama 3.3 70B)</strong></td>
+          <td>Groq is a cloud inference provider built around custom LPU chips that serve open-weights models (like Meta's Llama 3.3 70B) at very high tokens/sec. Free tier is generous on requests but capped at 6,000 tokens/minute.</td>
+        </tr>
+        <tr>
+          <td><strong>DeepSeek</strong></td>
+          <td>A Chinese AI lab and cloud LLM provider. Cheap on paper, but the "$5 free credit" promotion I tried turned out to be expired.</td>
+        </tr>
+        <tr>
+          <td><strong>Quantization / Q4</strong></td>
+          <td>Compressing a model's weights from 16-bit floats to fewer bits to shrink VRAM and disk footprint. Q4 ≈ 4 bits per weight. A 7B model at FP16 is ~14 GB; at Q4 it's ~4.5 GB, with only a small drop in quality.</td>
+        </tr>
+        <tr>
+          <td><strong>VRAM</strong></td>
+          <td>Video RAM, the dedicated memory on a GPU. The single most important number when choosing hardware for local LLMs. Model weights + KV cache + driver overhead all compete for this pool. 6GB is the practical floor for running a 7B model entirely on the GPU.</td>
+        </tr>
+        <tr>
+          <td><strong>KV cache</strong></td>
+          <td>The "key/value" cache, a chunk of GPU memory that stores attention state for the conversation so far. Grows with context length. A 7B model at 8K context burns ~1 GB just on KV cache.</td>
+        </tr>
+        <tr>
+          <td><strong>Telegram / Trello / Brave Search / GitHub</strong></td>
+          <td>The four external services this assistant wires together. Telegram is the chat front-end, Brave Search is the web-search MCP, GitHub is for repo/PR operations, Trello is the kanban board it reads for blog topics.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>With those out of the way, the story.</p>
+
+    <h2 id="the-goal">The Goal: An AI Assistant That Lives on Telegram</h2>
+
+    <p>OpenClaw is a self-hosted AI assistant: think of it as a thin Docker-Compose gateway that wraps a model with a personality file, persistent memory, an MCP (Model Context Protocol) tool registry, and a set of channels (Telegram, Slack, web). You message it, it routes the message through the model with all your registered tools available, and replies in the same channel. The MCP layer is where it gets useful: my gateway registers <code>brave-search</code> (web), <code>github</code> (issues, PRs, files), and <code>trello</code> (boards, lists, cards). The model can call any of them mid-conversation.</p>
+
+    <p>The whole thing is provisioned by an Ansible playbook (Docker, Ollama, OpenClaw, Telegram pairing, identity files, the lot). The intent was to keep the Ubuntu AI server reproducible from zero, so if I ever wipe it, one command rebuilds the entire stack. With that part settled, the only open question was which model to point it at.</p>
+
+    <div class="callout">
+      <strong>The architectural premise:</strong> Cheap, ubiquitous LLMs make personal AI assistants finally interesting. The model is the brain, MCP servers are the hands, OpenClaw is the body. The thing that turns out to matter most is whether the brain you picked can survive the bill at the end of the month.
+    </div>
+
+    <h2 id="cloud-attempt">Attempt 1: Just Use the Cloud</h2>
+
+    <p>The original config pointed OpenClaw at Google's <code>gemini-2.5-flash</code>. I picked it for three reasons: a decent free tier on paper, strong tool-calling reputation, and the only provider with an OpenClaw integration ready out of the box. Then I onboarded the assistant.</p>
+
+    <h3>Gemini 2.5 Flash: One Conversation a Day</h3>
+
+    <p>OpenClaw's onboarding flow is conversational: it interviews you to draft an <code>IDENTITY.md</code>, a <code>SOUL.md</code> (assistant personality), and a <code>USER.md</code> (your profile and working style). Each of those interviews is a multi-turn exchange. By the time my assistant had a name (Shruthi), a personality, and knew I worked in Berlin, I had used 18 of my 20 daily free-tier requests. The remaining two went to "hello" and an attempted Trello query, after which the bot replied with the most disappointing error you can read at 10pm on a Sunday:</p>
+
+    <pre><span class="cm">// Gemini API response</span>
+{
+  <span class="ky">"error"</span>: {
+    <span class="ky">"code"</span>: <span class="nm">429</span>,
+    <span class="ky">"message"</span>: <span class="st">"Quota exceeded for quota metric 'Generate Content API requests per day'"</span>,
+    <span class="ky">"status"</span>: <span class="st">"RESOURCE_EXHAUSTED"</span>
+  }
+}</pre>
+
+    <p>That's the trap with daily quotas: they aren't billed as "fair use" the way RPM ceilings are. They reset at midnight Pacific time, and once you've burned the day, you have a brick on Telegram until tomorrow. For an assistant the entire point of which is being available when I need it, that's a non-starter.</p>
+
+    <h3>Groq + Llama 3.3 70B: TPM Cliff at Turn One</h3>
+
+    <p>Groq's free tier looked friendlier on the spec sheet: unlimited daily requests, no per-day quota, just a tokens-per-minute ceiling. I switched OpenClaw's provider to Groq and pointed it at <code>llama-3.3-70b-versatile</code>. First Telegram message: "list my open GitHub issues". Response:</p>
+
+    <pre>HTTP 429
+{
+  <span class="ky">"error"</span>: {
+    <span class="ky">"message"</span>: <span class="st">"Rate limit reached for model 'llama-3.3-70b-versatile' in organization. Limit 6000 TPM (tokens per minute). Used 46812. Please try again in 7m 48s."</span>,
+    <span class="ky">"type"</span>: <span class="st">"tokens"</span>,
+    <span class="ky">"code"</span>: <span class="st">"rate_limit_exceeded"</span>
+  }
+}</pre>
+
+    <p>This is the punchline that took me a minute to absorb. The system prompt + identity files + persistent memory + ~80 MCP tool schemas add up to roughly <strong>46,000 tokens before my own message is even appended</strong>. The free tier's ceiling was 6,000 tokens per minute. A single OpenClaw turn doesn't fit in eight minutes of quota.</p>
+
+    <p>That's the structural mismatch nobody warns you about. Free tiers are designed for "send a small prompt, get a small reply" chatbot traffic. They are not designed for an agent that boots up carrying its entire personality and toolset every turn. The arithmetic just doesn't work.</p>
+
+    <h3>DeepSeek V4 Flash: The Phantom Credit</h3>
+
+    <p>I tried DeepSeek next, lured by the "$5 free credit on signup" line on their landing page. Account created, key generated, OpenClaw repointed. First request:</p>
+
+    <pre>HTTP 402 Payment Required
+{
+  <span class="ky">"error"</span>: {
+    <span class="ky">"message"</span>: <span class="st">"Insufficient balance. Top-up required to make requests."</span>
+  }
+}</pre>
+
+    <p>I checked the dashboard. <strong>Account balance: $0.00.</strong> The "$5 free credit on signup" line was, charitably, marketing for a promotion that had ended. There was no inline notice that the offer was over; you only learn after creating the account and trying to actually call something. Pay-as-you-go from minute one is fine for a business workload, but for a personal experiment where I wanted to see whether the architecture even worked before committing money, it was a hard no.</p>
+
+    <h3>The Pattern, Across All Three</h3>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Provider</th>
+          <th>Free-tier limit</th>
+          <th>How OpenClaw breaks it</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Gemini 2.5 Flash</strong></td>
+          <td>20 req/day</td>
+          <td>Onboarding alone takes 15–18 turns. Day one is gone before the first real question.</td>
+        </tr>
+        <tr>
+          <td><strong>Groq (Llama 3.3 70B)</strong></td>
+          <td>6,000 TPM</td>
+          <td>System prompt + MCP tool definitions ≈ 46K tokens. Single turn cannot fit.</td>
+        </tr>
+        <tr>
+          <td><strong>DeepSeek V4 Flash</strong></td>
+          <td>$5 signup credit (advertised)</td>
+          <td>Balance is $0 on first call. Pay-as-you-go from minute one.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>And these are just the limits I hit. The wider catalogue of cloud-provider tax that bites you eventually: regional access pauses (Gemini is region-gated for some EU postcodes), model deprecations (the 70B you tuned for today may be removed in a quarter), TOS changes for free tiers, and the small matter of every prompt, every tool result, every personality file being sent to a third party. For an agent that knows my Trello, my GitHub, and my calendar, "where my data goes" is not a footnote.</p>
+
+    <div class="callout">
+      <strong>The realisation:</strong> Cloud LLMs are priced and rate-limited for chatbots that send 500-token prompts. They are not priced for agents that ship a 46K-token bootstrap context every turn. Free tiers actively punish the agentic shape of work. The only way to win is to stop playing.
+    </div>
+
+    <h2 id="the-machine">The Machine: A Dell OptiPlex 990, Resurrected</h2>
+
+    <p>I had been quietly assuming a self-hosted LLM meant buying a Mac Studio or building a fresh PC with a 3090. Both would have cost thousands. The actual right move was already in my cupboard.</p>
+
+    <p>The Dell OptiPlex 990 SFF (Small Form Factor) is a 2011-era business desktop, the kind that runs spreadsheets at law firms and gets replaced every five years. Mine had been my home media box from 2014 to 2017, then sat unpowered since. Specs:</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Spec</th>
+          <th>Relevance to LLM serving</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>CPU</strong></td>
+          <td>Intel Core i7-2600 · 4 cores / 8 threads · 3.4 GHz (Sandy Bridge, 2011)</td>
+          <td>Plenty for OS, Docker, OpenClaw gateway. Token generation will run on GPU.</td>
+        </tr>
+        <tr>
+          <td><strong>RAM</strong></td>
+          <td>16 GB DDR3 (chipset max)</td>
+          <td>Generous for a 7B model loaded mostly on GPU; OS + Docker + Ollama fits comfortably.</td>
+        </tr>
+        <tr>
+          <td><strong>Storage</strong></td>
+          <td>500 GB SATA SSD</td>
+          <td>Each Ollama model ≈ 4.5 GB on disk. Two models + OS + Docker images fits easily.</td>
+        </tr>
+        <tr>
+          <td><strong>PSU</strong></td>
+          <td>240W (fixed, proprietary form factor)</td>
+          <td><strong>The constraint.</strong> Any GPU must be ≤75W slot-powered. No 6-pin or 8-pin connectors available.</td>
+        </tr>
+        <tr>
+          <td><strong>Expansion</strong></td>
+          <td>1× PCIe 2.0 x16, SFF chassis = low-profile cards only</td>
+          <td><strong>The second constraint.</strong> Only LP GPUs physically fit.</td>
+        </tr>
+        <tr>
+          <td><strong>OS</strong></td>
+          <td>Ubuntu 24.04 LTS Server</td>
+          <td>NVIDIA drivers available via apt; Ollama and Docker both first-class.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The use case I had in mind shaped what I needed from the machine. <strong>It would sit on a shelf, 24/7, mostly idle, occasionally answering a Telegram message in 10–25 seconds, and once a day running a longer blog-writing job for ~5 minutes.</strong> Not a workstation for interactive coding. Not a real-time chatbot for hundreds of users. A personal back-office. For that workload, a 13-year-old quad-core was wildly overpowered for the CPU side, and the entire game was about getting a usable GPU into a slot designed for office work.</p>
+
+    <h2 id="gpu-upgrade">The GPU Upgrade: A Low-Profile RTX 3050 with 6GB of VRAM</h2>
+
+    <p>This is the single decision that made the project viable. Two hard constraints from the OptiPlex 990 SFF chassis:</p>
+
+    <ol>
+      <li><strong>Low-profile only.</strong> The card has to be physically short, with an LP bracket. Most consumer GPUs are full-height.</li>
+      <li><strong>≤75W total power.</strong> The 240W PSU has no 6-pin or 8-pin PCIe power leads available. The GPU has to draw its entire budget from the PCIe slot, which caps at 75W.</li>
+    </ol>
+
+    <p>Add a third soft constraint: <strong>enough VRAM to run a 7B model at Q4 quantization with KV cache headroom.</strong> Below 6GB, you're stuck at 3B or smaller. Above 6GB on an LP 75W card, options thin out quickly.</p>
+
+    <h3>The Candidate Shortlist</h3>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Card</th>
+          <th>VRAM</th>
+          <th>TDP</th>
+          <th>Price (used / new, EU)</th>
+          <th>Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>GTX 1650 LP</td>
+          <td>4 GB</td>
+          <td>75W</td>
+          <td>~€140</td>
+          <td class="bad">VRAM too small for 7B Q4. Would force 3B class and weaker tool calling.</td>
+        </tr>
+        <tr>
+          <td>RTX A2000 LP</td>
+          <td>6 GB</td>
+          <td>70W</td>
+          <td>~€420</td>
+          <td>Spec-perfect, but a workstation card priced like one.</td>
+        </tr>
+        <tr>
+          <td><strong>RTX 3050 LP 6GB</strong></td>
+          <td>6 GB</td>
+          <td>70W</td>
+          <td>~€260</td>
+          <td class="good">LP, slot-powered, 6 GB VRAM. The cheapest card that meets all three constraints.</td>
+        </tr>
+        <tr>
+          <td>RTX 4060 LP</td>
+          <td>8 GB</td>
+          <td>115W</td>
+          <td>~€350</td>
+          <td class="bad">Exceeds 75W slot power. Would need a 6-pin lead the 240W PSU cannot supply.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The 6GB RTX 3050 LP is a slightly unusual SKU: most 3050 LP cards ship as 8GB / 115W variants. The 6GB / 70W variant exists specifically for SFF and low-power-budget builds, sold by MSI, PNY, and Gigabyte under near-identical naming. It is the sweet-spot card for resurrected office desktops, which is exactly what I had.</p>
+
+    <h3>Why 6GB is the Magic Number</h3>
+
+    <p>This took me a few hours of reading to internalise. The number you care about for running an LLM locally is the <strong>quantized model footprint + KV cache + runtime overhead</strong>, all of which compete for the same VRAM pool. Rough math for a 7B model at Q4 quantization:</p>
+
+    <ul>
+      <li><strong>Weights on disk:</strong> ~4.0–4.5 GB (Q4_K_M is the Ollama default; you'll see this number when you run <code>ollama show qwen2.5:7b-instruct</code>).</li>
+      <li><strong>KV cache:</strong> grows with context length. For a 4K context window with a 7B model at FP16 KV, expect ~500–800 MB. OpenClaw runs with ~8K effective context, so budget more like 1.2 GB.</li>
+      <li><strong>CUDA / driver overhead:</strong> 200–400 MB resident regardless.</li>
+    </ul>
+
+    <p>Total for a 7B Q4 model with realistic context: <strong>~5.5–6.0 GB</strong>. A 6GB card sits right on the edge, with a few hundred megabytes of headroom. Anything bigger (8B, 13B) overflows the VRAM and Ollama starts paging layers between GPU and CPU. The moment that happens, your tokens-per-second collapses from 30 to about 3, and a normal chat turn that took 12 seconds takes 90.</p>
+
+    <p>So the question "why 6GB?" has a clean answer: 6GB is the smallest VRAM that lets the 7B model class fit entirely on the GPU. 7B is the smallest model class that does multi-tool agentic work reliably. The two numbers meet at one card, and that card has to be LP and slot-powered. There were maybe three SKUs that fit, and the 3050 LP 6GB was the cheapest.</p>
+
+    <div class="callout">
+      <strong>The math one level up:</strong> <code>VRAM budget = model weights + KV cache + driver overhead</code>. Pick your model first, then size the GPU to match. People who pick the GPU first and then "see what runs" almost always end up with a 4GB card and a 3B model that hallucinates tool calls.
+    </div>
+
+    <h3>Physical Install</h3>
+
+    <p>The install itself was uneventful, which is the highest praise hardware projects deserve. Powered down, opened the SFF chassis, removed the LP slot cover, slotted the card, screwed in the LP bracket, closed up. No PSU upgrade needed: the RTX 3050 LP 6GB pulls 100% of its power through the PCIe slot, which the OptiPlex's 240W PSU supplies cleanly.</p>
+
+    <p>On Ubuntu 24.04, the driver path was equally calm:</p>
+
+    <pre><span class="cm"># Add the graphics drivers PPA (Ubuntu's official one)</span>
+sudo add-apt-repository ppa:graphics-drivers/ppa
+sudo apt update
+
+<span class="cm"># Install the recommended driver. As of May 2026, 565-server is current.</span>
+sudo apt install nvidia-driver-565-server
+
+<span class="cm"># Reboot, then confirm</span>
+sudo reboot
+<span class="cm"># after login:</span>
+nvidia-smi</pre>
+
+    <p><code>nvidia-smi</code> output confirmed the card:</p>
+
+    <pre>+-----------------------------------------------------------------------+
+| NVIDIA-SMI 565.77    Driver Version: 565.77    CUDA Version: 12.7   |
+|-----------------------------------------------------------------------|
+| GPU  Name        Persistence-M | Bus-Id        Disp.A | Volatile     |
+| Fan  Temp  Perf  Pwr:Usage/Cap |   Memory-Usage     | GPU-Util       |
+|=======================================+=======================+=======|
+|   0  NVIDIA GeForce RTX 3050 6GB     | 00000000:01:00.0 Off |   N/A |
+| 30%   38C    P8     6W /  70W      |     12MiB /  6144MiB |    0%  |
++-----------------------------------------------------------------------+</pre>
+
+    <p>6,144 MiB of VRAM available, idle power draw of 6W. That last number is important: the card draws ~6W idle, ~55–65W under inference. Over a month at German electricity rates (~€0.35/kWh), the GPU's contribution to the bill is on the order of €1.50. The entire box, idle most of the day with brief inference spikes, averages ~80W and costs about €20/month in electricity. That's the floor of what this kind of hosting costs you, and it's pleasantly small.</p>
+
+    <h2 id="ollama-setup">Ollama: The Inference Runtime</h2>
+
+    <p>With the GPU in place, I needed an inference server that could load a model into VRAM and expose an OpenAI-compatible API on the local network. Two real choices in May 2026: <a href="https://ollama.com/" target="_blank" rel="noopener">Ollama</a> and <a href="https://github.com/ggerganov/llama.cpp" target="_blank" rel="noopener">llama.cpp's server</a>. I picked Ollama for three reasons: a clean systemd integration, the model-pull/registry workflow ergonomically similar to Docker (<code>ollama pull qwen2.5:7b-instruct</code>), and an OpenAI-compatible API surface OpenClaw can talk to with one config line.</p>
+
+    <p>The Ansible role for it is twenty lines, the meaningful bits being:</p>
+
+    <pre><span class="cm"># roles/ollama/tasks/main.yaml (abridged)</span>
+- <span class="ky">name</span>: Install Ollama
+  <span class="ky">ansible.builtin.shell</span>:
+    <span class="ky">cmd</span>: <span class="st">curl -fsSL https://ollama.com/install.sh | sh</span>
+  <span class="ky">when</span>: ollama_check.rc != 0
+
+- <span class="ky">name</span>: Bind Ollama to all interfaces (so Docker containers can reach it)
+  <span class="ky">ansible.builtin.copy</span>:
+    <span class="ky">content</span>: |
+      [Service]
+      Environment="OLLAMA_HOST=0.0.0.0:11434"
+    <span class="ky">dest</span>: <span class="st">/etc/systemd/system/ollama.service.d/override.conf</span>
+
+- <span class="ky">name</span>: Pull configured models
+  <span class="ky">ansible.builtin.command</span>:
+    <span class="ky">cmd</span>: <span class="st">"ollama pull {{ item }}"</span>
+  <span class="ky">loop</span>:
+    - <span class="st">qwen2.5:7b-instruct</span>
+    - <span class="st">qwen2.5-coder:7b</span></pre>
+
+    <p>The OpenClaw container reaches Ollama through Docker's host bridge:</p>
+
+    <pre><span class="cm">// openclaw.json · provider config</span>
+<span class="ky">"providers"</span>: {
+  <span class="ky">"ollama"</span>: {
+    <span class="ky">"baseUrl"</span>: <span class="st">"http://host.docker.internal:11434/v1"</span>,
+    <span class="ky">"apiKey"</span>: <span class="st">"ollama"</span>,
+    <span class="ky">"timeoutSeconds"</span>: <span class="nm">300</span>,
+    <span class="ky">"models"</span>: [
+      { <span class="ky">"id"</span>: <span class="st">"qwen2.5:7b-instruct"</span>, <span class="ky">"name"</span>: <span class="st">"Qwen 2.5 7B Instruct"</span> },
+      { <span class="ky">"id"</span>: <span class="st">"qwen2.5-coder:7b"</span>, <span class="ky">"name"</span>: <span class="st">"Qwen 2.5 Coder 7B"</span> }
+    ]
+  }
+}</pre>
+
+    <p>Why bare-host Ollama instead of containerised? Three reasons: GPU passthrough into Docker is fiddly on consumer NVIDIA drivers (the <code>nvidia-container-toolkit</code> dance works but adds a layer of "why is it slow today" debugging), the host has nothing else competing for the GPU, and rolling Ollama updates is a one-liner (<code>curl | sh</code>) vs. rebuilding a custom image. Anything that talks to the GPU runs on the host. Everything else (OpenClaw gateway, MCP servers, the Docker networking around them) runs in containers.</p>
+
+    <h2 id="model-journey">The Model Journey: Gemma 4 E2B → Qwen 2.5 7B</h2>
+
+    <p>This is the part I expected to be easy and was, instead, the most interesting failure of the project. There are dozens of open-weights models you can pull with Ollama. The 6GB VRAM ceiling rules out most of them, but plenty fit. The question isn't "which model fits"; it's "which model can <em>actually drive an agent</em>".</p>
+
+    <h3>Attempt 1: Gemma 4 E2B (the Edge Variant)</h3>
+
+    <p>Google's Gemma 4 family ships in several sizes. The E2B ("Edge 2B") variant is the smallest, ~2B effective parameters, designed for phones and laptops. At Q4 it's about 1.8 GB on disk and loads into VRAM in seconds. I picked it first because: it's recent, Google-trained, and a 2B model on a 6GB card felt like leaving room for KV cache growth.</p>
+
+    <p>For pure chat, Gemma 4 E2B was great. Fast first-token latency (~1 second), tokens-per-second in the 60s on the 3050, perfectly competent for "summarise this paragraph" or "what's the syntax for a Bash for-loop".</p>
+
+    <p>For agentic work, Gemma 4 E2B was, generously, ambivalent. The first sign of trouble was when I asked the assistant to search the web for a Kubernetes 1.34 release note:</p>
+
+    <div class="conversation">
+      <div class="msg"><span class="human">me ▸</span> can you search the web for the kubernetes 1.34 release highlights?</div>
+      <div class="msg"><span class="ai">shruthi ▸</span> I tried, but the search tool is currently unavailable. You might want to check the Kubernetes blog directly.</div>
+      <div class="msg"><span class="human">me ▸</span> [checks OpenClaw logs] the brave-search MCP server is healthy and reachable from inside the container. why did you say it was unavailable?</div>
+      <div class="msg"><span class="ai">shruthi ▸</span> I'm sorry for the confusion. The search functionality appears to be temporarily unavailable in this session.</div>
+    </div>
+
+    <p>The brave-search MCP server was, in fact, healthy. I had tested it manually. The model never issued a tool call. It just <strong>told me</strong> that the tool had failed, without ever trying. This is the failure mode known in the trade as a "hallucinated tool failure". The model has seen, in its training data, plenty of examples of agents reporting tool errors. When confronted with a tool it doesn't quite know how to invoke, it pattern-matches to the apology rather than the call.</p>
+
+    <p>Underneath, the cause is straightforward: at ~2B effective parameters, Gemma 4 E2B does not reliably format the JSON-shaped function-call output that OpenAI-style tool use depends on. It "knows" the tool exists, it "knows" what it should do, but the structural step of emitting a <code>tool_calls</code> object with the right schema is too much for the model. So it falls back to natural language and invents an excuse.</p>
+
+    <p>I confirmed this by enabling verbose tracing in OpenClaw. Across 20 turns where a tool call was the right answer, Gemma E2B produced a syntactically valid <code>tool_calls</code> object exactly zero times. Across the same 20 turns, Qwen 2.5 7B Instruct produced a valid call 19 times. <strong>That's not a quality gap; that's a capability gap.</strong> Below ~3B parameters, structured agentic output is unreliable. Above ~7B, it's the default behaviour.</p>
+
+    <div class="callout">
+      <strong>The general rule I extracted:</strong> if your use case involves any MCP or function-calling beyond toy demos, do not go below 7B parameters. The smaller models are useful for chat, autocomplete, classification, and inference inside a constrained schema, but they are not reliable agent brains. The 7B threshold is approximate; it's where multi-step tool use stops being a coin flip.
+    </div>
+
+    <h3>Attempt 2: Qwen 2.5 7B Instruct (the Default)</h3>
+
+    <p>Qwen 2.5 7B Instruct is Alibaba's general-purpose mid-size model. At Q4_K_M it's 4.4 GB on disk, ~5.5 GB resident with KV cache, and fits the 6GB card with a few hundred megabytes to spare. On the RTX 3050 LP I see ~25 tokens/sec generation throughput, ~5 second first-token latency on a cold load (the bigger model is slower to warm up than Gemma E2B), and reliable tool calling.</p>
+
+    <p>The same conversation as before, with Qwen swapped in:</p>
+
+    <div class="conversation">
+      <div class="msg"><span class="human">me ▸</span> can you search the web for the kubernetes 1.34 release highlights?</div>
+      <div class="msg"><span class="ai">shruthi ▸</span> [calling brave_web_search(query="Kubernetes 1.34 release highlights")...]</div>
+      <div class="msg"><span class="ai">shruthi ▸</span> Kubernetes 1.34 ("Octarine") shipped on April 23, 2026. Key changes: Dynamic Resource Allocation graduated to stable, sidecar containers GA, structured authentication config GA, and pod-level resource specifications now beta. The release notes also flag the removal of the in-tree CSI migration shims for AWS EBS and Azure Disk that were deprecated in 1.30. Full notes: https://kubernetes.io/blog/2026/04/23/kubernetes-v1-34-release/</div>
+    </div>
+
+    <p>That is a perfectly normal agentic answer: the model decided a tool call was the right move, formatted the call correctly, the gateway executed it, the result came back, and the model summarised it. The same sequence Gemma E2B refused to attempt.</p>
+
+    <p>The interesting performance characteristic of Qwen 2.5 7B on this hardware is the <strong>shape</strong> of latency, not the average. The first turn after the model loads from disk takes ~10 seconds (cold KV cache, full prompt processing). Subsequent turns in the same conversation take 3–8 seconds because the prefix is cached. A long tool-use chain (web search ▸ summarise ▸ format) can take 30–45 seconds end to end because each tool round-trip adds another round of prompt processing. Compared to Gemini Flash's 1–3 seconds for the same chain, it's slower. Compared to "the bot is throttled until tomorrow", it's instant.</p>
+
+    <h3>Attempt 3: Qwen 2.5 Coder 7B (for the Blog Writer)</h3>
+
+    <p>The blog-automation agent is a special case. It's not interactive; it runs once a day on a Trello trigger, clones the blog repo, reads the existing posts to learn the voice, drafts a new article in HTML, opens a PR, and moves the Trello card. The work is structurally code: file edits, HTML scaffolding, git operations, GitHub API calls. For that, <code>qwen2.5-coder:7b</code> turned out to follow the multi-step instructions noticeably better than the general-purpose instruct variant, with the same VRAM footprint.</p>
+
+    <p>Both models can't live in VRAM at once on a 6GB card. Ollama hot-swaps: when the blog cron fires, it unloads the chat model, loads the coder model, runs the job, and the next chat turn pays a ~10 second penalty to reload the instruct model. That's a fair price for one cron run a day. If I had two models I wanted resident simultaneously, the next hardware upgrade is the obvious one (more VRAM), but I haven't needed it.</p>
+
+    <h2 id="hybrid">Where the Cloud Still Earns Its Place</h2>
+
+    <p>Local-only isn't religion. The blog automation pipeline ended up two-stage on purpose. Stage 1 is the local Qwen Coder 7B running the writer agent, producing an HTML draft and opening a PR. Stage 2 is <code>google/gemini-2.5-flash</code> in the cloud, taking that draft and polishing it for prose quality, voice, and consistency with the existing posts on the blog. The reason is one of fit:</p>
+
+    <ul>
+      <li><strong>Local model strength:</strong> multi-step agentic tool use over a long-running job. The writer agent does ~30 tool calls (git operations, file reads, HTML edits, PR creation). Cloud Gemini reliably stalls on this prompt shape; the local model handles it fine.</li>
+      <li><strong>Cloud model strength:</strong> prose quality on a single focused prompt. The reviewer agent does one task: read a diff and produce a better version. No long tool-use chain. Free tier handles it comfortably (one call per blog post, well within 20 req/day).</li>
+    </ul>
+
+    <p>That's the shape of a sane hybrid: <strong>use local for unlimited, low-stakes, multi-step work. Use cloud free tier for high-stakes, focused, single-prompt work.</strong> The cloud is never the workhorse, only the editor. Free-tier quota is never a daily anxiety; the worst case is "the polish step didn't run today, the draft is fine on its own".</p>
+
+    <h2 id="ansible-it">Ansible-Ising the Whole Stack</h2>
+
+    <p>The reason this entire setup is reproducible from scratch in 30 minutes is that everything sits in an Ansible role tree. The Ubuntu AI server playbook bootstraps five roles in order:</p>
+
+    <ol>
+      <li><strong>dotfiles</strong>: SSH keys, zsh, Oh-My-Zsh, Powerlevel10k, git config. The shell I expect.</li>
+      <li><strong>gnome-remote-desktop</strong>: RDP server with TLS, so I can remote in from my MacBook to do GUI debugging.</li>
+      <li><strong>docker</strong>: Docker CE + Docker Compose plugin from the official apt repo, user added to the docker group.</li>
+      <li><strong>ollama</strong>: install, configure as systemd, pull <code>qwen2.5:7b-instruct</code> and <code>qwen2.5-coder:7b</code>, bind to <code>0.0.0.0:11434</code>.</li>
+      <li><strong>openclaw</strong>: render <code>openclaw.json</code> with all secrets from Ansible Vault, deploy Docker Compose, start the gateway, register MCP servers (github, trello, brave-search), wire Telegram, deploy the blog cron pipeline.</li>
+    </ol>
+
+    <p>The single command:</p>
+
+    <pre>ansible-playbook playbooks/ubuntu-ai-server-bootstrap.yaml \
+  --ask-vault-pass --ask-become-pass</pre>
+
+    <p>The "factory reset" path matters more than it sounds. When I broke something experimenting with model swaps (twice, for reasons I'd rather forget), the recovery was:</p>
+
+    <pre>docker compose -f /opt/openclaw/docker-compose.yml down
+rm -rf /home/richierichardrajkumar/.openclaw/*
+<span class="cm"># run the playbook from the Mac</span>
+ansible-playbook playbooks/ubuntu-ai-server-bootstrap.yaml \
+  --ask-vault-pass --ask-become-pass</pre>
+
+    <p>Eight minutes later the bot was back online, identity reloaded from the templates in version control. That's the value of provisioning the assistant the same way you provision production infrastructure: experiments are cheap because rollback is cheap.</p>
+
+    <h2 id="numbers">The Numbers, End to End</h2>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Dell OptiPlex 990 SFF (i7-2600, 16 GB, 500 GB SSD)</td>
+          <td>€0 (already owned, ~€80 used market value)</td>
+        </tr>
+        <tr>
+          <td>RTX 3050 LP 6GB (MSI single-slot variant)</td>
+          <td>€260 (new, May 2026)</td>
+        </tr>
+        <tr>
+          <td>Electricity (24/7, average ~80W, German rates)</td>
+          <td>~€20 / month</td>
+        </tr>
+        <tr>
+          <td>Internet (already paid for, marginal cost zero)</td>
+          <td>€0 / month</td>
+        </tr>
+        <tr>
+          <td>LLM API costs (Ollama local + Gemini polish stage on free tier)</td>
+          <td><strong class="good">€0 / month</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Hardware payback vs hypothetical Gemini paid tier</strong></td>
+          <td>~6 months at modest usage</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>For €260 up-front and ~€20/month of electricity, I have an always-on Telegram assistant that knows my GitHub, manages my Trello, searches the web, drafts blog posts, and never tells me I'm rate-limited. The same workload on a paid LLM provider, with my usage pattern (~30 chat turns + one blog automation run per day), would have run about €40–60/month forever.</p>
+
+    <h2 id="what-i-learned">What I Actually Learned</h2>
+
+    <ol>
+      <li><strong>Cloud free tiers are not built for MCP agents.</strong> The bootstrap context of a real agent (system prompt + identity + tool definitions) is 30–50K tokens before your first character. Free tiers are sized for chatbot traffic at one-tenth of that. The mismatch is structural, not seasonal.</li>
+      <li><strong>VRAM is the line, and 6GB is where it crosses a useful model class.</strong> Below 6GB, you're stuck at 3B and tool calling breaks down. Above 6GB, options open up. Pick the model class first, then size the GPU.</li>
+      <li><strong>Tool-calling capability scales with parameter count, not training recency.</strong> Gemma 4 E2B is newer than Qwen 2.5 by months, but the 2B parameter count is the bottleneck. Newer is not better. Bigger is, for this specific capability, the thing that matters.</li>
+      <li><strong>Old workstations are excellent LLM hosts.</strong> A 2011-era SFF desktop with a €260 GPU is a perfectly serviceable always-on inference server. CPU speed barely matters; the GPU does the work. PSU and chassis dictate the GPU options. Pay attention to those before the spec sheet.</li>
+      <li><strong>Hybrid local + cloud is the pragmatic answer.</strong> Don't kill the cloud entirely; shape the workload to fit each tier's strengths. Local for unlimited multi-step agent work; cloud free tier for focused single-prompt polish. The free tier is sustainable when you stop asking it to be the workhorse.</li>
+      <li><strong>Provision the assistant the way you provision production.</strong> An Ansible role tree turns "I broke my AI" from a weekend recovery into an eight-minute rebuild. Identity, personality, tool registry, all in version control.</li>
+      <li><strong>Latency is a non-issue for asynchronous chat.</strong> 10–25 seconds per turn on Telegram feels almost identical to 2 seconds on a web app, because I'm doing something else while I wait. Latency budgets are use-case-specific; if you're not building a real-time copilot, slow local inference is fine.</li>
+    </ol>
+
+    <h2 id="whats-next">What's Next</h2>
+
+    <p>The 6GB VRAM ceiling is the obvious bottleneck for ambition. The next reasonable upgrade is either a used RTX 3060 12GB (around €220 on the second-hand market and full-height, which means a different chassis) or an RTX A4000 16GB if I felt rich. With 12GB I could run a 13B model at Q4 (so, Qwen 2.5 14B or DeepSeek's smaller distillation), keep both chat and coder models resident simultaneously, or fit a longer context window for the blog writer. None of that is necessary today; everything I currently want to do works on the 6GB card.</p>
+
+    <p>The other thread I'm pulling on is moving from Telegram-as-frontend to a small web UI for richer rendering of code blocks and tool outputs. OpenClaw exposes a web channel; the missing piece is hosting it behind Tailscale so it's accessible from anywhere without exposing the gateway to the public internet. That's a weekend project, not a hardware decision.</p>
+
+    <h2 id="reference">Reference</h2>
+    <ul>
+      <li>OpenClaw: <a href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener">github.com/openclaw/openclaw</a></li>
+      <li>Ollama: <a href="https://ollama.com/" target="_blank" rel="noopener">ollama.com</a> · <a href="https://github.com/ollama/ollama" target="_blank" rel="noopener">source</a></li>
+      <li>Qwen 2.5 model card: <a href="https://ollama.com/library/qwen2.5" target="_blank" rel="noopener">ollama.com/library/qwen2.5</a></li>
+      <li>Qwen 2.5 Coder model card: <a href="https://ollama.com/library/qwen2.5-coder" target="_blank" rel="noopener">ollama.com/library/qwen2.5-coder</a></li>
+      <li>Model Context Protocol spec: <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener">modelcontextprotocol.io</a></li>
+      <li>NVIDIA RTX 3050 6GB LP review (TechPowerUp): <a href="https://www.techpowerup.com/gpu-specs/geforce-rtx-3050-6-gb.c3958" target="_blank" rel="noopener">techpowerup.com/gpu-specs/geforce-rtx-3050-6-gb</a></li>
+      <li>Related: <a href="/blog/kubernetes-mcp-server">Talk to Your Cluster: Kubernetes MCP Server in Practice</a>, the MCP server pattern this assistant uses for tool access</li>
+      <li>Related: <a href="/blog/kubernetes-mcp-server-centralised">One MCP Server, Eight Clusters: Centralised AI Access with IRSA</a>, the bigger-team version of the same idea</li>
+    </ul>
+
+  </article>
+
+  <div class="article-divider"></div>
+  <footer class="article-footer">
+    <div class="article-author">
+      <div class="author-avatar">R³</div>
+      <div>
+        <div class="author-name">Richie Richard Rajkumar</div>
+        <div class="author-role">Infrastructure Architect · Platform Leader · Berlin</div>
+      </div>
+    </div>
+    <a href="/blog" class="back-btn">← All articles</a>
+  </footer>
+
+</div><!-- /article-page -->
+
+<script src="/js/main.js"></script>
+</body>
+</html>
