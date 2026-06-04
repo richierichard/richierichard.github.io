@@ -30,7 +30,8 @@ richierichard.github.io/
 │   ├── eks-cluster-autoscaler-vs-karpenter.html # Article: CAS vs Karpenter Comparison (May 2026)
 │   ├── helm-to-kustomize.html                  # Article: Helm to Kustomize Migration (May 2026)
 │   ├── infracost-terraform-aws.html            # Article: Infracost for Terraform on AWS (May 2026)
-│   └── local-llm-openclaw-rtx-3050.html        # Article: Self-Hosting OpenClaw on OptiPlex 990 + RTX 3050 (May 2026)
+│   ├── local-llm-openclaw-rtx-3050.html        # Article: Self-Hosting OpenClaw on OptiPlex 990 + RTX 3050 (May 2026)
+│   └── eks-auto-mode.html                      # Article: EKS Auto Mode comparison + migration (June 2026)
 ├── CNAME                    # GitHub Pages artefact (no longer used by Vercel)
 └── README.md
 ```
@@ -164,6 +165,7 @@ Each article is a standalone HTML file in the `blog/` directory with:
 | `helm-to-kustomize` | From Helm to Kustomize: Why We Ditched Templates for Overlays | May 2026 | Kubernetes, DevOps, GitOps, Platform Engineering |
 | `infracost-terraform-aws` | Infracost for Terraform: Catching AWS Cost Surprises Before They Hit Production | May 2026 | AWS, Terraform, FinOps, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
 | `local-llm-openclaw-rtx-3050` | From Cloud Throttling to a Home Server: Self-Hosting OpenClaw with a Local LLM on an OptiPlex 990 | May 2026 | AI, DevOps, Infrastructure, Platform Engineering |
+| `eks-auto-mode` | EKS Auto Mode: Letting AWS Run the Data Plane (and What It Costs You) | June 2026 | Kubernetes, AWS, Cost Engineering, FinOps, DevOps, Infrastructure, Platform Engineering |
 
 ## favicon.svg
 - SVG favicon, transparent background, green R³ in Courier New bold

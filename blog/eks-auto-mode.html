@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EKS Auto Mode: Letting AWS Run the Data Plane (and What It Costs You) · Richie Richard Rajkumar</title>
+
+<meta name="description" content="A practical guide to EKS Auto Mode. How it compares to self-managed and EKS managed node groups, the real cost implications in eu-central-1 with a worked example, and step-by-step migration plans from EKS managed node groups and from self-hosted Karpenter to Auto Mode.">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://www.richierichard.com/blog/eks-auto-mode">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.richierichard.com/blog/eks-auto-mode">
+<meta property="og:title" content="EKS Auto Mode: Letting AWS Run the Data Plane (and What It Costs You) · Richie Richard Rajkumar">
+<meta property="og:description" content="A practical guide to EKS Auto Mode: comparison with self-managed and managed node groups, cost implications in eu-central-1, and migration plans from MNGs and from self-hosted Karpenter.">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+
+<style>
+/* ── ARTICLE PAGE ── */
+.article-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 7rem 2rem 5rem;
+  position: relative;
+  z-index: 1;
+}
+.article-top { max-width: 960px; }
+
+.article-intro {
+  max-width: 960px;
+  margin-bottom: 2.5rem;
+  color: var(--text);
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+.article-intro p { margin-bottom: 1.25rem; }
+.article-intro code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+
+.article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  margin-bottom: 2.5rem;
+  transition: color 0.2s;
+}
+.article-back:hover { color: var(--accent); }
+
+.article-header { margin-bottom: 2.5rem; }
+.article-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.article-tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.2);
+  letter-spacing: 0.04em;
+}
+body.light .article-tag { border-color: rgba(2,132,199,0.25); }
+
+.article-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.article-title span { color: var(--accent); }
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.article-meta-dot { opacity: 0.3; }
+
+.article-hero {
+  width: 100%;
+  max-width: 960px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+}
+
+.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 2.5rem 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 6rem;
+}
+.article-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 1.75rem 0 0.5rem;
+}
+.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.article-body li { margin-bottom: 0.4rem; color: var(--text); }
+.article-body strong { color: var(--text); font-weight: 700; }
+.article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+.article-body pre {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.article-body code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+.article-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 1em;
+}
+.article-body pre .cm { color: var(--muted); }
+.article-body pre .ky { color: var(--accent); }
+.article-body pre .st { color: #f9a8d4; }
+.article-body pre .nm { color: #fde68a; }
+
+.callout {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+.callout strong { color: var(--accent); }
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
+}
+.compare-table th {
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.compare-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .good { color: var(--accent); font-weight: 700; }
+.compare-table .bad  { color: #f87171; }
+.compare-table .mid  { color: #fbbf24; }
+
+.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+
+.article-footer {
+  max-width: 960px;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.article-author { display: flex; align-items: center; gap: 0.85rem; }
+.author-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
+  flex-shrink: 0;
+}
+.author-name { font-weight: 700; font-size: 0.9rem; }
+.author-role { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--accent); color: var(--accent);
+  font-weight: 700; font-size: 0.85rem; text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #000; }
+</style>
+</head>
+<body class="light">
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
+    <span class="nav-logo-divider"></span>
+    <span class="nav-logo-right">
+      <span class="nav-logo-name-line"><span class="nav-logo-name">Richie Richard </span><span class="nav-logo-surname">Rajkumar</span></span>
+      <span class="nav-logo-tag">build <span class="nav-logo-arrow">▸</span> scale <span class="nav-logo-arrow">▸</span> secure</span>
+    </span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Dark</span>
+  </button>
+</nav>
+
+<div class="article-page">
+
+  <div class="article-top">
+    <a href="/blog" class="article-back">← Back to Blog</a>
+    <header class="article-header">
+      <div class="article-tags">
+        <span class="article-tag">Kubernetes</span>
+        <span class="article-tag">AWS</span>
+        <span class="article-tag">Cost Engineering</span>
+        <span class="article-tag">FinOps</span>
+        <span class="article-tag">DevOps</span>
+        <span class="article-tag">Infrastructure</span>
+        <span class="article-tag">Platform Engineering</span>
+      </div>
+      <h1 class="article-title">EKS Auto Mode: <span>Letting AWS Run the Data Plane (and What It Costs You)</span></h1>
+      <div class="article-meta">
+        <span>Richie Richard Rajkumar</span>
+        <span class="article-meta-dot">·</span>
+        <span>June 2026</span>
+        <span class="article-meta-dot">·</span>
+        <span>18 min read</span>
+      </div>
+    </header>
+  </div>
+
+  <div class="article-hero">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" width="760" height="420" style="width:100%;height:auto;display:block;">
+      <defs>
+        <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0a0c10"/>
+          <stop offset="100%" stop-color="#12151c"/>
+        </linearGradient>
+        <linearGradient id="aws-grad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.05"/>
+          <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.22"/>
+        </linearGradient>
+      </defs>
+      <rect width="760" height="420" fill="url(#bg-grad)"/>
+
+      <!-- TITLE -->
+      <text x="380" y="26" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="2">EKS DATA PLANE · THREE LEVELS OF AWS MANAGEMENT</text>
+
+      <!-- AWS-managed background gradient strip -->
+      <rect x="40" y="50" width="680" height="320" fill="url(#aws-grad)" rx="10"/>
+      <text x="60" y="68" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" font-weight="600" letter-spacing="1">YOU MANAGE</text>
+      <text x="700" y="68" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" font-weight="600" letter-spacing="1" text-anchor="end">AWS MANAGES</text>
+      <line x1="60" y1="74" x2="700" y2="74" stroke="#38bdf8" stroke-width="0.3" stroke-dasharray="2 3"/>
+
+      <!-- COLUMN 1: SELF-MANAGED -->
+      <text x="170" y="98" font-family="'Nunito',sans-serif" font-size="13" fill="#f87171" text-anchor="middle" font-weight="800">Self-Managed</text>
+      <text x="170" y="113" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">ASG · Launch Template · Your AMI</text>
+
+      <rect x="60" y="125" width="220" height="28" rx="5" fill="#1a1e28" stroke="#f87171" stroke-width="0.6"/>
+      <text x="170" y="143" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">You: AMI, bootstrap, kubelet args</text>
+
+      <rect x="60" y="158" width="220" height="28" rx="5" fill="#1a1e28" stroke="#f87171" stroke-width="0.6"/>
+      <text x="170" y="176" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">You: ASGs, scaling, patches</text>
+
+      <rect x="60" y="191" width="220" height="28" rx="5" fill="#1a1e28" stroke="#f87171" stroke-width="0.6"/>
+      <text x="170" y="209" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">You: CNI, CSI, LB controller</text>
+
+      <rect x="60" y="224" width="220" height="28" rx="5" fill="#1a1e28" stroke="#f87171" stroke-width="0.6"/>
+      <text x="170" y="242" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">You: CoreDNS, kube-proxy</text>
+
+      <rect x="60" y="257" width="220" height="28" rx="5" fill="#1a1e28" stroke="#f87171" stroke-width="0.6"/>
+      <text x="170" y="275" font-family="'Fira Code',monospace" font-size="7.5" fill="#f87171" text-anchor="middle">You: Karpenter / CAS</text>
+
+      <rect x="60" y="295" width="220" height="60" rx="8" fill="rgba(248,113,113,0.05)" stroke="#f87171" stroke-width="0.6" stroke-dasharray="4 2"/>
+      <text x="170" y="314" font-family="'Fira Code',monospace" font-size="7" fill="#f87171" text-anchor="middle">Max control, max ops burden</text>
+      <text x="170" y="328" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">No surcharge on EC2</text>
+      <text x="170" y="344" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">Best for: regulated, custom AMI</text>
+
+      <!-- COLUMN 2: EKS MANAGED NODE GROUPS -->
+      <text x="380" y="98" font-family="'Nunito',sans-serif" font-size="13" fill="#fbbf24" text-anchor="middle" font-weight="800">EKS Managed Node Groups</text>
+      <text x="380" y="113" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">AWS-curated AMI · You scale</text>
+
+      <rect x="280" y="125" width="200" height="28" rx="5" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.6"/>
+      <text x="380" y="143" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">AWS: EKS-optimised AMI</text>
+
+      <rect x="280" y="158" width="200" height="28" rx="5" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.6"/>
+      <text x="380" y="176" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">You: NG size, taints, labels</text>
+
+      <rect x="280" y="191" width="200" height="28" rx="5" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.6"/>
+      <text x="380" y="209" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">You: install CNI, CSI, LB</text>
+
+      <rect x="280" y="224" width="200" height="28" rx="5" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.6"/>
+      <text x="380" y="242" font-family="'Fira Code',monospace" font-size="7.5" fill="#fbbf24" text-anchor="middle">You: install Karpenter / CAS</text>
+
+      <rect x="280" y="257" width="200" height="28" rx="5" fill="#1a1e28" stroke="#fbbf24" stroke-width="0.6"/>
+      <text x="380" y="275" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">AWS: rolling AMI upgrades</text>
+
+      <rect x="280" y="295" width="200" height="60" rx="8" fill="rgba(251,191,36,0.05)" stroke="#fbbf24" stroke-width="0.6" stroke-dasharray="4 2"/>
+      <text x="380" y="314" font-family="'Fira Code',monospace" font-size="7" fill="#fbbf24" text-anchor="middle">Balanced · most common today</text>
+      <text x="380" y="328" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">No surcharge on EC2</text>
+      <text x="380" y="344" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">You still own scaling + addons</text>
+
+      <!-- COLUMN 3: EKS AUTO MODE -->
+      <text x="590" y="98" font-family="'Nunito',sans-serif" font-size="13" fill="#4ade80" text-anchor="middle" font-weight="800">EKS Auto Mode</text>
+      <text x="590" y="113" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">Bottlerocket · Managed Karpenter</text>
+
+      <rect x="480" y="125" width="220" height="28" rx="5" fill="#1a1e28" stroke="#4ade80" stroke-width="0.6"/>
+      <text x="590" y="143" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">AWS: Bottlerocket nodes</text>
+
+      <rect x="480" y="158" width="220" height="28" rx="5" fill="#1a1e28" stroke="#4ade80" stroke-width="0.6"/>
+      <text x="590" y="176" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">AWS: 21-day node refresh</text>
+
+      <rect x="480" y="191" width="220" height="28" rx="5" fill="#1a1e28" stroke="#4ade80" stroke-width="0.6"/>
+      <text x="590" y="209" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">AWS: CNI, EBS CSI, ALB, NLB</text>
+
+      <rect x="480" y="224" width="220" height="28" rx="5" fill="#1a1e28" stroke="#4ade80" stroke-width="0.6"/>
+      <text x="590" y="242" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">AWS: CoreDNS, kube-proxy</text>
+
+      <rect x="480" y="257" width="220" height="28" rx="5" fill="#1a1e28" stroke="#4ade80" stroke-width="0.6"/>
+      <text x="590" y="275" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="middle">AWS: managed Karpenter</text>
+
+      <rect x="480" y="295" width="220" height="60" rx="8" fill="rgba(74,222,128,0.05)" stroke="#4ade80" stroke-width="0.6" stroke-dasharray="4 2"/>
+      <text x="590" y="314" font-family="'Fira Code',monospace" font-size="7" fill="#4ade80" text-anchor="middle">You own NodePools and workloads</text>
+      <text x="590" y="328" font-family="'Fira Code',monospace" font-size="7" fill="#fbbf24" text-anchor="middle">~12% surcharge on EC2 compute</text>
+      <text x="590" y="344" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099" text-anchor="middle">Best for: new clusters, lean teams</text>
+
+      <!-- Bottom tagline -->
+      <text x="380" y="402" font-family="'Nunito',sans-serif" font-size="11" fill="#38bdf8" text-anchor="middle" font-weight="700">Same Kubernetes API · Less Operational Surface · You Pay for the Difference</text>
+    </svg>
+  </div><!-- /article-hero -->
+
+  <div class="article-intro">
+    <p>EKS gives you three ways to run the data plane. Self-managed node groups put everything in your hands, the AMI, the Auto Scaling Group, the bootstrap scripts, the kubelet flags. EKS managed node groups (MNGs) hand AWS the AMI and the rolling upgrade lifecycle while you keep control over scaling and addons. <strong>EKS Auto Mode</strong>, generally available since December 2024, goes further: AWS runs the nodes, runs Karpenter, runs the load balancer controller, runs the CSI and CNI drivers, and rotates your nodes every 21 days for security patching. You bring workloads and a <code>NodePool</code>. AWS brings the rest.</p>
+    <p>That sounds great, until you read the pricing page. Auto Mode adds an EC2 management fee, roughly 12% on top of the underlying instance cost in <code>eu-central-1</code>. For a 5-node platform cluster like mine, that is around 25 EUR a month extra. For a 50-node production fleet running Spot at scale, the same 12% becomes meaningful FinOps territory. This article is a decision and migration guide: what Auto Mode actually does, how it differs from self-managed and MNG setups, what the real numbers look like in <code>eu-central-1</code>, and how to migrate to it from either a managed node group cluster or from a self-hosted Karpenter cluster.</p>
+  </div>
+
+  <article class="article-body">
+
+    <h2 id="what-is-auto-mode">What EKS Auto Mode Actually Is</h2>
+
+    <p>The marketing line is "EKS, fully managed". The technical reality is more useful: Auto Mode is a bundle of AWS-managed components that sit on top of a normal EKS cluster and remove your responsibility for the data plane scaffolding most teams build by hand.</p>
+
+    <p>When you enable Auto Mode on a cluster, AWS turns on the following as a single managed unit:</p>
+
+    <ul>
+      <li><strong>Managed compute</strong>, a built-in Karpenter implementation that AWS operates. You still define <code>NodePool</code> and <code>NodeClass</code> CRDs (the latter is the Auto Mode flavour, <code>eks.amazonaws.com/NodeClass</code>, not the Karpenter community <code>EC2NodeClass</code>). AWS handles the controller upgrades, the IAM wiring, the SQS interruption queue, and the Karpenter version.</li>
+      <li><strong>Bottlerocket-only nodes</strong>, immutable, minimal, container-optimised. There is no AL2023 or AL2 option in Auto Mode. SSH and SSM access are disabled. Nodes are treated as cattle that you cannot pet.</li>
+      <li><strong>Automatic node refresh</strong>, every node is replaced at most every 21 days. AWS pulls a freshly patched Bottlerocket AMI, drains the old node, and provisions a new one. No more "schedule the AMI rotation" tickets.</li>
+      <li><strong>Managed networking</strong>, VPC CNI, kube-proxy, CoreDNS, plus a built-in AWS Load Balancer Controller exposed through a new <code>IngressClass</code> (<code>eks-auto-alb</code>) and <code>LoadBalancerClass</code> (<code>eks.amazonaws.com/nlb</code>).</li>
+      <li><strong>Managed storage</strong>, the EBS CSI driver is built in, with a default <code>gp3</code> storage class managed by Auto Mode. The volumes are tagged and lifecycle-managed by AWS as part of the cluster.</li>
+      <li><strong>Managed Pod Identity and Node Monitoring</strong> agents, no separate addon installs.</li>
+    </ul>
+
+    <p>What stays yours: the EKS control plane configuration (same as before), the VPC and subnets, the IAM roles for your workloads, your applications, and the <code>NodePool</code> CRDs that describe what kinds of nodes Auto Mode is allowed to provision. Everything between your pods and the EC2 API is the AWS managed surface.</p>
+
+    <div class="callout">
+      <strong>The mental model:</strong> Auto Mode is EKS with the "boring but necessary" parts pre-wired. It is not Fargate, you still get real EC2 nodes, you still pay per instance, you still see them in the EC2 console. The difference is that you no longer install or upgrade the controllers that make those nodes useful.
+    </div>
+
+    <h2 id="three-modes">The Three Modes Compared</h2>
+
+    <p>Before deciding, it helps to see the three options side by side. The same workload runs on the same Kubernetes API on all three, but the operational and pricing surface looks different.</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Area</th>
+          <th>Self-Managed</th>
+          <th>EKS Managed Node Groups</th>
+          <th>EKS Auto Mode</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Node AMI</strong></td>
+          <td class="bad">You build and maintain</td>
+          <td class="good">AWS-optimised AL2023 / Bottlerocket</td>
+          <td class="good">AWS-managed Bottlerocket only</td>
+        </tr>
+        <tr>
+          <td><strong>AMI patching</strong></td>
+          <td class="bad">You schedule and roll</td>
+          <td class="mid">AWS publishes, you trigger update</td>
+          <td class="good">Automatic, max 21-day node lifetime</td>
+        </tr>
+        <tr>
+          <td><strong>Node scaling</strong></td>
+          <td class="bad">You install CAS or Karpenter</td>
+          <td class="bad">You install CAS or Karpenter</td>
+          <td class="good">Managed Karpenter built in</td>
+        </tr>
+        <tr>
+          <td><strong>CNI / kube-proxy / CoreDNS</strong></td>
+          <td class="bad">You install and upgrade</td>
+          <td class="mid">EKS managed addons (opt-in)</td>
+          <td class="good">Built in, AWS upgrades</td>
+        </tr>
+        <tr>
+          <td><strong>EBS CSI driver</strong></td>
+          <td class="bad">You install</td>
+          <td class="mid">EKS managed addon</td>
+          <td class="good">Built in, default gp3 storage class</td>
+        </tr>
+        <tr>
+          <td><strong>AWS Load Balancer Controller</strong></td>
+          <td class="bad">Helm install + IRSA</td>
+          <td class="bad">Helm install + IRSA</td>
+          <td class="good">Built in, eks-auto-alb IngressClass</td>
+        </tr>
+        <tr>
+          <td><strong>Node access</strong></td>
+          <td class="good">SSH, SSM, full root</td>
+          <td class="good">SSH, SSM by default</td>
+          <td class="bad">No SSH, no SSM (immutable)</td>
+        </tr>
+        <tr>
+          <td><strong>Custom AMI / userdata</strong></td>
+          <td class="good">Anything you want</td>
+          <td class="mid">Limited via launch template</td>
+          <td class="bad">Not supported</td>
+        </tr>
+        <tr>
+          <td><strong>EC2 surcharge</strong></td>
+          <td class="good">None</td>
+          <td class="good">None</td>
+          <td class="bad">~12% on instance hourly cost</td>
+        </tr>
+        <tr>
+          <td><strong>Spot Instances</strong></td>
+          <td class="good">Yes, you wire interruption handling</td>
+          <td class="good">Yes, native MNG support</td>
+          <td class="good">Yes, managed via Karpenter</td>
+        </tr>
+        <tr>
+          <td><strong>Provisioning speed</strong></td>
+          <td>Karpenter: ~60s · CAS: 3–5 min</td>
+          <td>Karpenter: ~60s · CAS: 3–5 min</td>
+          <td class="good">~60 seconds (Karpenter)</td>
+        </tr>
+        <tr>
+          <td><strong>Operational surface</strong></td>
+          <td class="bad">High (AMI, ASG, scaler, addons)</td>
+          <td class="mid">Medium (scaler, addons)</td>
+          <td class="good">Low (NodePool, workloads)</td>
+        </tr>
+        <tr>
+          <td><strong>Multi-region / multi-cluster</strong></td>
+          <td class="good">Identical setup everywhere</td>
+          <td class="good">Identical setup everywhere</td>
+          <td class="good">Per-cluster opt-in flag</td>
+        </tr>
+        <tr>
+          <td><strong>Best fit</strong></td>
+          <td>Regulated, custom AMI, GovCloud</td>
+          <td>Existing fleets, AMI control needs</td>
+          <td>New clusters, small platform teams</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Where the line moves</h3>
+
+    <p>The pattern is consistent: each step right hands AWS another job and shrinks the surface you have to maintain, in exchange for less flexibility on the underlying primitives and, in Auto Mode's case, a per-instance fee. Self-managed gives you GovCloud-grade control, MNGs are the comfortable middle ground that almost every EKS cluster runs today, and Auto Mode is the "I do not want to think about the data plane" option.</p>
+
+    <h2 id="workload-isolation">Workload Isolation: Custom NodePools, Labels, and Taints</h2>
+
+    <p>In an MNG world, workload isolation is done at the node group level. You create one MNG with the label <code>workload=critical-addons</code> and the taint <code>dedicated=critical-addons:NoSchedule</code>, another MNG with <code>workload=apps</code> and <code>dedicated=apps:NoSchedule</code>, and your deployments declare a <code>nodeSelector</code> plus matching <code>toleration</code> so each pod lands on the right group.</p>
+
+    <p>The same model works on Auto Mode. You just express it through <strong>NodePool</strong> CRDs instead of node group configurations. The default <code>general-purpose</code> NodePool that Auto Mode ships with is a catch-all; for real isolation you create additional NodePools with their own labels, taints, and instance constraints, and your deployments use the same nodeSelectors and tolerations they used before.</p>
+
+    <h3>Mirroring the three-MNG layout in Auto Mode</h3>
+
+    <p>To replicate the <code>kubernetes-components</code> / <code>critical-addons</code> / <code>apps</code> layout, define three NodePools. Each gets its own label, taint, and instance constraints, exactly the way a node group used to.</p>
+
+    <pre><span class="cm"># NodePool: kubernetes-components (CoreDNS, system tooling)</span>
+<span class="ky">apiVersion</span>: <span class="st">karpenter.sh/v1</span>
+<span class="ky">kind</span>: <span class="st">NodePool</span>
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">kubernetes-components</span>
+<span class="ky">spec</span>:
+  <span class="ky">template</span>:
+    <span class="ky">metadata</span>:
+      <span class="ky">labels</span>:
+        <span class="ky">workload</span>: <span class="st">kubernetes-components</span>
+    <span class="ky">spec</span>:
+      <span class="ky">nodeClassRef</span>:
+        <span class="ky">group</span>: <span class="st">eks.amazonaws.com</span>
+        <span class="ky">kind</span>: <span class="st">NodeClass</span>
+        <span class="ky">name</span>: <span class="st">default</span>
+      <span class="ky">taints</span>:
+        - <span class="ky">key</span>: <span class="st">dedicated</span>
+          <span class="ky">value</span>: <span class="st">kubernetes-components</span>
+          <span class="ky">effect</span>: <span class="st">NoSchedule</span>
+      <span class="ky">requirements</span>:
+        - <span class="ky">key</span>: <span class="st">karpenter.sh/capacity-type</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"on-demand"</span>]
+        - <span class="ky">key</span>: <span class="st">eks.amazonaws.com/instance-category</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"t"</span>]
+        - <span class="ky">key</span>: <span class="st">eks.amazonaws.com/instance-size</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"small"</span>, <span class="st">"medium"</span>]
+  <span class="ky">limits</span>:
+    <span class="ky">cpu</span>: <span class="st">"8"</span></pre>
+
+    <pre><span class="cm"># NodePool: critical-addons (Prometheus, Loki, ALB controller, etc.)</span>
+<span class="ky">apiVersion</span>: <span class="st">karpenter.sh/v1</span>
+<span class="ky">kind</span>: <span class="st">NodePool</span>
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">critical-addons</span>
+<span class="ky">spec</span>:
+  <span class="ky">template</span>:
+    <span class="ky">metadata</span>:
+      <span class="ky">labels</span>:
+        <span class="ky">workload</span>: <span class="st">critical-addons</span>
+    <span class="ky">spec</span>:
+      <span class="ky">nodeClassRef</span>:
+        <span class="ky">group</span>: <span class="st">eks.amazonaws.com</span>
+        <span class="ky">kind</span>: <span class="st">NodeClass</span>
+        <span class="ky">name</span>: <span class="st">default</span>
+      <span class="ky">taints</span>:
+        - <span class="ky">key</span>: <span class="st">dedicated</span>
+          <span class="ky">value</span>: <span class="st">critical-addons</span>
+          <span class="ky">effect</span>: <span class="st">NoSchedule</span>
+      <span class="ky">requirements</span>:
+        - <span class="ky">key</span>: <span class="st">karpenter.sh/capacity-type</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"on-demand"</span>]
+        - <span class="ky">key</span>: <span class="st">eks.amazonaws.com/instance-category</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"m"</span>, <span class="st">"r"</span>]
+  <span class="ky">limits</span>:
+    <span class="ky">cpu</span>: <span class="st">"32"</span>
+    <span class="ky">memory</span>: <span class="st">"128Gi"</span></pre>
+
+    <pre><span class="cm"># NodePool: apps (stateless application workloads, Spot-enabled)</span>
+<span class="ky">apiVersion</span>: <span class="st">karpenter.sh/v1</span>
+<span class="ky">kind</span>: <span class="st">NodePool</span>
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">apps</span>
+<span class="ky">spec</span>:
+  <span class="ky">template</span>:
+    <span class="ky">metadata</span>:
+      <span class="ky">labels</span>:
+        <span class="ky">workload</span>: <span class="st">apps</span>
+    <span class="ky">spec</span>:
+      <span class="ky">nodeClassRef</span>:
+        <span class="ky">group</span>: <span class="st">eks.amazonaws.com</span>
+        <span class="ky">kind</span>: <span class="st">NodeClass</span>
+        <span class="ky">name</span>: <span class="st">default</span>
+      <span class="ky">taints</span>:
+        - <span class="ky">key</span>: <span class="st">dedicated</span>
+          <span class="ky">value</span>: <span class="st">apps</span>
+          <span class="ky">effect</span>: <span class="st">NoSchedule</span>
+      <span class="ky">requirements</span>:
+        - <span class="ky">key</span>: <span class="st">karpenter.sh/capacity-type</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"spot"</span>, <span class="st">"on-demand"</span>]
+        - <span class="ky">key</span>: <span class="st">eks.amazonaws.com/instance-category</span>
+          <span class="ky">operator</span>: <span class="st">In</span>
+          <span class="ky">values</span>: [<span class="st">"m"</span>, <span class="st">"c"</span>]
+  <span class="ky">limits</span>:
+    <span class="ky">cpu</span>: <span class="st">"200"</span>
+    <span class="ky">memory</span>: <span class="st">"800Gi"</span></pre>
+
+    <p>A few things to notice:</p>
+
+    <ul>
+      <li><strong>The label on the NodePool template</strong> (<code>workload: critical-addons</code>) is applied to every node provisioned by that pool. Pods use this as their <code>nodeSelector</code> match.</li>
+      <li><strong>The taint</strong> (<code>dedicated=critical-addons:NoSchedule</code>) is also applied to every node. Pods need a matching <code>toleration</code> or they will not schedule there. This is the part that <em>excludes</em> other workloads from the pool.</li>
+      <li><strong>The requirements</strong> constrain instance shape: capacity type (Spot vs on-demand), category (<code>t</code>/<code>m</code>/<code>c</code>/<code>r</code>), size, architecture. Auto Mode picks the cheapest instance within these constraints when it needs to provision.</li>
+      <li><strong>The limits</strong> stop the pool from running away. <code>cpu: "200"</code> means Karpenter will never let the pool exceed 200 vCPU across all nodes it provisions, regardless of pending pods.</li>
+    </ul>
+
+    <h3>Pod-side: same nodeSelector and toleration pattern as MNGs</h3>
+
+    <p>The deployment side does not change. The exact YAML you used to pin a pod to the <code>critical-addons</code> MNG continues to work; the label key and taint key are just declared on a NodePool now instead of on a node group.</p>
+
+    <pre><span class="cm"># Prometheus pinned to the critical-addons NodePool</span>
+<span class="ky">apiVersion</span>: <span class="st">apps/v1</span>
+<span class="ky">kind</span>: <span class="st">Deployment</span>
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">prometheus</span>
+<span class="ky">spec</span>:
+  <span class="ky">template</span>:
+    <span class="ky">spec</span>:
+      <span class="ky">nodeSelector</span>:
+        <span class="ky">workload</span>: <span class="st">critical-addons</span>
+      <span class="ky">tolerations</span>:
+        - <span class="ky">key</span>: <span class="st">dedicated</span>
+          <span class="ky">operator</span>: <span class="st">Equal</span>
+          <span class="ky">value</span>: <span class="st">critical-addons</span>
+          <span class="ky">effect</span>: <span class="st">NoSchedule</span>
+      <span class="ky">containers</span>:
+        - <span class="ky">name</span>: <span class="st">prometheus</span>
+          <span class="ky">image</span>: <span class="st">prom/prometheus:latest</span></pre>
+
+    <pre><span class="cm"># Stateless app pinned to the apps NodePool</span>
+<span class="ky">spec</span>:
+  <span class="ky">template</span>:
+    <span class="ky">spec</span>:
+      <span class="ky">nodeSelector</span>:
+        <span class="ky">workload</span>: <span class="st">apps</span>
+      <span class="ky">tolerations</span>:
+        - <span class="ky">key</span>: <span class="st">dedicated</span>
+          <span class="ky">operator</span>: <span class="st">Equal</span>
+          <span class="ky">value</span>: <span class="st">apps</span>
+          <span class="ky">effect</span>: <span class="st">NoSchedule</span></pre>
+
+    <p>The label key (<code>workload</code>) and taint key (<code>dedicated</code>) are arbitrary, pick whatever your fleet already uses for MNGs and reuse the same names so existing deployments do not need to change. The migration is literally "rename one set of YAML resources, leave pod specs alone".</p>
+
+    <h3>Disabling the default general-purpose NodePool</h3>
+
+    <p>The built-in <code>general-purpose</code> NodePool that Auto Mode ships with is a catch-all: any untainted pod without a matching nodeSelector will land on it. That is convenient during early experimentation, but it breaks the isolation guarantee in production, a misconfigured deployment will silently schedule onto shared nodes instead of being pinned where you intended.</p>
+
+    <p>To remove the default and force every workload onto a specifically targeted NodePool:</p>
+
+    <pre><span class="cm"># Disable the built-in general-purpose NodePool</span>
+aws eks update-cluster-config \
+  --name apps-prod \
+  --region eu-central-1 \
+  --compute-config <span class="ky">enabled=true,nodePools=,nodeRoleArn=</span>$NODE_ROLE</pre>
+
+    <p>Setting <code>nodePools</code> to an empty list keeps Auto Mode enabled but removes AWS's default NodePool. Now only the NodePools you defined can provision nodes. Workloads with no matching nodeSelector go Pending, which is exactly what you want in production: explicit scheduling, no fallback.</p>
+
+    <h3>NodeClass: per-NodePool networking and IAM</h3>
+
+    <p>The <code>NodeClass</code> resource is Auto Mode's equivalent of the community Karpenter <code>EC2NodeClass</code>. The default <code>NodeClass</code> named <code>default</code> covers most cases, all subnets in the cluster, the default node role, the default security group. Create custom NodeClasses when you need:</p>
+
+    <ul>
+      <li>Different subnets per NodePool (e.g. <code>apps</code> on private app-tier subnets, <code>critical-addons</code> on a separate observability subnet).</li>
+      <li>Different IAM instance profiles per NodePool, so addon nodes do not get the same permissions as app nodes.</li>
+      <li>Different security groups, useful if Prometheus needs scrape access to extra targets that app nodes do not.</li>
+    </ul>
+
+    <pre><span class="cm"># Custom NodeClass for the apps NodePool</span>
+<span class="ky">apiVersion</span>: <span class="st">eks.amazonaws.com/v1</span>
+<span class="ky">kind</span>: <span class="st">NodeClass</span>
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">apps-private</span>
+<span class="ky">spec</span>:
+  <span class="ky">role</span>: <span class="st">AutoModeAppsNodeRole</span>
+  <span class="ky">subnetSelectorTerms</span>:
+    - <span class="ky">tags</span>:
+        <span class="ky">kubernetes.io/role/internal-elb</span>: <span class="st">"1"</span>
+        <span class="ky">tier</span>: <span class="st">apps</span>
+  <span class="ky">securityGroupSelectorTerms</span>:
+    - <span class="ky">tags</span>:
+        <span class="ky">Name</span>: <span class="st">apps-prod-apps-sg</span></pre>
+
+    <p>Reference it from a NodePool with <code>nodeClassRef.name: apps-private</code> instead of <code>default</code>.</p>
+
+    <div class="callout">
+      <strong>The mental shift:</strong> in MNGs you scaled node groups. In Auto Mode you describe constraints and let Karpenter provision. A NodePool is not a fixed fleet, it is a policy that says "if a pod matches my label/taint/requirements, provision the cheapest instance from this category, up to these limits." The pod-side configuration (nodeSelector plus toleration) is byte-for-byte identical to the MNG pattern, only the resource that publishes the label and the taint has changed.
+    </div>
+
+    <h2 id="cost-implications">Cost Implications</h2>
+
+    <p>Auto Mode's pricing is the part most teams trip over, because the AWS pricing page reads like it is only about EC2 instances. There are actually three things you pay for, and one of them is a fee on top of compute.</p>
+
+    <h3>What you pay for</h3>
+
+    <ol>
+      <li><strong>The EKS control plane</strong>, unchanged at $0.10/hour ($73/month) in <code>eu-central-1</code>. Same for self-managed, MNGs, and Auto Mode.</li>
+      <li><strong>The EC2 instances</strong>, billed at standard on-demand or Spot rates. Auto Mode does not give you a different rate card for EC2.</li>
+      <li><strong>The Auto Mode management fee</strong>, an extra per-second charge on each EC2 instance Auto Mode provisions. The fee is roughly <strong>12% of the on-demand price</strong> of that instance family, and it applies to Spot too (i.e. the surcharge is on the on-demand price, not the discounted Spot price).</li>
+    </ol>
+
+    <p>Other Auto Mode resources, EBS volumes, ELBs, are billed at the normal EBS and ELB rates with no separate surcharge. The 12% lives entirely on the EC2 line.</p>
+
+    <h3>eu-central-1 reference prices</h3>
+
+    <p>The numbers below are on-demand list prices for Frankfurt, current as of June 2026. Spot is typically 60–70% cheaper; reserved instances and Savings Plans apply normally.</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Instance</th>
+          <th>vCPU / RAM</th>
+          <th>$/hour</th>
+          <th>$/month (730h)</th>
+          <th>Auto Mode +12% / month</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>t3.small</code></td><td>2 / 2 GiB</td><td>$0.0228</td><td>$16.64</td><td>+$2.00</td></tr>
+        <tr><td><code>t3.medium</code></td><td>2 / 4 GiB</td><td>$0.0456</td><td>$33.29</td><td>+$4.00</td></tr>
+        <tr><td><code>t3.large</code></td><td>2 / 8 GiB</td><td>$0.0912</td><td>$66.58</td><td>+$7.99</td></tr>
+        <tr><td><code>m6i.large</code></td><td>2 / 8 GiB</td><td>$0.1152</td><td>$84.10</td><td>+$10.09</td></tr>
+        <tr><td><code>m7g.large</code></td><td>2 / 8 GiB (Graviton)</td><td>$0.0968</td><td>$70.66</td><td>+$8.48</td></tr>
+        <tr><td><code>c7g.large</code></td><td>2 / 4 GiB (Graviton)</td><td>$0.0784</td><td>$57.23</td><td>+$6.87</td></tr>
+        <tr><td><code>m6i.xlarge</code></td><td>4 / 16 GiB</td><td>$0.2304</td><td>$168.19</td><td>+$20.18</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Worked example: my current platform cluster</h3>
+
+    <p>The cluster has three EKS managed node groups in <code>eu-central-1</code>, sized for a small platform footprint:</p>
+
+    <ul>
+      <li><strong>kubernetes-components</strong> (1 × <code>t3.small</code>), hosting CoreDNS and the self-hosted Karpenter controller during the in-progress migration off MNGs.</li>
+      <li><strong>critical-addons</strong> (2 × <code>t3.medium</code>), hosting Prometheus, the Loki stack, the AWS Load Balancer Controller, and other shared platform tooling.</li>
+      <li><strong>apps</strong> (2 × <code>t3.large</code>), hosting the stateless services built by the organisation's product teams.</li>
+    </ul>
+
+    <p>Today's monthly cost, on-demand, no Savings Plans:</p>
+
+    <pre><span class="cm"># Today, EKS managed node groups (eu-central-1, on-demand)</span>
+EKS control plane                $0.10/h  × 730  = <span class="nm">$73.00</span>
+1 × t3.small  (kube-components)  $0.0228/h × 730 = <span class="nm">$16.64</span>
+2 × t3.medium (critical-addons)  $0.0456/h × 730 = <span class="nm">$66.58</span>
+2 × t3.large  (apps)             $0.0912/h × 730 = <span class="nm">$133.16</span>
+                                                  ───────
+<span class="ky">TOTAL</span>                                            <span class="ky">$289.38 / month</span></pre>
+
+    <p>The same workload on Auto Mode, assuming Karpenter consolidates the addon nodes a little better but the overall instance footprint stays roughly the same:</p>
+
+    <pre><span class="cm"># Same workload on EKS Auto Mode (eu-central-1)</span>
+EKS control plane                                   <span class="nm">$73.00</span>
+5 × small/medium/large equivalent EC2 (compute)    <span class="nm">$216.38</span>
+Auto Mode fee (≈12% of compute)                     <span class="nm">$25.97</span>
+                                                   ───────
+<span class="ky">TOTAL</span>                                              <span class="ky">$315.35 / month</span>
+
+<span class="cm"># Net difference vs MNG setup</span>
++$25.97 / month  ≈  <span class="nm">+9%</span></pre>
+
+    <p>But that calculation is unfair to Auto Mode, because Auto Mode is also doing the work of:</p>
+
+    <ul>
+      <li>The self-hosted Karpenter controller (which currently runs on <code>kubernetes-components</code>).</li>
+      <li>The AWS Load Balancer Controller (currently on <code>critical-addons</code>).</li>
+      <li>The EBS CSI driver pods.</li>
+      <li>The AMI patching pipeline (currently a chore on a calendar).</li>
+    </ul>
+
+    <p>Once Karpenter is managed by AWS, the <code>kubernetes-components</code> node group can be retired entirely, its only workloads were CoreDNS (now managed by Auto Mode) and Karpenter (now managed by Auto Mode). That removes one <code>t3.small</code>, $16.64/month. With consolidation, Auto Mode's Karpenter can also bin-pack the addon pods onto fewer nodes than the static MNG layout. A realistic Auto Mode footprint for the same workload looks like:</p>
+
+    <pre><span class="cm"># Auto Mode after consolidation (no kube-components NG)</span>
+EKS control plane                                   <span class="nm">$73.00</span>
+1 × t3.medium (system + addons)                     <span class="nm">$33.29</span>
+2 × t3.large  (apps)                               <span class="nm">$133.16</span>
+Compute subtotal                                   <span class="nm">$166.45</span>
+Auto Mode fee (≈12% of compute)                     <span class="nm">$19.97</span>
+                                                   ───────
+<span class="ky">TOTAL</span>                                              <span class="ky">$259.42 / month</span>
+
+<span class="cm"># Net difference vs MNG setup</span>
+-$29.96 / month  ≈  <span class="nm">-10% cheaper</span></pre>
+
+    <p>Whether Auto Mode is cheaper or more expensive depends entirely on how consolidated your current fleet is. If your MNGs are already lean and tightly bin-packed, the 12% fee is pure overhead. If, like most teams, you have static MNGs sized for peak with idle headroom, Auto Mode's Karpenter consolidation will claw back more than the 12% fee.</p>
+
+    <h3>Scaled-up example: a 50-node production fleet</h3>
+
+    <p>The picture changes at scale. Take a fleet of roughly 50 nodes in <code>eu-central-1</code>: 5 system nodes (<code>m6i.large</code>), 15 addon nodes (<code>m6i.large</code>), and 30 application nodes (<code>m6i.xlarge</code>), all on-demand.</p>
+
+    <pre><span class="cm"># MNG fleet, 50 nodes, on-demand, eu-central-1</span>
+EKS control plane                                   <span class="nm">$73</span>
+20 × m6i.large   ($84.10/month)                    <span class="nm">$1,682</span>
+30 × m6i.xlarge  ($168.19/month)                   <span class="nm">$5,046</span>
+                                                  ────────
+<span class="ky">TOTAL</span>                                            <span class="ky">$6,801 / month</span>
+
+<span class="cm"># Same fleet on Auto Mode</span>
+EKS control plane                                   <span class="nm">$73</span>
+Compute (same instances)                          <span class="nm">$6,728</span>
+Auto Mode fee (≈12%)                                <span class="nm">$807</span>
+                                                  ────────
+<span class="ky">TOTAL</span>                                            <span class="ky">$7,608 / month</span>
+
+<span class="cm"># Net difference, no consolidation savings</span>
++$807 / month  ≈  <span class="nm">+11.9%</span>
+≈ <span class="nm">$9,700 / year</span></pre>
+
+    <p>At this scale, the surcharge is the salary equivalent of a junior platform engineer per year. The trade-off becomes real. Auto Mode's consolidation, AMI patching automation, and removal of Karpenter operational toil need to be worth that. For most teams under 10 engineers, they are. For a 50-engineer platform org that has already built rock-solid Karpenter automation, the maths is closer.</p>
+
+    <div class="callout">
+      <strong>FinOps rule of thumb:</strong> Auto Mode pays for itself when (a) your fleet has meaningful idle headroom that Karpenter consolidation can reclaim, (b) your team spends measurable hours per month on AMI patching, addon upgrades, and Karpenter version bumps, or (c) you are starting fresh and would otherwise need to build that automation. It is hardest to justify on already-optimised, large, mostly-static fleets.
+    </div>
+
+    <h3>Storage and load balancer costs are unchanged</h3>
+
+    <p>Auto Mode provisions EBS volumes (gp3, $0.0952/GiB-month in <code>eu-central-1</code>) and ELBs (ALB at $0.02528/hour + LCUs, NLB similar) on your behalf, but those are billed at standard rates. There is no Auto Mode surcharge on storage or load balancers, the management fee is purely on EC2 compute.</p>
+
+    <h2 id="workload-considerations">Workload Considerations and Edge Cases</h2>
+
+    <p>Most stateless application workloads, addons, and platform tooling fit Auto Mode without changes. A few categories need extra attention before you flip the switch.</p>
+
+    <h3>GPU and ML workloads</h3>
+
+    <p>Auto Mode supports GPU instance families (<code>g5</code>, <code>g6</code>, <code>p5</code>) the same way Karpenter does, you list them in the NodePool's instance-family requirements and Auto Mode provisions on demand. There are caveats:</p>
+
+    <ul>
+      <li><strong>Bottlerocket GPU AMI</strong> is what you get, not a custom CUDA image. For most inference and standard training workloads this is fine; the NVIDIA drivers and container runtime are pre-installed. If you have a deep-learning stack that depends on a specific CUDA version pinned to a custom AMI, Auto Mode is the wrong choice.</li>
+      <li><strong>Quotas still apply.</strong> The 12% management fee on a <code>p5.48xlarge</code> at $98/hour list price is roughly $11.76/hour or ~$8,600/month extra <em>per instance</em>. For GPU-heavy fleets, the surcharge maths is dramatic. Many teams keep GPU workloads on a self-managed or MNG node group and only put CPU workloads on Auto Mode.</li>
+      <li><strong>Time-slicing and MIG configurations</strong> need to be done at the pod level; you cannot pre-configure node-level GPU partitioning via custom userdata.</li>
+    </ul>
+
+    <h3>Windows containers</h3>
+
+    <p>Auto Mode does not support Windows nodes. Stay on MNGs for Windows workloads.</p>
+
+    <h3>Custom AMIs and bootstrap scripts</h3>
+
+    <p>If your security team mandates a hardened internal AMI (CIS benchmark with custom audit daemons, internal certificates, FIPS modules), Auto Mode is not an option. Custom userdata, custom kubelet flags, custom CNI overrides, all locked down. Bottlerocket is the only OS, and its configuration is set by AWS.</p>
+
+    <h3>HostPath, HostNetwork, and privileged workloads</h3>
+
+    <p>Bottlerocket has a read-only root filesystem with a minimal package set. Workloads that mount arbitrary host paths, run as privileged with broad capability sets, or depend on packages being installed on the host (debugging daemons, eBPF tracers that need kernel headers) will hit walls. Most of them are anti-patterns anyway; the few legitimate cases (some service meshes, some observability agents) need to be tested before migration.</p>
+
+    <h3>Daemonsets you can't replace</h3>
+
+    <p>Auto Mode bundles its own VPC CNI, kube-proxy, CoreDNS, Pod Identity agent, and node monitoring agent. You cannot install a competing implementation on the same nodes (e.g. Cilium replacing VPC CNI, NodeLocal DNSCache layered on top of CoreDNS). If you depend on those, Auto Mode is not a fit until AWS adds the integration points.</p>
+
+    <h3>Stateful workloads</h3>
+
+    <p>Stateful sets work, the EBS CSI driver is built in and the default gp3 storage class is reliable. The 21-day node refresh interacts with PVCs the way Karpenter normally does: the new node is provisioned in the same AZ as the volume, the volume re-attaches. Make sure your stateful workload's PodDisruptionBudget tolerates a node drain, otherwise the 21-day refresh can stall.</p>
+
+    <h2 id="migration-from-mng">Migrating from EKS Managed Node Groups to Auto Mode</h2>
+
+    <p>The good news: Auto Mode can be enabled on an existing EKS cluster alongside your existing MNGs. You do not need a new cluster, you do not need a blue/green migration, you can let workloads drain to Auto Mode nodes gradually.</p>
+
+    <h3>Phase 1 · Enable Auto Mode on the existing cluster</h3>
+
+    <pre><span class="cm"># Pre-flight: confirm cluster version supports Auto Mode</span>
+<span class="cm"># Auto Mode requires EKS 1.29+. Upgrade first if needed.</span>
+aws eks describe-cluster --name apps-prod --region eu-central-1 \
+  --query 'cluster.version'
+
+<span class="cm"># Enable Auto Mode on the existing cluster</span>
+aws eks update-cluster-config \
+  --name apps-prod \
+  --region eu-central-1 \
+  --compute-config enabled=true,nodePools=general-purpose,nodeRoleArn=$NODE_ROLE \
+  --kubernetes-network-config '{"elasticLoadBalancing":{"enabled":true}}' \
+  --storage-config '{"blockStorage":{"enabled":true}}'</pre>
+
+    <p>What this does:</p>
+
+    <ul>
+      <li>Enables the managed Karpenter controller in the cluster.</li>
+      <li>Creates the default <code>general-purpose</code> NodePool, which provisions <code>c</code>, <code>m</code>, and <code>r</code> instance families across multiple AZs.</li>
+      <li>Enables the managed ALB controller (creates the <code>eks-auto-alb</code> IngressClass and the <code>eks.amazonaws.com/nlb</code> LoadBalancerClass).</li>
+      <li>Enables the managed EBS CSI driver and the default gp3 storage class.</li>
+    </ul>
+
+    <p>Your existing MNGs are untouched. Their nodes keep running. Pods keep scheduling on them.</p>
+
+    <h3>Phase 2 · Create custom NodePools that mirror your MNG layout</h3>
+
+    <p>Before migrating any workload, define a NodePool for every MNG you intend to replace. Use the same label and taint keys/values that the MNGs use today, so deployments do not have to change their <code>nodeSelector</code> or <code>tolerations</code>. See the <a href="#workload-isolation">Workload Isolation</a> section above for the full <code>kubernetes-components</code> / <code>critical-addons</code> / <code>apps</code> NodePool examples.</p>
+
+    <p>If you want strict isolation in production, disable the default <code>general-purpose</code> NodePool now so the only pools available are the ones you defined.</p>
+
+    <h3>Phase 3 · Validate Auto Mode with a non-critical workload</h3>
+
+    <p>Pick something low-risk: a dev namespace, a batch job, an internal tool. Deploy it with the same nodeSelector and toleration it already uses for its MNG, and confirm it lands on an Auto Mode node provisioned by the matching NodePool:</p>
+
+    <pre><span class="ky">spec</span>:
+  <span class="ky">nodeSelector</span>:
+    <span class="ky">workload</span>: <span class="st">apps</span>
+  <span class="ky">tolerations</span>:
+    - <span class="ky">key</span>: <span class="st">dedicated</span>
+      <span class="ky">operator</span>: <span class="st">Equal</span>
+      <span class="ky">value</span>: <span class="st">apps</span>
+      <span class="ky">effect</span>: <span class="st">NoSchedule</span></pre>
+
+    <p>Verify with <code>kubectl get nodes -L karpenter.sh/nodepool,workload</code> that the new node has the expected NodePool ownership. Confirm provisioning latency is in the expected ~60 second range, an ALB created via the new IngressClass works, and a PVC against the new gp3 storage class binds and mounts. If any of these break, you want to know now, not after you have migrated half your production traffic.</p>
+
+    <h3>Phase 4 · Migrate workloads node group by node group</h3>
+
+    <p>Work in reverse priority order, least critical first. For each MNG, in this order: <code>apps</code> → <code>critical-addons</code> → <code>kubernetes-components</code>.</p>
+
+    <ol>
+      <li><strong>Cordon the MNG nodes.</strong> <code>kubectl cordon</code> every node in the target MNG so no new pods land on them.</li>
+      <li><strong>Roll the workload.</strong> <code>kubectl rollout restart deployment/...</code>. Because pods carry the same <code>nodeSelector</code> + <code>toleration</code> that the matching Auto Mode NodePool publishes, and the MNG nodes are cordoned, the new pods schedule onto Auto Mode nodes. No deployment YAML changes required.</li>
+      <li><strong>Watch placement.</strong> <code>kubectl get pods -o wide</code> should show new pods on Auto Mode nodes. If anything lands on a wrong node, double-check the NodePool's labels and taints match what the deployment selects.</li>
+      <li><strong>Drain and delete the MNG.</strong> Once the workloads are on Auto Mode, <code>kubectl drain</code> the old nodes, then delete the node group: <code>aws eks delete-nodegroup --cluster-name apps-prod --nodegroup-name &lt;name&gt;</code>.</li>
+      <li><strong>Wait a day before moving the next MNG.</strong> Let real traffic, weekday/weekend patterns, scheduled jobs, and any scheduled scale events hit the Auto Mode nodes before you commit further.</li>
+    </ol>
+
+    <h3>Phase 5 · Migrate the addons</h3>
+
+    <p>This is where MNG migrations get fiddly. Your existing cluster probably has:</p>
+
+    <ul>
+      <li>The AWS Load Balancer Controller installed via Helm.</li>
+      <li>The EBS CSI driver installed as an EKS managed addon.</li>
+      <li>The VPC CNI installed as an EKS managed addon.</li>
+      <li>CoreDNS and kube-proxy as EKS managed addons.</li>
+      <li>An external-dns / cert-manager / Prometheus stack that depends on the above.</li>
+    </ul>
+
+    <p>Auto Mode brings its own. Two coexisting installations of the AWS Load Balancer Controller will fight over ingress reconciliation. The fix:</p>
+
+    <ol>
+      <li><strong>Migrate Ingresses one at a time.</strong> Each Ingress lists an <code>ingressClassName</code>. The legacy Helm controller watches its own class (<code>alb</code>). The managed Auto Mode controller watches <code>eks-auto-alb</code>. Update Ingresses to the new class, confirm a new ALB is created and DNS swung over (Route 53 weighted records work well here), then delete the old ALB.</li>
+      <li><strong>Migrate Services of type LoadBalancer</strong> by switching their <code>loadBalancerClass</code> to <code>eks.amazonaws.com/nlb</code>.</li>
+      <li><strong>Once no resources reference the legacy classes</strong>, uninstall the Helm controller release.</li>
+      <li><strong>Repeat for EBS CSI.</strong> The legacy addon and the Auto Mode driver coexist, but you should remove the legacy EKS managed addon once all PVCs are using the Auto Mode storage class.</li>
+      <li><strong>Disable the legacy CoreDNS, kube-proxy, and VPC CNI addons</strong> only when no MNG nodes remain in the cluster, since Auto Mode's managed versions only run on Auto Mode nodes.</li>
+    </ol>
+
+    <h3>Phase 6 · Decommission</h3>
+
+    <p>Once every workload runs on Auto Mode nodes and every addon has been migrated to its Auto Mode equivalent:</p>
+
+    <ul>
+      <li>Delete the last MNGs.</li>
+      <li>Delete the legacy IAM roles, ASGs, launch templates that the MNGs created.</li>
+      <li>Delete the legacy Helm releases (LB controller, anything else replaced).</li>
+      <li>Delete the legacy EKS managed addons (EBS CSI, CoreDNS, kube-proxy, VPC CNI).</li>
+      <li>Verify your Terraform / CDK / Pulumi state matches reality, the cluster definition should now contain Auto Mode flags and NodePool CRDs, nothing else.</li>
+    </ul>
+
+    <h2 id="migration-from-karpenter">Migrating from Self-Hosted Karpenter to Auto Mode</h2>
+
+    <p>If you have already done the work to move from MNGs to self-hosted Karpenter, the migration to Auto Mode is shorter, but there are gotchas because both Karpenters run inside the same cluster during the transition.</p>
+
+    <h3>The core problem: two Karpenters, one cluster</h3>
+
+    <p>Self-hosted Karpenter uses the community CRDs: <code>NodePool</code> (group <code>karpenter.sh</code>) and <code>EC2NodeClass</code> (group <code>karpenter.k8s.aws</code>). Auto Mode uses a different CRD set: <code>NodePool</code> (group <code>karpenter.sh</code>, same name and group) and <code>NodeClass</code> (group <code>eks.amazonaws.com</code>, different from EC2NodeClass).</p>
+
+    <p>The NodePool resource is shared between both, which means a single NodePool can only be claimed by one of them. They distinguish ownership by inspecting the NodePool's <code>spec.template.spec.nodeClassRef</code>:</p>
+
+    <ul>
+      <li>If <code>nodeClassRef.group</code> is <code>karpenter.k8s.aws</code>, the community Karpenter handles it.</li>
+      <li>If <code>nodeClassRef.group</code> is <code>eks.amazonaws.com</code>, Auto Mode handles it.</li>
+    </ul>
+
+    <p>This is the lever you use during migration: keep your existing NodePools pointing at <code>EC2NodeClass</code>, create new NodePools pointing at the Auto Mode <code>NodeClass</code>, and let workloads shift between them.</p>
+
+    <h3>Phase 1 · Enable Auto Mode alongside self-hosted Karpenter</h3>
+
+    <pre>aws eks update-cluster-config \
+  --name apps-prod \
+  --region eu-central-1 \
+  --compute-config enabled=true,nodePools=general-purpose,nodeRoleArn=$NODE_ROLE</pre>
+
+    <p>This creates the default <code>general-purpose</code> NodePool managed by Auto Mode. Your existing Karpenter NodePools continue to provision <code>EC2NodeClass</code> nodes alongside it.</p>
+
+    <h3>Phase 2 · Identify mutually exclusive workloads</h3>
+
+    <p>To stop both Karpenters from competing for the same pending pods, use taints on the Auto Mode NodePool that only the workloads you want to migrate tolerate. Auto Mode nodes do not get the <code>karpenter.sh/registered=true</code> label that self-hosted Karpenter sets, so node-affinity rules referencing that label naturally keep workloads on self-hosted nodes until you change them.</p>
+
+    <pre><span class="cm"># Auto Mode NodePool with a taint that opt-in workloads tolerate</span>
+<span class="ky">apiVersion</span>: <span class="st">karpenter.sh/v1</span>
+<span class="ky">kind</span>: <span class="st">NodePool</span>
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: <span class="st">auto-mode-pool</span>
+<span class="ky">spec</span>:
+  <span class="ky">template</span>:
+    <span class="ky">spec</span>:
+      <span class="ky">nodeClassRef</span>:
+        <span class="ky">group</span>: <span class="st">eks.amazonaws.com</span>
+        <span class="ky">kind</span>: <span class="st">NodeClass</span>
+        <span class="ky">name</span>: <span class="st">default</span>
+      <span class="ky">taints</span>:
+        - <span class="ky">key</span>: <span class="st">workload</span>
+          <span class="ky">value</span>: <span class="st">auto-mode</span>
+          <span class="ky">effect</span>: <span class="st">NoSchedule</span></pre>
+
+    <h3>Phase 3 · Migrate workloads NodePool by NodePool</h3>
+
+    <ol>
+      <li>Start with a non-critical NodePool's workloads. Add the toleration to those deployments. Roll them. They schedule on Auto Mode nodes.</li>
+      <li>Once the old self-hosted NodePool has no pods, scale it to <code>limits.cpu: 0</code> so Karpenter stops provisioning new nodes for it, and let the existing nodes drain via consolidation or expiration.</li>
+      <li>Repeat per NodePool, leaving the system / addons NodePool for last.</li>
+    </ol>
+
+    <h3>Phase 4 · Migrate the addons that lived on self-hosted Karpenter</h3>
+
+    <p>The big one is Karpenter itself. The self-hosted Karpenter controller pod runs somewhere, often on a small MNG you kept around for system pods, or on the Karpenter-managed nodes themselves. You cannot delete it while it is still managing nodes. The sequence:</p>
+
+    <ol>
+      <li>Migrate every workload to Auto Mode NodePools.</li>
+      <li>Delete every self-hosted Karpenter <code>NodePool</code> (the ones with <code>EC2NodeClass</code> refs). Karpenter will deprovision the nodes it provisioned.</li>
+      <li>Helm uninstall the Karpenter release.</li>
+      <li>Delete the Karpenter CRDs (<code>EC2NodeClass</code> is no longer in use), and the IAM role / SQS interruption queue / EventBridge rules that Karpenter created.</li>
+      <li>Migrate the AWS Load Balancer Controller, EBS CSI, CoreDNS, kube-proxy, and VPC CNI the same way as in the MNG-to-Auto-Mode flow, since those are also replaced by Auto Mode managed versions.</li>
+    </ol>
+
+    <h3>What to watch during the Karpenter migration</h3>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Signal</th>
+          <th>What to watch</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Pending pods</td>
+          <td class="good">Should drain within ~60s on either NodePool</td>
+          <td>If they pile up on the wrong side, check tolerations</td>
+        </tr>
+        <tr>
+          <td>Node count drift</td>
+          <td>Self-hosted nodes count drops as Auto Mode rises</td>
+          <td>Use <code>kubectl get nodes -L karpenter.sh/nodepool</code> to track per-pool</td>
+        </tr>
+        <tr>
+          <td>Cost line on Cost Explorer</td>
+          <td class="mid">EC2 cost roughly flat, Auto Mode line appears</td>
+          <td>Tag NodePools so the split is visible</td>
+        </tr>
+        <tr>
+          <td>Spot interruption recovery</td>
+          <td class="good">Auto Mode pre-provisions like community Karpenter</td>
+          <td>No action, verify on next interruption event</td>
+        </tr>
+        <tr>
+          <td>ALB / NLB churn</td>
+          <td class="bad">Switching IngressClass replaces the load balancer</td>
+          <td>Use Route 53 weighted records to swing traffic, not in-place swap</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>Don't skip the parallel-running phase.</strong> Whether you are coming from MNGs or from self-hosted Karpenter, run both side by side for two to four weeks before deleting the legacy installation. The cost of running both is a handful of euros per month; the cost of discovering a workload-specific incompatibility after you have already deleted the safety net is much higher.
+    </div>
+
+    <h2 id="when-not-to-use">When Auto Mode Is the Wrong Choice</h2>
+
+    <p>Auto Mode is not a universal upgrade. Skip it when any of these apply:</p>
+
+    <ul>
+      <li><strong>Custom AMI requirements.</strong> CIS-hardened internal builds, FIPS modules, regulated environments that demand AMI control.</li>
+      <li><strong>Windows containers.</strong> Not supported.</li>
+      <li><strong>Specialised CNI.</strong> Cilium, Calico, or any CNI that replaces VPC CNI rather than layering on top.</li>
+      <li><strong>Custom kubelet configuration.</strong> Reserved system resources, eviction thresholds, log rotation, anything you set via kubelet flags or config files.</li>
+      <li><strong>SSH / SSM debugging is part of your incident response.</strong> Bottlerocket is API-only; debugging is via kubectl, logs, and the Bottlerocket control container, not shell access.</li>
+      <li><strong>You have already invested deeply in Karpenter ops.</strong> If your team has built dashboards, runbooks, drift policies, and consolidation tuning for self-hosted Karpenter, the 12% surcharge buys very little additional value.</li>
+      <li><strong>GovCloud or restricted environments.</strong> Auto Mode availability in GovCloud and isolated regions lags behind commercial regions, check before planning.</li>
+      <li><strong>GPU-heavy fleets at scale.</strong> The 12% fee on <code>p5</code> and <code>g6e</code> instances is brutal at production scale. Consider keeping GPUs on MNGs.</li>
+    </ul>
+
+    <h2 id="decision-framework">The Decision Framework</h2>
+
+    <p>Skip the feature list and ask in order:</p>
+
+    <ol>
+      <li><strong>Do you have non-negotiable AMI, CNI, or kubelet customisation requirements?</strong> → MNG or self-managed. Auto Mode is not flexible enough.</li>
+      <li><strong>Are you starting a new EKS cluster?</strong> → Auto Mode. The simplest possible production-grade EKS today.</li>
+      <li><strong>Is your team small (under ~10 platform engineers) and is "stop maintaining Karpenter" a stated goal?</strong> → Auto Mode. The 12% buys back real engineering hours.</li>
+      <li><strong>Do you already have a healthy, optimised self-hosted Karpenter setup?</strong> → Stay on it. Re-evaluate when your platform team shrinks or when AWS reduces the management fee.</li>
+      <li><strong>Are you running heavy GPU workloads?</strong> → Hybrid. Auto Mode for CPU workloads, MNG or self-managed for GPU nodes.</li>
+      <li><strong>Are you locked into a specific Karpenter version or feature ahead of AWS's managed rollout?</strong> → Stay on self-hosted Karpenter for now.</li>
+    </ol>
+
+    <pre><span class="cm"># Quick decision tree</span>
+
+Need custom AMI / kubelet / CNI?
+  <span class="st">YES</span> → Self-managed or MNG
+  <span class="st">NO</span>  → New cluster?
+          <span class="st">YES</span> → <span class="ky">EKS Auto Mode</span>
+          <span class="st">NO</span>  → Already on self-hosted Karpenter and happy?
+                  <span class="st">YES</span> → Stay; revisit when team or scope changes
+                  <span class="st">NO</span>  → Migrating from MNG?
+                          <span class="st">YES</span> → <span class="ky">Skip Karpenter, go straight to Auto Mode</span>
+                          <span class="st">NO</span>  → Karpenter pain points?
+                                  <span class="st">YES</span> → <span class="ky">Migrate to Auto Mode</span>
+                                  <span class="st">NO</span>  → Stay</pre>
+
+    <h2 id="takeaways">Key Takeaways</h2>
+
+    <ol>
+      <li><strong>Auto Mode is managed Karpenter plus managed addons.</strong> Same Kubernetes API, same NodePool model, but AWS runs Karpenter, the LB controller, the CSI driver, the CNI, kube-proxy, and CoreDNS as a single managed unit.</li>
+      <li><strong>The 12% surcharge is the headline cost.</strong> Applied to every EC2 instance Auto Mode provisions, on top of the standard on-demand or Spot price. At small scale it is noise. At 50+ nodes it is a real FinOps line item.</li>
+      <li><strong>Whether it is cheaper or more expensive depends on your current consolidation.</strong> If your MNGs run hot and lean, Auto Mode is a 9-12% premium. If your MNGs are sized for peak with idle headroom, Auto Mode's Karpenter consolidation will more than pay for the fee.</li>
+      <li><strong>Bottlerocket is non-negotiable.</strong> No SSH, no SSM, no custom AMI. Workloads that need host access, custom packages, or specialised CNI are not Auto Mode candidates.</li>
+      <li><strong>GPU workloads need a separate decision.</strong> The 12% on a <code>p5.48xlarge</code> is several thousand euros a month per instance. Hybrid setups, Auto Mode for CPU plus MNGs for GPU, are common.</li>
+      <li><strong>You can migrate gradually from either MNGs or self-hosted Karpenter.</strong> Both legacy and Auto Mode run side by side. Use taints, tolerations, and NodeClass references as the routing layer during migration. Plan two to four weeks of overlap before deleting the legacy installation.</li>
+      <li><strong>For new clusters and lean platform teams, Auto Mode is the new default.</strong> The cost of building MNG plus Karpenter plus addon automation from scratch outweighs the surcharge, almost always.</li>
+    </ol>
+
+    <h2 id="reference">Reference</h2>
+    <ul>
+      <li>EKS Auto Mode documentation: <a href="https://docs.aws.amazon.com/eks/latest/userguide/automode.html" target="_blank" rel="noopener">docs.aws.amazon.com/eks/latest/userguide/automode.html</a></li>
+      <li>EKS pricing (including Auto Mode fees): <a href="https://aws.amazon.com/eks/pricing/" target="_blank" rel="noopener">aws.amazon.com/eks/pricing</a></li>
+      <li>Karpenter on EKS (self-hosted deep dive): <a href="/blog/eks-scaling-with-karpenter">Karpenter on EKS: Right-Sized Nodes in 60 Seconds</a></li>
+      <li>Choosing a node scaler: <a href="/blog/eks-cluster-autoscaler-vs-karpenter">Cluster Autoscaler vs Karpenter</a></li>
+      <li>Cost-optimised compute: <a href="/blog/eks-spot-instances">EKS Spot Instances: A Practical Guide</a></li>
+      <li>Bottlerocket OS: <a href="https://bottlerocket.dev/" target="_blank" rel="noopener">bottlerocket.dev</a></li>
+    </ul>
+
+  </article>
+
+  <div class="article-divider"></div>
+  <footer class="article-footer">
+    <div class="article-author">
+      <div class="author-avatar">R³</div>
+      <div>
+        <div class="author-name">Richie Richard Rajkumar</div>
+        <div class="author-role">Infrastructure Architect · Platform Leader · Berlin</div>
+      </div>
+    </div>
+    <a href="/blog" class="back-btn">← All articles</a>
+  </footer>
+
+</div><!-- /article-page -->
+
+<script src="/js/main.js"></script>
+</body>
+</html>
