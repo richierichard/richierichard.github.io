@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Five AWS MCP Servers Worth Wiring Up, and the IAM Boundary That Makes Them Safe · Richie Richard Rajkumar</title>
+
+<meta name="description" content="The five officially maintained AWS Labs MCP servers (API, CloudWatch, Billing and Cost Management, CloudTrail, IAM), with copy-and-paste example prompts for each one, AWS's new managed remote MCP server, and the read-only IAM role and permissions boundary you should build before you connect any of them.">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://www.richierichard.com/blog/aws-mcp-servers">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.richierichard.com/blog/aws-mcp-servers">
+<meta property="og:title" content="Five AWS MCP Servers Worth Wiring Up, and the IAM Boundary That Makes Them Safe · Richie Richard Rajkumar">
+<meta property="og:description" content="Five AWS Labs MCP servers with example prompts for each, the managed alternative AWS shipped in May 2026, and the IAM work that has to come first.">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+
+<style>
+/* ── ARTICLE PAGE ── */
+.article-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 7rem 2rem 5rem;
+  position: relative;
+  z-index: 1;
+}
+.article-top { max-width: 960px; }
+
+.article-intro {
+  max-width: 960px;
+  margin-bottom: 2.5rem;
+  color: var(--text);
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+.article-intro p { margin-bottom: 1.25rem; }
+.article-intro code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+
+.article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  margin-bottom: 2.5rem;
+  transition: color 0.2s;
+}
+.article-back:hover { color: var(--accent); }
+
+.article-header { margin-bottom: 2.5rem; }
+.article-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.article-tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.2);
+  letter-spacing: 0.04em;
+}
+body.light .article-tag { border-color: rgba(2,132,199,0.25); }
+
+.article-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.article-title span { color: var(--accent); }
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.article-meta-dot { opacity: 0.3; }
+
+.article-hero {
+  width: 100%;
+  max-width: 960px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+}
+
+.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 2.5rem 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 6rem;
+}
+.article-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 1.75rem 0 0.5rem;
+}
+.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.article-body li { margin-bottom: 0.4rem; color: var(--text); }
+.article-body strong { color: var(--text); font-weight: 700; }
+.article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+.article-body pre {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.article-body code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+.article-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 1em;
+}
+.article-body pre .cm { color: var(--muted); }
+.article-body pre .ky { color: var(--accent); }
+.article-body pre .st { color: #f9a8d4; }
+.article-body pre .nm { color: #fde68a; }
+
+.callout {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+.callout strong { color: var(--accent); }
+
+.table-scroll { overflow-x: auto; margin-bottom: 1.75rem; }
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
+}
+.table-scroll .compare-table { margin-bottom: 0; min-width: 640px; }
+.compare-table th {
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.compare-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .good { color: var(--accent); font-weight: 700; }
+.compare-table .bad  { color: #f87171; }
+.compare-table .mid  { color: #fbbf24; }
+
+.prompt-list {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1.1rem 1.35rem;
+  margin-bottom: 1.5rem;
+}
+.prompt-list-label {
+  font-family: var(--mono);
+  font-size: 0.67rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+}
+.article-body .prompt-list ul {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+.article-body .prompt-list li {
+  position: relative;
+  padding-left: 1.4rem;
+  margin-bottom: 0.85rem;
+  font-size: 0.93rem;
+  line-height: 1.65;
+}
+.article-body .prompt-list li:last-child { margin-bottom: 0; }
+.prompt-list li::before {
+  content: "\25B8";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+.prompt-list li q {
+  quotes: "\201C" "\201D";
+  color: var(--text);
+}
+.prompt-list li .why {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+  line-height: 1.55;
+}
+
+.conversation {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+.conversation .human {
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+.conversation .ai {
+  color: #a78bfa;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+.conversation .msg {
+  margin-bottom: 1rem;
+  padding-left: 0.5rem;
+  color: var(--text);
+}
+.conversation .msg:last-child { margin-bottom: 0; }
+.conversation code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+
+.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+
+.article-footer {
+  max-width: 960px;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.article-author { display: flex; align-items: center; gap: 0.85rem; }
+.author-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
+  flex-shrink: 0;
+}
+.author-name { font-weight: 700; font-size: 0.9rem; }
+.author-role { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--accent); color: var(--accent);
+  font-weight: 700; font-size: 0.85rem; text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #000; }
+</style>
+</head>
+<body class="light">
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
+    <span class="nav-logo-divider"></span>
+    <span class="nav-logo-right">
+      <span class="nav-logo-name-line"><span class="nav-logo-name">Richie Richard </span><span class="nav-logo-surname">Rajkumar</span></span>
+      <span class="nav-logo-tag">build <span class="nav-logo-arrow">▸</span> scale <span class="nav-logo-arrow">▸</span> secure</span>
+    </span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Dark</span>
+  </button>
+</nav>
+
+<div class="article-page">
+
+  <div class="article-top">
+    <a href="/blog" class="article-back">← Back to Blog</a>
+    <header class="article-header">
+      <div class="article-tags">
+        <span class="article-tag">AWS</span>
+        <span class="article-tag">AI</span>
+        <span class="article-tag">DevOps</span>
+        <span class="article-tag">FinOps</span>
+        <span class="article-tag">Infrastructure</span>
+        <span class="article-tag">Platform Engineering</span>
+      </div>
+      <h1 class="article-title">Five AWS MCP Servers Worth Wiring Up, <span>and the IAM Boundary That Makes Them Safe</span></h1>
+      <div class="article-meta">
+        <span>Richie Richard Rajkumar</span>
+        <span class="article-meta-dot">·</span>
+        <span>September 2026</span>
+        <span class="article-meta-dot">·</span>
+        <span>19 min read</span>
+      </div>
+    </header>
+  </div>
+
+  <div class="article-hero">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" width="760" height="420" style="width:100%;height:auto;display:block;">
+      <defs>
+        <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0a0c10"/>
+          <stop offset="100%" stop-color="#12151c"/>
+        </linearGradient>
+        <marker id="arrow-blue" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+          <polygon points="0 0, 7 2.5, 0 5" fill="#38bdf8"/>
+        </marker>
+        <marker id="arrow-grey" markerWidth="6" markerHeight="4.5" refX="6" refY="2.25" orient="auto">
+          <polygon points="0 0, 6 2.25, 0 4.5" fill="#7a8099"/>
+        </marker>
+      </defs>
+      <rect width="760" height="420" fill="url(#bg-grad)"/>
+
+      <!-- TITLE -->
+      <text x="380" y="26" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="1.6">ONE AGENT · FIVE SERVERS · ONE SCOPED ROLE BETWEEN THEM AND YOUR ACCOUNT</text>
+
+      <!-- MCP CLIENT -->
+      <rect x="30" y="150" width="120" height="96" rx="10" fill="rgba(167,139,250,0.07)" stroke="#a78bfa" stroke-width="0.9"/>
+      <text x="90" y="172" font-family="'Fira Code',monospace" font-size="8" fill="#a78bfa" text-anchor="middle" letter-spacing="1.2">MCP CLIENT</text>
+      <text x="90" y="192" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">Claude Code</text>
+      <text x="90" y="206" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">Amazon Q CLI</text>
+      <text x="90" y="220" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099" text-anchor="middle">Cursor · Kiro</text>
+      <text x="90" y="238" font-family="'Fira Code',monospace" font-size="7" fill="#4ade80" text-anchor="middle">stdio · uvx</text>
+
+      <line x1="154" y1="198" x2="190" y2="198" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-blue)"/>
+
+      <!-- IAM BOUNDARY -->
+      <rect x="196" y="52" width="300" height="292" rx="10" fill="rgba(56,189,248,0.04)" stroke="#38bdf8" stroke-width="0.7" stroke-dasharray="4 2"/>
+      <text x="346" y="70" font-family="'Fira Code',monospace" font-size="8" fill="#38bdf8" text-anchor="middle" letter-spacing="1.2">IAM ROLE · READ-ONLY · PERMISSIONS BOUNDARY</text>
+
+      <!-- SERVER PILLS -->
+      <rect x="212" y="80" width="268" height="42" rx="7" fill="rgba(56,189,248,0.08)" stroke="#38bdf8" stroke-width="0.6"/>
+      <text x="224" y="96" font-family="'Fira Code',monospace" font-size="8" fill="#e6e8ef">1 · aws-api-mcp-server</text>
+      <text x="224" y="112" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099">call_aws · suggest_aws_commands</text>
+
+      <rect x="212" y="132" width="268" height="42" rx="7" fill="rgba(56,189,248,0.08)" stroke="#38bdf8" stroke-width="0.6"/>
+      <text x="224" y="148" font-family="'Fira Code',monospace" font-size="8" fill="#e6e8ef">2 · cloudwatch-mcp-server</text>
+      <text x="224" y="164" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099">alarms · metrics · logs insights · promql</text>
+
+      <rect x="212" y="184" width="268" height="42" rx="7" fill="rgba(56,189,248,0.08)" stroke="#38bdf8" stroke-width="0.6"/>
+      <text x="224" y="200" font-family="'Fira Code',monospace" font-size="8" fill="#e6e8ef">3 · billing-cost-management</text>
+      <text x="224" y="216" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099">cost explorer · anomalies · optimizer</text>
+
+      <rect x="212" y="236" width="268" height="42" rx="7" fill="rgba(56,189,248,0.08)" stroke="#38bdf8" stroke-width="0.6"/>
+      <text x="224" y="252" font-family="'Fira Code',monospace" font-size="8" fill="#e6e8ef">4 · cloudtrail-mcp-server</text>
+      <text x="224" y="268" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099">lookup_events · lake_query (SQL)</text>
+
+      <rect x="212" y="288" width="268" height="42" rx="7" fill="rgba(167,139,250,0.08)" stroke="#a78bfa" stroke-width="0.6"/>
+      <text x="224" y="304" font-family="'Fira Code',monospace" font-size="8" fill="#e6e8ef">5 · iam-mcp-server</text>
+      <text x="224" y="320" font-family="'Fira Code',monospace" font-size="7" fill="#fde68a">separate role · --readonly</text>
+
+      <!-- ARROWS OUT -->
+      <line x1="502" y1="101" x2="530" y2="101" stroke="#7a8099" stroke-width="1" marker-end="url(#arrow-grey)"/>
+      <line x1="502" y1="153" x2="530" y2="153" stroke="#7a8099" stroke-width="1" marker-end="url(#arrow-grey)"/>
+      <line x1="502" y1="205" x2="530" y2="205" stroke="#7a8099" stroke-width="1" marker-end="url(#arrow-grey)"/>
+      <line x1="502" y1="257" x2="530" y2="257" stroke="#7a8099" stroke-width="1" marker-end="url(#arrow-grey)"/>
+      <line x1="502" y1="309" x2="530" y2="309" stroke="#7a8099" stroke-width="1" marker-end="url(#arrow-grey)"/>
+
+      <!-- AWS SURFACES -->
+      <rect x="534" y="82" width="196" height="38" rx="6" fill="rgba(122,128,153,0.07)" stroke="#2a3040" stroke-width="0.7"/>
+      <text x="546" y="98" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">EC2 · S3 · Lambda · RDS · VPC</text>
+      <text x="546" y="112" font-family="'Fira Code',monospace" font-size="6.5" fill="#4ade80">the whole CLI surface</text>
+
+      <rect x="534" y="134" width="196" height="38" rx="6" fill="rgba(122,128,153,0.07)" stroke="#2a3040" stroke-width="0.7"/>
+      <text x="546" y="150" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">CloudWatch Metrics · Logs</text>
+      <text x="546" y="164" font-family="'Fira Code',monospace" font-size="6.5" fill="#4ade80">what broke</text>
+
+      <rect x="534" y="186" width="196" height="38" rx="6" fill="rgba(122,128,153,0.07)" stroke="#2a3040" stroke-width="0.7"/>
+      <text x="546" y="202" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">Cost Explorer · Budgets · Hub</text>
+      <text x="546" y="216" font-family="'Fira Code',monospace" font-size="6.5" fill="#fde68a">what it costs</text>
+
+      <rect x="534" y="238" width="196" height="38" rx="6" fill="rgba(122,128,153,0.07)" stroke="#2a3040" stroke-width="0.7"/>
+      <text x="546" y="254" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">CloudTrail · Lake (10 yrs)</text>
+      <text x="546" y="268" font-family="'Fira Code',monospace" font-size="6.5" fill="#4ade80">when it happened</text>
+
+      <rect x="534" y="290" width="196" height="38" rx="6" fill="rgba(122,128,153,0.07)" stroke="#2a3040" stroke-width="0.7"/>
+      <text x="546" y="306" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">IAM users · roles · policies</text>
+      <text x="546" y="320" font-family="'Fira Code',monospace" font-size="6.5" fill="#4ade80">who did it</text>
+
+      <!-- AUDIT STRIP -->
+      <rect x="30" y="356" width="700" height="30" rx="7" fill="rgba(74,222,128,0.04)" stroke="#2a3040" stroke-width="0.6"/>
+      <text x="44" y="375" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80">CloudTrail</text>
+      <text x="112" y="375" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">every API call the agent issues lands here, under the role's session identity. Review it like a new hire's first week.</text>
+
+      <!-- TAGLINE -->
+      <text x="380" y="408" font-family="'Nunito',sans-serif" font-size="11.5" fill="#38bdf8" text-anchor="middle" font-weight="700">Scope the Role First · Add One Server · Compose Later</text>
+    </svg>
+  </div><!-- /article-hero -->
+
+  <div class="article-intro">
+    <p>Most of the time an infrastructure engineer loses to AWS is not spent solving the problem. It is spent on retrieval. You know exactly what you want to know, which staging instances have been idle for a fortnight, and the next ten minutes go on remembering the shape of the <code>--filters</code> argument for <code>describe-instances</code>, then pivoting to CloudWatch because the CLI does not return utilisation, then reconciling two lists by eye. The thinking took fifteen seconds. The retrieval took a quarter of an hour.</p>
+    <p>MCP servers collapse that gap. An agent holding AWS credentials can construct the call, run it, read the result, and issue the follow-up call without you context-switching between four consoles. The catch is that searching for "AWS MCP server" returns a field of abandoned forks, half-written wrappers, and blog posts describing packages that no longer install. So I limited this to the servers that live in <a href="https://github.com/awslabs/mcp" target="_blank" rel="noopener">awslabs/mcp</a>, are officially maintained by AWS Labs, and are still being shipped in 2026. I checked each one against its current documentation while writing this, and the package names and tool lists below are what the docs say today, not what they said last year.</p>
+    <p>There are two things I want to spend more time on than the usual list does. The first is <strong>the IAM work that comes before any of this</strong>, because the interesting failure mode is not a broken server, it is a read-only role that quietly turns out to include <code>s3:GetObject</code>. The second is <strong>AWS's own managed MCP server</strong>, which went generally available in May 2026 and changes the calculus on whether you should be running these processes locally at all.</p>
+  </div>
+
+  <article class="article-body">
+
+    <h2 id="iam-first">IAM First, Servers Second</h2>
+
+    <p>Every server here works the same way: it takes the AWS credentials you hand it and makes API calls on your behalf. There is no sandbox, no per-tool permission model, and no server-side restriction that is meaningfully independent of IAM. The AWS API MCP Server documentation is admirably direct about this: "IAM permissions remain the primary and most reliable security control." That sentence is the whole security architecture. Everything else is a convenience flag.</p>
+
+    <p>So before installing anything, create a dedicated role. Not your engineer role. Not an admin role with a mental note to be careful. A role that exists only to be assumed by an agent, so that when you read CloudTrail six weeks from now you can tell agent activity from human activity by the principal alone.</p>
+
+    <pre><span class="cm"># The role an agent assumes. Short sessions, MFA on the human upstream,</span>
+<span class="cm"># and a boundary that survives someone later attaching a wider policy.</span>
+resource <span class="st">"aws_iam_role"</span> <span class="st">"mcp_readonly"</span> {
+  name                 = <span class="st">"mcp-agent-readonly"</span>
+  max_session_duration = <span class="nm">3600</span>
+  permissions_boundary = aws_iam_policy.mcp_boundary.arn
+
+  assume_role_policy = jsonencode({
+    Version = <span class="st">"2012-10-17"</span>
+    Statement = [{
+      Effect    = <span class="st">"Allow"</span>
+      Action    = [<span class="st">"sts:AssumeRole"</span>, <span class="st">"sts:TagSession"</span>]
+      Principal = { AWS = <span class="st">"arn:aws:iam::${var.account_id}:root"</span> }
+      Condition = {
+        StringEquals = { <span class="st">"aws:PrincipalTag/MCPAgent"</span> = <span class="st">"true"</span> }
+        Bool         = { <span class="st">"aws:MultiFactorAuthPresent"</span> = <span class="st">"true"</span> }
+      }
+    }]
+  })
+}
+
+resource <span class="st">"aws_iam_role_policy_attachment"</span> <span class="st">"mcp_readonly"</span> {
+  role       = aws_iam_role.mcp_readonly.name
+  policy_arn = <span class="st">"arn:aws:iam::aws:policy/ReadOnlyAccess"</span>
+}</pre>
+
+    <h3>ReadOnlyAccess reads your data, not just your metadata</h3>
+
+    <p>This is the part that gets skipped. <code>ReadOnlyAccess</code> is not a resource-inventory policy. It grants read across the data plane too, which includes <code>s3:GetObject</code>, and depending on the current revision of the policy, secret and parameter reads as well. An agent with that role attached is one confused tool call away from pulling the contents of an object into a conversation transcript that then gets stored by whatever client you are using.</p>
+
+    <p>A permissions boundary fixes this properly, because unlike a policy someone can detach, a boundary caps the role's effective permissions no matter what gets attached to it later.</p>
+
+    <pre>resource <span class="st">"aws_iam_policy"</span> <span class="st">"mcp_boundary"</span> {
+  name = <span class="st">"mcp-agent-boundary"</span>
+  policy = jsonencode({
+    Version = <span class="st">"2012-10-17"</span>
+    Statement = [
+      { Effect = <span class="st">"Allow"</span>, Action = <span class="st">"*"</span>, Resource = <span class="st">"*"</span> },
+      {
+        <span class="cm"># Metadata yes, contents no.</span>
+        Effect = <span class="st">"Deny"</span>
+        Action = [
+          <span class="st">"s3:GetObject"</span>,
+          <span class="st">"s3:GetObjectVersion"</span>,
+          <span class="st">"secretsmanager:GetSecretValue"</span>,
+          <span class="st">"ssm:GetParameter"</span>,
+          <span class="st">"ssm:GetParameters"</span>,
+          <span class="st">"ssm:GetParametersByPath"</span>,
+          <span class="st">"kms:Decrypt"</span>,
+          <span class="st">"dynamodb:GetItem"</span>,
+          <span class="st">"dynamodb:Scan"</span>,
+          <span class="st">"dynamodb:Query"</span>,
+          <span class="st">"lambda:GetFunction"</span>,
+          <span class="st">"iam:*"</span>,
+          <span class="st">"sts:AssumeRole"</span>
+        ]
+        Resource = <span class="st">"*"</span>
+      }
+    ]
+  })
+}</pre>
+
+    <p>Two notes on that deny list. <code>lambda:GetFunction</code> returns a presigned URL to the deployment package, so it is a code-exfiltration path dressed as a metadata call. And <code>iam:*</code> is denied here deliberately, which means this role cannot be used for the IAM server. That is the point: an access-review tool and a general investigation tool should not share a principal. Give the IAM server its own role scoped to <code>iam:List*</code>, <code>iam:Get*</code>, <code>iam:Simulate*</code>, and nothing else.</p>
+
+    <h3>The Cost Explorer gap</h3>
+
+    <p><code>ReadOnlyAccess</code> also does not cover Cost Explorer, Compute Optimizer, or Cost Optimization Hub, so the billing server will fail with access-denied errors that look like a broken install. Attach these explicitly:</p>
+
+    <pre>resource <span class="st">"aws_iam_policy"</span> <span class="st">"mcp_cost_read"</span> {
+  name = <span class="st">"mcp-agent-cost-read"</span>
+  policy = jsonencode({
+    Version = <span class="st">"2012-10-17"</span>
+    Statement = [{
+      Effect = <span class="st">"Allow"</span>
+      Action = [
+        <span class="st">"ce:Get*"</span>, <span class="st">"ce:Describe*"</span>, <span class="st">"ce:List*"</span>,
+        <span class="st">"compute-optimizer:Get*"</span>, <span class="st">"compute-optimizer:Describe*"</span>,
+        <span class="st">"cost-optimization-hub:Get*"</span>, <span class="st">"cost-optimization-hub:List*"</span>,
+        <span class="st">"budgets:Describe*"</span>, <span class="st">"budgets:View*"</span>,
+        <span class="st">"savingsplans:Describe*"</span>, <span class="st">"savingsplans:List*"</span>
+      ]
+      Resource = <span class="st">"*"</span>
+    }]
+  })
+}</pre>
+
+    <div class="callout">
+      <strong>Turn CloudTrail on for this role before the first query, not after the first surprise.</strong> The single most useful artefact from running agents against AWS is a queryable log of every call one made under your credentials. You are accountable for what runs under that role regardless of whether a person or a model composed the request, and the only way that accountability is real rather than rhetorical is if you can reconstruct the sequence afterwards.
+    </div>
+
+    <h2 id="the-five">The Five Servers</h2>
+
+    <p>All five install identically. They are Python packages published to PyPI, run over stdio, and launched with <code>uvx</code> so you are not managing virtualenvs. SSE transport was removed from these servers in 2025; stdio is the only supported transport. Any client that speaks MCP works, including Claude Code, Claude Desktop, Amazon Q Developer CLI, Cursor, and Kiro.</p>
+
+    <h3>1 · AWS API MCP Server</h3>
+
+    <p><strong>Package:</strong> <code>awslabs.aws-api-mcp-server</code></p>
+
+    <p>The broadest of the five, and the right default. It exposes the AWS CLI itself as a natural-language interface, which means its surface area is effectively every service the CLI covers. Three tools do the work: <code>call_aws</code> executes a validated CLI command, <code>suggest_aws_commands</code> proposes commands from a description, and <code>get_execution_plan</code> (experimental) sketches multi-step approaches.</p>
+
+    <p>The validation step matters more than it sounds. The server checks the command is syntactically valid against the CLI's own model before executing, so the common agent failure of inventing a plausible-looking flag that does not exist gets caught locally rather than producing a confusing API error.</p>
+
+    <pre><span class="cm">// ~/.aws-mcp/config.json (or your client's MCP config)</span>
+{
+  <span class="ky">"mcpServers"</span>: {
+    <span class="ky">"aws-api"</span>: {
+      <span class="ky">"command"</span>: <span class="st">"uvx"</span>,
+      <span class="ky">"args"</span>: [<span class="st">"awslabs.aws-api-mcp-server@latest"</span>],
+      <span class="ky">"env"</span>: {
+        <span class="ky">"AWS_API_MCP_PROFILE_NAME"</span>: <span class="st">"mcp-agent-readonly"</span>,
+        <span class="ky">"AWS_REGION"</span>: <span class="st">"eu-central-1"</span>,
+        <span class="ky">"READ_OPERATIONS_ONLY"</span>: <span class="st">"true"</span>,
+        <span class="ky">"REQUIRE_MUTATION_CONSENT"</span>: <span class="st">"true"</span>,
+        <span class="ky">"FASTMCP_LOG_LEVEL"</span>: <span class="st">"ERROR"</span>
+      }
+    }
+  }
+}</pre>
+
+    <p>Set both <code>READ_OPERATIONS_ONLY</code> and <code>REQUIRE_MUTATION_CONSENT</code>. Treat them as defence in depth on top of the IAM role, never as a substitute: they are process-local flags that an operator can flip in a config file, whereas the role is enforced by AWS.</p>
+
+    <div class="prompt-list">
+      <div class="prompt-list-label">// prompts worth trying</div>
+      <ul>
+        <li><q>List every EC2 instance in eu-central-1 whose average CPU over the last 14 days is under 5%. Show instance type, launch time, and the Name tag, sorted by instance type.</q><span class="why">The classic idle hunt. Spans describe-instances and CloudWatch in one pass, which is the bit that normally costs you ten minutes.</span></li>
+        <li><q>Which security groups allow 0.0.0.0/0 on a port other than 80 or 443? For each one, tell me whether it is actually attached to a running network interface.</q><span class="why">The second sentence is what makes this useful. Most raw findings are attached to nothing and are noise.</span></li>
+        <li><q>Find every Lambda function with no invocations in the last 30 days, and for each, say whether it still has an event source mapping or trigger wired up.</q><span class="why">Distinguishes dead code from code that is idle but still reachable. Only the first group is safe to delete.</span></li>
+        <li><q>Compare the RDS parameter groups used by prod and staging and list only the parameters that differ.</q><span class="why">Drift detection between environments. Painful in the console, trivial as a diff.</span></li>
+        <li><q>List unattached EBS volumes and unassociated Elastic IPs, with size, creation date, and the ID of whatever they were last attached to.</q><span class="why">Zombie cleanup with enough context to be confident about deleting.</span></li>
+        <li><q>Show me every S3 bucket where Block Public Access is not fully enabled, and print the bucket policy for each.</q><span class="why">Give it the raw policy rather than asking it to judge. You decide, it retrieves.</span></li>
+      </ul>
+    </div>
+
+    <h3>2 · CloudWatch MCP Server</h3>
+
+    <p><strong>Package:</strong> <code>awslabs.cloudwatch-mcp-server</code></p>
+
+    <p>This is the one that changed my day-to-day most. It is not a thin wrapper over the CloudWatch API; it exposes sixteen task-oriented tools grouped into metrics, alarms, logs, and PromQL. The distinction matters because the raw CloudWatch API is one of the least pleasant surfaces in AWS to drive by hand, and Logs Insights in particular has a query language that most engineers relearn from scratch every time they need it.</p>
+
+    <ul>
+      <li><strong>Alarms:</strong> <code>get_active_alarms</code>, <code>get_alarm_history</code>. Alarm-based troubleshooting is a first-class flow: from a firing alarm the server can pull the related metrics, the relevant log groups, and the historical pattern of that alarm.</li>
+      <li><strong>Metrics:</strong> <code>get_metric_data</code>, <code>analyze_metric</code>, <code>get_metric_metadata</code>, <code>get_recommended_metric_alarms</code>. That last one is quietly useful for greenfield services where nobody has decided what to alarm on yet.</li>
+      <li><strong>Logs:</strong> <code>describe_log_groups</code>, <code>analyze_log_group</code>, <code>execute_log_insights_query</code>, <code>execute_cwl_insights_batch</code>, plus polling and cancellation tools for long-running queries.</li>
+      <li><strong>PromQL:</strong> five tools for instant and range queries, label and series discovery. If you are running Managed Prometheus alongside CloudWatch, this removes the last reason to keep a separate query console open.</li>
+    </ul>
+
+    <p>It also ships investigation skills built on AgentCore, which encode common troubleshooting sequences so the agent follows a structured path rather than improvising a different route through the same data every time.</p>
+
+    <div class="callout">
+      <strong>Watch the query cost on Logs Insights.</strong> An agent that decides to scan a month of logs across every log group to answer a vague question will do exactly that, and CloudWatch bills Logs Insights on data scanned. Scope your prompts to a log group and a time window, or you will find the retrieval convenience showing up on the bill as its own line item.
+    </div>
+
+    <div class="prompt-list">
+      <div class="prompt-list-label">// prompts worth trying</div>
+      <ul>
+        <li><q>The payments-api-5xx alarm is firing. Pull its history for the last week, the metrics it watches, and any error patterns in /aws/ecs/payments-api during the current breach.</q><span class="why">The full alarm-to-metric-to-log walk in one prompt. This is the flow the server was built for.</span></li>
+        <li><q>Find the top 20 error messages by count in /aws/eks/prod/application over the last 6 hours, grouped by the pod that emitted them.</q><span class="why">A Logs Insights query nobody remembers how to write. Note the explicit log group and window.</span></li>
+        <li><q>Which alarms are in ALARM or INSUFFICIENT_DATA right now, and which of those have changed state more than five times in the last 24 hours?</q><span class="why">INSUFFICIENT_DATA is where dead alarms hide. The flapping filter finds the ones nobody trusts any more.</span></li>
+        <li><q>This service went live last week and has no alarms. Look at its metrics for the last two weeks and recommend alarm thresholds with reasoning.</q><span class="why">Exercises get_recommended_metric_alarms. Treat the output as a first draft, not a config.</span></li>
+        <li><q>Run a PromQL range query for container_memory_working_set_bytes on the checkout deployment over 7 days and tell me how close it gets to its limit.</q><span class="why">Only useful if you run Managed Prometheus, and then it removes the last reason to keep a second console open.</span></li>
+        <li><q>Compare the error rate and p99 latency of the api-gateway service this week against the same week last month.</q><span class="why">Period-over-period comparison, which the CloudWatch console makes needlessly awkward.</span></li>
+      </ul>
+    </div>
+
+    <h3>3 · AWS Billing and Cost Management MCP Server</h3>
+
+    <p><strong>Package:</strong> <code>awslabs.billing-cost-management-mcp-server</code></p>
+
+    <p>This is the current cost server. If you find a guide pointing at <code>cost-explorer-mcp-server</code>, that package is deprecated in the repository in favour of this broader one. The replacement is not a rename: it spans Cost Explorer, Budgets, Cost Anomaly Detection, Compute Optimizer, Cost Optimization Hub, Savings Plans, Pricing and the Pricing Calculator, S3 Storage Lens, Billing Conductor, cost allocation tags, cost categories, invoicing, credits, and Free Tier usage.</p>
+
+    <p>The practical consequence of that breadth is that one question can cross sources that used to require three separate consoles. "Our EC2 spend jumped 22% in the last fortnight, what changed and is there a savings recommendation" pulls from Cost Explorer for the trend, Anomaly Detection for the flag, and Cost Optimization Hub for the recommendation, in one turn.</p>
+
+    <pre>{
+  <span class="ky">"mcpServers"</span>: {
+    <span class="ky">"aws-billing"</span>: {
+      <span class="ky">"command"</span>: <span class="st">"uvx"</span>,
+      <span class="ky">"args"</span>: [<span class="st">"awslabs.billing-cost-management-mcp-server@latest"</span>],
+      <span class="ky">"env"</span>: {
+        <span class="ky">"AWS_PROFILE"</span>: <span class="st">"mcp-agent-readonly"</span>,
+        <span class="ky">"AWS_REGION"</span>: <span class="st">"us-east-1"</span>,
+        <span class="ky">"FASTMCP_LOG_LEVEL"</span>: <span class="st">"ERROR"</span>
+      }
+    }
+  }
+}</pre>
+
+    <p>Note the region. Cost Explorer is a <code>us-east-1</code> global endpoint regardless of where your workloads run, and pointing this server at your workload region is the most common reason it appears to return nothing.</p>
+
+    <p>Two costs to be aware of. Cost Explorer's API is a <strong>paid API</strong>, billed per request at AWS's published rate of roughly a cent per call, which is trivial for a human clicking through the console and non-trivial for an agent that decides to iterate across twelve dimensions to be thorough. And Storage Lens functionality runs through Athena, so it needs a manifest location and an output bucket configured via <code>STORAGE_LENS_MANIFEST_LOCATION</code> and <code>STORAGE_LENS_OUTPUT_LOCATION</code>, and it bills like Athena.</p>
+
+    <div class="prompt-list">
+      <div class="prompt-list-label">// prompts worth trying</div>
+      <ul>
+        <li><q>Compare this month's spend to last month by service, and show only services that moved by more than 10% or $200.</q><span class="why">The threshold is doing real work here. Without it you get all forty services and have to rank them yourself.</span></li>
+        <li><q>Any cost anomalies detected in the last 30 days? For each, give the service, the dollar impact, and the date it started.</q><span class="why">The start date is what makes an anomaly actionable, because it tells CloudTrail where to look next.</span></li>
+        <li><q>List our Cost Optimization Hub recommendations sorted by estimated monthly saving, and give me the total if we implemented all of them.</q><span class="why">One call replaces a tour of three separate consoles.</span></li>
+        <li><q>Show Compute Optimizer rightsizing recommendations for instances tagged env=production, and flag any that would require a different instance family.</q><span class="why">The family flag matters: a cross-family move is a compatibility question, not just a size change.</span></li>
+        <li><q>What is our Savings Plans coverage and utilisation right now, how much on-demand spend is uncovered, and what would a 1-year no-upfront Compute plan at that level cost?</q><span class="why">Coverage and utilisation together. High utilisation with low coverage means buy more, the reverse means you over-committed.</span></li>
+        <li><q>Break down our S3 costs by bucket and storage class, and identify buckets where most objects are under 128 KB.</q><span class="why">The small-object check that decides whether Intelligent-Tiering will help or cost you money.</span></li>
+      </ul>
+    </div>
+
+    <h3>4 · AWS CloudTrail MCP Server</h3>
+
+    <p><strong>Package:</strong> <code>awslabs.cloudtrail-mcp-server</code></p>
+
+    <p>This answers "who did this, and when." <code>lookup_events</code> covers the last 90 days of management events that CloudTrail retains by default, filterable by username, event name, resource, and time. If you have CloudTrail Lake enabled, <code>lake_query</code> runs Trino-compatible SQL against event data stores, which extends the reach to as much history as you have chosen to retain, up to ten years.</p>
+
+    <p>That second capability is the one worth setting up. Ninety days of point lookups is useful during an incident. SQL over years of history is what lets you answer compliance and forensic questions that were previously a multi-day exercise in CSV exports.</p>
+
+    <pre><span class="cm"># IAM actions this server needs (its own read role, not the general one)</span>
+cloudtrail:LookupEvents
+cloudtrail:ListEventDataStores
+cloudtrail:GetEventDataStore
+cloudtrail:StartQuery
+cloudtrail:DescribeQuery
+cloudtrail:GetQueryResults</pre>
+
+    <p>The remaining tools, <code>list_event_data_stores</code>, <code>get_query_status</code>, and <code>get_query_results</code>, exist because Lake queries are asynchronous. The agent starts a query, polls for completion, and pages the results, which is exactly the kind of three-step mechanical sequence that is tedious by hand and invisible when a tool does it.</p>
+
+    <div class="prompt-list">
+      <div class="prompt-list-label">// prompts worth trying</div>
+      <ul>
+        <li><q>What IAM changes happened in the last 24 hours and who made them? Exclude anything from the terraform-apply role.</q><span class="why">The exclusion is the whole trick. Filtering out your own automation leaves only what needs explaining.</span></li>
+        <li><q>The bucket assets-prod became publicly readable at some point. Find the API call that changed it, then show everything that principal did in the hour either side.</q><span class="why">Point-in-time plus blast radius. The second half is what a console investigation usually skips.</span></li>
+        <li><q>Show every ConsoleLogin event in the last 30 days where MFA was not used, with the source IP and whether it succeeded.</q><span class="why">Straight out of most audit checklists, and about four clicks per result by hand.</span></li>
+        <li><q>Has the root account made any API call in the last 90 days? If so, what, when, and from where.</q><span class="why">Should return nothing. If it returns something, that is your afternoon.</span></li>
+        <li><q>Using CloudTrail Lake, list the top 25 principals by write API call count over the last 12 months, and for each show the first and last time they were active.</q><span class="why">Needs Lake enabled. The last-active column is how you find credentials nobody has used since a departure.</span></li>
+        <li><q>Using CloudTrail Lake, find every AssumeRole call into the prod-admin role over the last year, grouped by the originating principal.</q><span class="why">Twelve months of privileged-access history as one SQL query rather than a CSV export project.</span></li>
+      </ul>
+    </div>
+
+    <h3>5 · AWS IAM MCP Server</h3>
+
+    <p><strong>Package:</strong> <code>awslabs.iam-mcp-server</code></p>
+
+    <p>Built for access hygiene. It enumerates users, roles, groups, and both managed and inline policies, and its most valuable tool is <code>iam:SimulatePrincipalPolicy</code> exposed as policy simulation: you can ask whether a given principal would be allowed a given action <em>before</em> you change anything. That converts "I think this policy is too broad" from an argument into a test.</p>
+
+    <p>It can also create and delete users, roles, and access keys. Do not let it. Run it with the <code>--readonly</code> flag, which disables every mutating tool while leaving list and get intact.</p>
+
+    <pre>{
+  <span class="ky">"mcpServers"</span>: {
+    <span class="ky">"aws-iam"</span>: {
+      <span class="ky">"command"</span>: <span class="st">"uvx"</span>,
+      <span class="ky">"args"</span>: [<span class="st">"awslabs.iam-mcp-server@latest"</span>, <span class="st">"--readonly"</span>],
+      <span class="ky">"env"</span>: {
+        <span class="ky">"AWS_PROFILE"</span>: <span class="st">"mcp-agent-iam-audit"</span>,
+        <span class="ky">"FASTMCP_LOG_LEVEL"</span>: <span class="st">"ERROR"</span>
+      }
+    }
+  }
+}</pre>
+
+    <p>A separate profile, deliberately. This is the one server on the list whose write capabilities could compromise the security of everything else on the list, including its own audit trail. It gets an IAM-scoped read role and nothing more.</p>
+
+    <div class="prompt-list">
+      <div class="prompt-list-label">// prompts worth trying</div>
+      <ul>
+        <li><q>Which IAM users have console access but no MFA device? Include when their password was last used.</q><span class="why">The last-used date splits genuine risk from dormant accounts you should be deleting anyway.</span></li>
+        <li><q>Find every customer-managed policy with a wildcard in both Action and Resource, and list which users, roles, and groups it is attached to.</q><span class="why">An unattached over-broad policy is a cleanup task. An attached one is a finding.</span></li>
+        <li><q>Simulate whether the role eks-node-prod is allowed to call s3:DeleteObject on arn:aws:s3:::assets-prod/*, and tell me which policy statement decides the outcome.</q><span class="why">Policy simulation, the best tool on this server. Turns an argument about a policy into a test with an answer.</span></li>
+        <li><q>List all access keys older than 90 days with their last-used date and which service they were last used against.</q><span class="why">The service column tells you what will break before you rotate.</span></li>
+        <li><q>Which roles in this account can be assumed by a principal outside the account, and what does each trust policy actually permit?</q><span class="why">Cross-account trust is where the genuinely surprising findings live.</span></li>
+        <li><q>List every role with an AdministratorAccess attachment, and for each show whether it has a permissions boundary.</q><span class="why">Admin plus no boundary is the combination worth a same-day conversation.</span></li>
+      </ul>
+    </div>
+
+    <h3>The five at a glance</h3>
+
+    <div class="table-scroll">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Server</th><th>Answers</th><th>Standout tool</th><th>Extra IAM needed</th><th>Cost per query</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>aws-api</strong></td>
+          <td>What exists, what is misconfigured</td>
+          <td><code>call_aws</code></td>
+          <td class="good">ReadOnlyAccess covers it</td>
+          <td class="good">Free</td>
+        </tr>
+        <tr>
+          <td><strong>cloudwatch</strong></td>
+          <td>What broke and when</td>
+          <td><code>execute_log_insights_query</code></td>
+          <td class="good">ReadOnlyAccess covers it</td>
+          <td class="mid">Logs Insights scan charges</td>
+        </tr>
+        <tr>
+          <td><strong>billing-cost-management</strong></td>
+          <td>What it costs, what to cut</td>
+          <td>Cost Optimization Hub</td>
+          <td class="bad">ce, compute-optimizer, budgets</td>
+          <td class="bad">~$0.01 per Cost Explorer call</td>
+        </tr>
+        <tr>
+          <td><strong>cloudtrail</strong></td>
+          <td>Who did it, in what order</td>
+          <td><code>lake_query</code> (SQL)</td>
+          <td class="mid">cloudtrail Lake actions</td>
+          <td class="mid">Lake query charges</td>
+        </tr>
+        <tr>
+          <td><strong>iam</strong></td>
+          <td>Who could do it</td>
+          <td>Policy simulation</td>
+          <td class="bad">Own role, IAM read only</td>
+          <td class="good">Free</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2 id="managed">The Sixth Option: AWS's Managed MCP Server</h2>
+
+    <p>The five above are local processes holding your credentials. In May 2026 AWS made a remote, fully managed alternative generally available, and most lists written before then do not mention it. It is worth understanding before you commit to a local-only setup.</p>
+
+    <pre><span class="cm"># Connect through the proxy; auth uses SigV4 with your existing credentials</span>
+uvx mcp-proxy-for-aws@latest https://aws-mcp.us-east-1.api.aws/mcp</pre>
+
+    <p>The managed server covers a very wide API surface, ships with current AWS documentation and curated skills, provides sandboxed Python execution, and authenticates through your own IAM identity rather than a long-lived credential sitting in a config file. Calls are validated server-side and logged to CloudTrail as a matter of course.</p>
+
+    <div class="table-scroll">
+    <table class="compare-table">
+      <thead>
+        <tr><th>Dimension</th><th>Local awslabs servers</th><th>Managed AWS MCP Server</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Credential exposure</td>
+          <td class="bad">Profile readable by the local process</td>
+          <td class="good">SigV4 under your IAM identity, nothing stored</td>
+        </tr>
+        <tr>
+          <td>Breadth</td>
+          <td class="mid">Five focused servers, task-shaped tools</td>
+          <td class="good">Very wide API coverage plus live docs</td>
+        </tr>
+        <tr>
+          <td>Depth per domain</td>
+          <td class="good">Purpose-built (PromQL, Lake SQL, policy sim)</td>
+          <td class="mid">Generalist, thinner on specialised flows</td>
+        </tr>
+        <tr>
+          <td>Version control</td>
+          <td class="good">You pin the package</td>
+          <td class="bad">AWS ships changes when AWS ships them</td>
+        </tr>
+        <tr>
+          <td>Air-gapped or restricted networks</td>
+          <td class="good">Works offline against VPC endpoints</td>
+          <td class="bad">Requires reaching the AWS endpoint</td>
+        </tr>
+        <tr>
+          <td>Operational burden</td>
+          <td class="bad">Every engineer maintains local config</td>
+          <td class="good">Nothing to maintain</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p>My read: the managed server is the better starting point for most teams, precisely because it removes the credentials-in-a-config-file problem that is the weakest link in every local setup. Add the specific local servers on top where their depth genuinely matters, which in practice means CloudWatch if you live in Logs Insights and PromQL, CloudTrail if you have Lake enabled, and the billing server if cost work is a recurring part of the job. That is a hybrid, and hybrids are unfashionable, but it puts the credential handling where AWS can enforce it and keeps the specialised tools where you need them.</p>
+
+    <div class="prompt-list">
+      <div class="prompt-list-label">// prompts that show what the managed server adds</div>
+      <ul>
+        <li><q>Check the current EKS documentation and tell me whether Auto Mode supports a custom CNI configuration yet. Quote the relevant section.</q><span class="why">The differentiator: it reads live docs rather than answering from a training cut-off. Asking for the quote is how you check it actually looked.</span></li>
+        <li><q>Using current pricing, what would 40 m7g.xlarge instances cost per month in eu-central-1 on demand versus a 1-year no-upfront Compute Savings Plan?</q><span class="why">Pricing maths in the sandboxed Python runtime, against current rates rather than remembered ones.</span></li>
+        <li><q>What is the recommended way to give a pod in EKS access to an S3 bucket in another account in 2026? Tell me what has changed since IRSA.</q><span class="why">The what-has-changed framing is the point. This is the question a stale answer gets wrong most often.</span></li>
+      </ul>
+    </div>
+
+    <h2 id="composition">Where the Value Actually Shows Up</h2>
+
+    <p>Taken one at a time, none of these servers gives you a capability you did not have. The CloudWatch server does not know anything a Logs Insights query would not have told you. It removes the friction of writing the query, which is worth something, but it is not new power.</p>
+
+    <p>The step change is composition. Multiple servers in one conversation let an agent join data that no single console view joins, and that is where questions get answered that previously took a person forty minutes of tab-switching and note-taking to assemble.</p>
+
+    <h3>Security posture review</h3>
+
+    <ol>
+      <li><strong>aws-api:</strong> security groups with unrestricted ingress, buckets with public access configurations, unencrypted volumes.</li>
+      <li><strong>iam:</strong> users with console access and no MFA, roles with wildcard resources, access keys older than 90 days.</li>
+      <li><strong>cloudtrail:</strong> any root-account API activity in the last 30 days, and any <code>iam:*</code> calls made outside the change window.</li>
+      <li><strong>Synthesis:</strong> one prioritised list, ordered by exploitability rather than by which tool found it.</li>
+    </ol>
+
+    <p>That last point is the whole benefit. Three separate scans produce three separate lists that a human then has to rank against each other. One conversation produces a ranking, because the agent knows that a public bucket matters more when an IAM role with wildcard access can reach it.</p>
+
+    <h3>Incident root cause</h3>
+
+    <div class="conversation">
+      <div class="human">You:</div>
+      <div class="msg">The payments-api started returning 503s at 14:20 UTC today and recovered at 14:52. Nothing was deployed. Find out what changed.</div>
+      <div class="ai">Agent:</div>
+      <div class="msg">I traced this across CloudWatch and CloudTrail.
+        <br><br><strong>What broke (CloudWatch):</strong> <code>payments-api</code> target group healthy host count dropped from 6 to 0 at 14:19:48. Application logs show connection timeouts to <code>payments-db.cluster-xxxx.eu-central-1.rds.amazonaws.com</code> on port 5432, not application errors. The service itself was healthy; it could not reach its database.
+        <br><br><strong>What changed (CloudTrail):</strong> a single <code>RevokeSecurityGroupIngress</code> call at 14:19:31, twelve seconds before the drop. Security group <code>sg-0a41...</code> (the RDS security group), removing the rule that allowed 5432 from <code>sg-0b77...</code> (the EKS node group). Principal: <code>arn:aws:sts::...:assumed-role/terraform-apply/GitHubActions-8841</code>.
+        <br><br><strong>Why (aws-api plus CloudTrail):</strong> the reverse call <code>AuthorizeSecurityGroupIngress</code> appears at 14:51:40 from the same principal. This is a Terraform apply that recreated the rule rather than leaving it in place, which suggests the rule was moved between resources in the configuration. The 32-minute gap is the duration of the apply.
+        <br><br><strong>Conclusion:</strong> not an outage, a self-inflicted revoke-then-recreate during a Terraform run. The fix is a <code>create_before_destroy</code> lifecycle block on that rule, and the reason nobody noticed a deployment is that the change was to infrastructure, not to the service.</div>
+    </div>
+
+    <p>Every fact in that answer was available to you before. CloudTrail had the event, CloudWatch had the metric, the security group state was one CLI call away. What you did not have was the join, and the join is the part that took forty minutes.</p>
+
+    <h3>Cost anomaly triage</h3>
+
+    <ol>
+      <li><strong>billing:</strong> which service and usage type drove the increase, and when it started.</li>
+      <li><strong>cloudtrail:</strong> what was created or modified in that service around that timestamp, and by whom.</li>
+      <li><strong>aws-api:</strong> whether those resources are still running and whether anything is attached to them.</li>
+    </ol>
+
+    <p>This is the loop that turns a monthly billing surprise into a same-day operational signal, which is the actual goal of cost work. I have written separately about the <a href="/blog/aws-cost-reduction-kubernetes">ordering of AWS cost levers</a> and about <a href="/blog/infracost-terraform-aws">catching cost changes at PR time</a>; the billing server is the third leg of that, covering the spend that has already happened.</p>
+
+    <div class="prompt-list">
+      <div class="prompt-list-label">// composed prompts, two or more servers in one turn</div>
+      <ul>
+        <li><q>Our EC2 spend rose 22% starting around the 14th. Find what drove it in Cost Explorer, then check CloudTrail for what was created in that service around that date and by whom, then tell me whether those resources are still running.</q><span class="why">billing + cloudtrail + aws-api. The three-console cost investigation as one sentence.</span></li>
+        <li><q>Run a security posture review: unrestricted security groups and public buckets, users without MFA and roles with wildcard resources, and any root activity in the last 30 days. Give me one list ordered by exploitability, not by which check found it.</q><span class="why">aws-api + iam + cloudtrail. The ordering instruction is what you are actually buying here.</span></li>
+        <li><q>The checkout service degraded between 09:10 and 09:40 UTC. Correlate its CloudWatch metrics and logs with every CloudTrail event touching its infrastructure in that window, and name the change most likely responsible.</q><span class="why">cloudwatch + cloudtrail. Ask it to name a cause and it commits to something you can check, rather than handing you two timelines.</span></li>
+        <li><q>For the top five namespaces by cost this month, check whether each has had a deployment in the last 30 days and whether its alarms have fired. Flag anything expensive, undeployed, and quiet.</q><span class="why">billing + aws-api + cloudwatch. That combination is the signature of a service nobody owns any more.</span></li>
+      </ul>
+    </div>
+
+    <div class="callout">
+      <strong>Three habits that make these prompts work better.</strong> Name the region, log group, and time window explicitly, because an unscoped question invites the agent to scan everything and both CloudWatch and Cost Explorer bill for that. Ask for the evidence alongside the conclusion, a policy statement, an event ID, a quoted doc section, so you can check the answer without redoing the work. And when a finding is only interesting in context, say so in the prompt: "tell me which of these are actually attached to something" turns forty raw results into the four that matter.
+    </div>
+
+    <h2 id="injection">The Problem Nobody Puts in the Feature List</h2>
+
+    <p>The AWS API MCP Server documentation states plainly that the server offers no protection against prompt injection, is designed for single-user use, and does not sandbox filesystem access. I would rather quote that than paraphrase it, because it is unusually honest for vendor documentation and it defines the threat model precisely.</p>
+
+    <p>What it means in practice: an agent that reads untrusted text and also holds AWS credentials is a confused deputy waiting to happen. The text does not have to arrive through a dramatic channel. A resource tag, an EC2 instance name, an S3 object key, a CloudWatch log line containing a user-submitted string, a CloudTrail <code>userAgent</code> field. All of these are attacker-influenceable in some architectures, and all of them flow into the agent's context as ordinary tool output.</p>
+
+    <p>The mitigations are unglamorous and they all live below the agent:</p>
+
+    <ul>
+      <li><strong>Read-only at the IAM layer, with data reads denied.</strong> Injection that can only enumerate resources is a nuisance. Injection that can read secrets or delete infrastructure is an incident. This is what the permissions boundary above is for.</li>
+      <li><strong>Never point a credentialed agent at a bucket or log group carrying user-generated content.</strong> If you need to analyse that data, do it in a session with no write capability and no access to anything else.</li>
+      <li><strong>Separate roles per server, always.</strong> A compromise of the general investigation context should not reach IAM.</li>
+      <li><strong>Short session durations.</strong> One hour, so a leaked session credential has a short half-life.</li>
+      <li><strong>Read the CloudTrail log.</strong> Not as an afterthought. A weekly review of what the agent role actually called is the only control that catches a problem you did not anticipate.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>The honest framing:</strong> connecting an agent to your AWS account is onboarding a very fast contractor with no judgement about consequences and a tendency to be helpful. You would scope that person's access narrowly, log what they did, and review it. Do the same here, and the residual risk is manageable. Skip it, and you have handed <code>ReadOnlyAccess</code> to a process that reads text from the internet.
+    </div>
+
+    <h2 id="rollout">A Staged Rollout</h2>
+
+    <p>Adding all five at once produces overlapping tool calls and a lot of noise, because the agent has no basis for choosing between three servers that could plausibly answer the same question. Worse, you never build the intuition for which one is right, so you cannot tell a bad answer from a good one. Stage it.</p>
+
+    <div class="table-scroll">
+    <table class="compare-table">
+      <thead>
+        <tr><th>Week</th><th>Add</th><th>Goal</th><th>Do not yet</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>0</strong></td>
+          <td>The IAM role and boundary. No servers.</td>
+          <td>CloudTrail logging confirmed working on the role</td>
+          <td class="bad">Install anything</td>
+        </tr>
+        <tr>
+          <td><strong>1</strong></td>
+          <td>aws-api, read-only</td>
+          <td>Ask real questions daily. Learn where it guesses.</td>
+          <td class="bad">Grant any write</td>
+        </tr>
+        <tr>
+          <td><strong>2</strong></td>
+          <td>cloudwatch</td>
+          <td>Use it on a real incident. Compare to your manual path.</td>
+          <td class="bad">Broad unscoped log queries</td>
+        </tr>
+        <tr>
+          <td><strong>3</strong></td>
+          <td>cloudtrail</td>
+          <td>First composed question: metric drop plus the change that caused it</td>
+          <td class="mid">Lake, until you have checked retention</td>
+        </tr>
+        <tr>
+          <td><strong>4</strong></td>
+          <td>billing</td>
+          <td>Monthly cost review as a conversation, not a console tour</td>
+          <td class="mid">Unbounded dimension sweeps</td>
+        </tr>
+        <tr>
+          <td><strong>5</strong></td>
+          <td>iam, separate role, <code>--readonly</code></td>
+          <td>Full posture review composing all four others</td>
+          <td class="bad">Ever remove <code>--readonly</code></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p>Five weeks feels slow and it is not. The constraint is not installation time, it is the time it takes you to develop a reliable sense of when a given server's answer should be trusted and when it should be checked. Compressing that produces a team that either distrusts the tooling entirely or, much worse, trusts it uniformly.</p>
+
+    <h2 id="would-not">What I Would Not Do</h2>
+
+    <h3>Grant write access on day one</h3>
+
+    <p>The pitch for write access is that the agent could remediate what it finds. The problem is that remediation is where being confidently wrong becomes expensive, and read-only investigation is where these servers deliver almost all their value anyway. If you eventually want mutation, route it through the path you already have for changes: the agent proposes a Terraform diff, a human reviews it, CI applies it. That keeps the audit trail and the review gate you have already built rather than opening a second, unreviewed path into production.</p>
+
+    <h3>Share one role across all servers</h3>
+
+    <p>It is the obvious convenience and it defeats the main control. A shared role means CloudTrail cannot tell you which tool made a call, and a problem in any one context reaches everything. One role per server, named after the server.</p>
+
+    <h3>Run these against production from a laptop</h3>
+
+    <p>Local stdio servers mean production credentials on developer machines, which is the thing every credential-hygiene programme has spent a decade trying to eliminate. Use the managed server, or run the local servers on a bastion or in a container with the role attached rather than a profile on disk. The convenience of local install is real, and it is not worth reintroducing static credentials to get it.</p>
+
+    <h3>Trust a package name from a blog post, including this one</h3>
+
+    <p>The deprecation of <code>cost-explorer-mcp-server</code> is a good illustration. It was the right answer, then it was not, and a lot of guides still recommend it. Check <a href="https://awslabs.github.io/mcp/" target="_blank" rel="noopener">awslabs.github.io/mcp</a> before you install. The list moves.</p>
+
+    <h2 id="takeaways">Key Takeaways</h2>
+
+    <ol>
+      <li><strong>IAM is the security model, not a detail before it.</strong> AWS's own docs say IAM permissions are the primary and most reliable control. The <code>READ_OPERATIONS_ONLY</code> flag is defence in depth on top of that, never instead of it.</li>
+      <li><strong><code>ReadOnlyAccess</code> reads data, not just metadata.</strong> It covers <code>s3:GetObject</code> and, depending on the policy revision, secret and parameter reads. Add a permissions boundary that denies data-plane reads and <code>lambda:GetFunction</code>, which returns a presigned link to your code.</li>
+      <li><strong>Five servers, five roles.</strong> The IAM server in particular gets its own principal, scoped to IAM reads and policy simulation, and always runs with <code>--readonly</code>.</li>
+      <li><strong>Start with the AWS API server.</strong> Broadest surface, no extra IAM, no per-query cost. It is the right default for general investigation.</li>
+      <li><strong>The CloudWatch server is the biggest daily quality-of-life gain.</strong> Sixteen task-shaped tools over metrics, alarms, Logs Insights, and PromQL, which is the surface engineers most dislike driving by hand.</li>
+      <li><strong>Use the billing server, not the deprecated Cost Explorer one</strong>, point it at <code>us-east-1</code>, attach <code>ce:*</code> read permissions explicitly, and remember Cost Explorer bills roughly a cent per API call.</li>
+      <li><strong>Enable CloudTrail Lake if you can.</strong> It turns the CloudTrail server from 90 days of point lookups into SQL over years of history, which is a different class of tool.</li>
+      <li><strong>Consider the managed AWS MCP Server first.</strong> GA since May 2026, it removes credentials from local config entirely. Add local servers on top only where their depth earns it.</li>
+      <li><strong>There is no prompt-injection protection.</strong> Documented, not speculative. Never combine credentialed agent sessions with untrusted text, and remember that tags, object keys, and log lines are untrusted text.</li>
+      <li><strong>The gain is composition, not any single server.</strong> CloudTrail says when, IAM says who, CloudWatch says what broke, billing says what it cost. Answering those together in one pass is the actual product.</li>
+      <li><strong>Scope every prompt.</strong> Name the region, log group, and time window, and ask for the evidence alongside the conclusion. Unscoped questions are how a retrieval convenience turns into a CloudWatch and Cost Explorer line item.</li>
+      <li><strong>Stage the rollout over weeks.</strong> One role, one server, real questions for a week. The bottleneck is calibrating your own trust in the answers, and that cannot be parallelised.</li>
+    </ol>
+
+    <h2 id="reference">Reference</h2>
+    <ul>
+      <li>Repository: <a href="https://github.com/awslabs/mcp" target="_blank" rel="noopener">github.com/awslabs/mcp</a> · Documentation: <a href="https://awslabs.github.io/mcp/" target="_blank" rel="noopener">awslabs.github.io/mcp</a></li>
+      <li>Server docs: <a href="https://awslabs.github.io/mcp/servers/aws-api-mcp-server" target="_blank" rel="noopener">AWS API</a> · <a href="https://awslabs.github.io/mcp/servers/cloudwatch-mcp-server" target="_blank" rel="noopener">CloudWatch</a> · <a href="https://awslabs.github.io/mcp/servers/billing-cost-management-mcp-server" target="_blank" rel="noopener">Billing and Cost Management</a> · <a href="https://awslabs.github.io/mcp/servers/cloudtrail-mcp-server" target="_blank" rel="noopener">CloudTrail</a> · <a href="https://awslabs.github.io/mcp/servers/iam-mcp-server" target="_blank" rel="noopener">IAM</a></li>
+      <li>Managed server: endpoint <code>https://aws-mcp.us-east-1.api.aws/mcp</code> via <a href="https://awslabs.github.io/mcp/" target="_blank" rel="noopener">mcp-proxy-for-aws</a></li>
+      <li>AWS: <a href="https://docs.aws.amazon.com/aws-managed-policy/latest/reference/ReadOnlyAccess.html" target="_blank" rel="noopener">ReadOnlyAccess policy reference</a> · <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html" target="_blank" rel="noopener">Permissions boundaries</a> · <a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-lake.html" target="_blank" rel="noopener">CloudTrail Lake</a> · <a href="https://aws.amazon.com/aws-cost-management/aws-cost-explorer/pricing/" target="_blank" rel="noopener">Cost Explorer API pricing</a></li>
+      <li>Source that prompted this piece: <a href="https://medium.com/cloud-wizards/aws-mcp-servers-every-infrastructure-team-should-wire-up-in-2026-36ccc3c17c7d" target="_blank" rel="noopener">AWS MCP Servers Every Infrastructure Team Should Wire Up in 2026</a> by Manoj Saini, Cloud Wizards</li>
+      <li>Related reading here: <a href="/blog/kubernetes-mcp-server">Kubernetes MCP Server in Practice</a> · <a href="/blog/kubernetes-mcp-server-centralised">One MCP Server, Eight Clusters</a> · <a href="/blog/aws-cost-reduction-kubernetes">Cutting the AWS Bill for Kubernetes</a> · <a href="/blog/infracost-terraform-aws">Infracost for Terraform</a></li>
+    </ul>
+
+    <p style="font-size:0.88rem;color:var(--muted);margin-top:2rem;">Package names, tool lists, and environment variables were checked against the AWS Labs documentation in September 2026. This repository moves quickly, so verify against the docs before you install rather than trusting the snapshot above.</p>
+
+  </article>
+
+  <div class="article-divider"></div>
+  <footer class="article-footer">
+    <div class="article-author">
+      <div class="author-avatar">R³</div>
+      <div>
+        <div class="author-name">Richie Richard Rajkumar</div>
+        <div class="author-role">Infrastructure Architect · Platform Leader · Berlin</div>
+      </div>
+    </div>
+    <a href="/blog" class="back-btn">← All articles</a>
+  </footer>
+
+</div><!-- /article-page -->
+
+<script src="/js/main.js"></script>
+</body>
+</html>
