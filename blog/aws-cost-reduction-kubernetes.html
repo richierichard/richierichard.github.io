@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cutting the AWS Bill for Kubernetes: Ten Levers, Ranked by Payback · Richie Richard Rajkumar</title>
+
+<meta name="description" content="Ten AWS cost reduction levers for Kubernetes teams, ordered the way you should actually pull them: visibility first, waste second, commitments last. Karpenter and Spot, Graviton, rightsizing, KEDA scale-to-zero, VPC endpoints, zombie cleanup, S3 tiering, RDS, and Savings Plans, with the caveats most lists leave out.">
+<meta name="author" content="Richie Richard Rajkumar">
+<link rel="canonical" href="https://www.richierichard.com/blog/aws-cost-reduction-kubernetes">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.richierichard.com/blog/aws-cost-reduction-kubernetes">
+<meta property="og:title" content="Cutting the AWS Bill for Kubernetes: Ten Levers, Ranked by Payback · Richie Richard Rajkumar">
+<meta property="og:description" content="Visibility first, waste second, commitments last. Ten AWS cost levers for Kubernetes teams, with the caveats most lists leave out.">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+
+<style>
+/* ── ARTICLE PAGE ── */
+.article-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 7rem 2rem 5rem;
+  position: relative;
+  z-index: 1;
+}
+.article-top { max-width: 960px; }
+
+.article-intro {
+  max-width: 960px;
+  margin-bottom: 2.5rem;
+  color: var(--text);
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+.article-intro p { margin-bottom: 1.25rem; }
+.article-intro code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+
+.article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  margin-bottom: 2.5rem;
+  transition: color 0.2s;
+}
+.article-back:hover { color: var(--accent); }
+
+.article-header { margin-bottom: 2.5rem; }
+.article-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.article-tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(56,189,248,0.2);
+  letter-spacing: 0.04em;
+}
+body.light .article-tag { border-color: rgba(2,132,199,0.25); }
+
+.article-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.article-title span { color: var(--accent); }
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.article-meta-dot { opacity: 0.3; }
+
+.article-hero {
+  width: 100%;
+  max-width: 960px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+}
+
+.article-body { color: var(--text); line-height: 1.85; font-size: 1.05rem; max-width: 960px; }
+.article-body h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 2.5rem 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 6rem;
+}
+.article-body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 1.75rem 0 0.5rem;
+}
+.article-body p { margin-bottom: 1.25rem; color: var(--text); }
+.article-body ul, .article-body ol { padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.article-body li { margin-bottom: 0.4rem; color: var(--text); }
+.article-body strong { color: var(--text); font-weight: 700; }
+.article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+.article-body pre {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.article-body code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--accent);
+}
+.article-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 1em;
+}
+.article-body pre .cm { color: var(--muted); }
+.article-body pre .ky { color: var(--accent); }
+.article-body pre .st { color: #f9a8d4; }
+.article-body pre .nm { color: #fde68a; }
+
+.callout {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+.callout strong { color: var(--accent); }
+
+.table-scroll { overflow-x: auto; margin-bottom: 1.75rem; }
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.75rem;
+  font-size: 0.9rem;
+}
+.table-scroll .compare-table { margin-bottom: 0; min-width: 640px; }
+.compare-table th {
+  background: var(--bg2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.compare-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .good { color: var(--accent); font-weight: 700; }
+.compare-table .bad  { color: #f87171; }
+.compare-table .mid  { color: #fbbf24; }
+
+.article-divider { height: 1px; background: var(--border); margin: 2.5rem 0; max-width: 960px; }
+
+.article-footer {
+  max-width: 960px;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.article-author { display: flex; align-items: center; gap: 0.85rem; }
+.author-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--accent);
+  flex-shrink: 0;
+}
+.author-name { font-weight: 700; font-size: 0.9rem; }
+.author-role { font-size: 0.78rem; color: var(--muted); font-family: var(--mono); }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--accent); color: var(--accent);
+  font-weight: 700; font-size: 0.85rem; text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.back-btn:hover { background: var(--accent); color: #000; }
+</style>
+</head>
+<body class="light">
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-mark">R<sup style="font-size:0.6em;letter-spacing:0;">3</sup></span>
+    <span class="nav-logo-divider"></span>
+    <span class="nav-logo-right">
+      <span class="nav-logo-name-line"><span class="nav-logo-name">Richie Richard </span><span class="nav-logo-surname">Rajkumar</span></span>
+      <span class="nav-logo-tag">build <span class="nav-logo-arrow">▸</span> scale <span class="nav-logo-arrow">▸</span> secure</span>
+    </span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/blog" style="color:var(--accent)">Blog</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span class="t-icon">☀</span>
+    <span id="theme-label">Dark</span>
+  </button>
+</nav>
+
+<div class="article-page">
+
+  <div class="article-top">
+    <a href="/blog" class="article-back">← Back to Blog</a>
+    <header class="article-header">
+      <div class="article-tags">
+        <span class="article-tag">Kubernetes</span>
+        <span class="article-tag">AWS</span>
+        <span class="article-tag">FinOps</span>
+        <span class="article-tag">Cost Engineering</span>
+        <span class="article-tag">DevOps</span>
+        <span class="article-tag">Infrastructure</span>
+        <span class="article-tag">Platform Engineering</span>
+      </div>
+      <h1 class="article-title">Cutting the AWS Bill for Kubernetes: <span>Ten Levers, Ranked by Payback</span></h1>
+      <div class="article-meta">
+        <span>Richie Richard Rajkumar</span>
+        <span class="article-meta-dot">·</span>
+        <span>September 2026</span>
+        <span class="article-meta-dot">·</span>
+        <span>17 min read</span>
+      </div>
+    </header>
+  </div>
+
+  <div class="article-hero">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" width="760" height="400" style="width:100%;height:auto;display:block;">
+      <defs>
+        <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0a0c10"/>
+          <stop offset="100%" stop-color="#12151c"/>
+        </linearGradient>
+        <marker id="arrow-blue" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+          <polygon points="0 0, 7 2.5, 0 5" fill="#38bdf8"/>
+        </marker>
+      </defs>
+      <rect width="760" height="400" fill="url(#bg-grad)"/>
+
+      <!-- TITLE -->
+      <text x="380" y="26" font-family="'Fira Code',monospace" font-size="10" fill="#7a8099" text-anchor="middle" letter-spacing="1.6">KUBERNETES ON AWS · WHERE THE BILL GOES AND WHICH LEVER MOVES IT</text>
+
+      <!-- BEFORE BAR -->
+      <text x="123" y="52" font-family="'Fira Code',monospace" font-size="10" fill="#f87171" text-anchor="middle" font-weight="700">$18,000 / mo</text>
+      <rect x="80" y="60"  width="86" height="143" fill="#38bdf8" opacity="0.85"/>
+      <rect x="80" y="203" width="86" height="32"  fill="#a78bfa" opacity="0.85"/>
+      <rect x="80" y="235" width="86" height="20"  fill="#f87171" opacity="0.85"/>
+      <rect x="80" y="255" width="86" height="20"  fill="#fde68a" opacity="0.85"/>
+      <rect x="80" y="275" width="86" height="15"  fill="#7a8099" opacity="0.85"/>
+      <text x="123" y="136" font-family="'Fira Code',monospace" font-size="8" fill="#08111a" text-anchor="middle" font-weight="700">EC2 62%</text>
+      <text x="123" y="305" font-family="'Fira Code',monospace" font-size="8.5" fill="#7a8099" text-anchor="middle" letter-spacing="1.5">BEFORE</text>
+
+      <!-- ARROW IN -->
+      <line x1="174" y1="175" x2="202" y2="175" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-blue)"/>
+
+      <!-- LEVERS PANEL -->
+      <rect x="212" y="60" width="336" height="230" rx="10" fill="rgba(56,189,248,0.04)" stroke="#38bdf8" stroke-width="0.6" stroke-dasharray="4 2"/>
+      <text x="380" y="80" font-family="'Fira Code',monospace" font-size="8.5" fill="#38bdf8" text-anchor="middle" letter-spacing="1.5">TEN LEVERS · TYPICAL SAVING</text>
+
+      <text x="228" y="102" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">1 · OpenCost visibility</text>
+      <text x="532" y="102" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="end">enables the rest</text>
+      <text x="228" y="121" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">2 · Karpenter + Spot</text>
+      <text x="532" y="121" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="end">50–70% on nodes</text>
+      <text x="228" y="140" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">3 · Graviton (arm64)</text>
+      <text x="532" y="140" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="end">20–40% vs x86</text>
+      <text x="228" y="159" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">4 · Rightsize requests</text>
+      <text x="532" y="159" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="end">20–40% on compute</text>
+      <text x="228" y="178" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">5 · KEDA scale-to-zero</text>
+      <text x="532" y="178" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="end">40–70% when idle</text>
+      <text x="228" y="197" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">6 · VPC endpoints vs NAT</text>
+      <text x="532" y="197" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="end">$300–2,000 / mo</text>
+      <text x="228" y="216" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">7 · Zombie resources</text>
+      <text x="532" y="216" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="end">$200–1,000 / mo</text>
+      <text x="228" y="235" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">8 · S3 Intelligent-Tiering</text>
+      <text x="532" y="235" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="end">40–80% on cold data</text>
+      <text x="228" y="254" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">9 · RDS rightsize + reserve</text>
+      <text x="532" y="254" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="end">40–60% on DB</text>
+      <text x="228" y="273" font-family="'Fira Code',monospace" font-size="7.5" fill="#7a8099">10 · Savings Plans (last)</text>
+      <text x="532" y="273" font-family="'Fira Code',monospace" font-size="7.5" fill="#4ade80" text-anchor="end">24–66% on residual</text>
+
+      <!-- ARROW OUT -->
+      <line x1="558" y1="240" x2="592" y2="240" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-blue)"/>
+
+      <!-- AFTER BAR -->
+      <text x="643" y="182" font-family="'Fira Code',monospace" font-size="10" fill="#4ade80" text-anchor="middle" font-weight="700">$7,800 / mo</text>
+      <rect x="600" y="190" width="86" height="52" fill="#38bdf8" opacity="0.85"/>
+      <rect x="600" y="242" width="86" height="18" fill="#a78bfa" opacity="0.85"/>
+      <rect x="600" y="260" width="86" height="7"  fill="#f87171" opacity="0.85"/>
+      <rect x="600" y="267" width="86" height="13" fill="#fde68a" opacity="0.85"/>
+      <rect x="600" y="280" width="86" height="10" fill="#7a8099" opacity="0.85"/>
+      <text x="643" y="305" font-family="'Fira Code',monospace" font-size="8.5" fill="#7a8099" text-anchor="middle" letter-spacing="1.5">AFTER</text>
+
+      <!-- LEGEND -->
+      <rect x="80" y="322" width="606" height="34" rx="8" fill="rgba(56,189,248,0.03)" stroke="#2a3040" stroke-width="0.6"/>
+      <rect x="94"  y="335" width="9" height="9" fill="#38bdf8"/>
+      <text x="109" y="343" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099">EC2 worker nodes</text>
+      <rect x="216" y="335" width="9" height="9" fill="#a78bfa"/>
+      <text x="231" y="343" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099">RDS · Aurora</text>
+      <rect x="330" y="335" width="9" height="9" fill="#f87171"/>
+      <text x="345" y="343" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099">NAT · data transfer</text>
+      <rect x="464" y="335" width="9" height="9" fill="#fde68a"/>
+      <text x="479" y="343" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099">S3 · EBS storage</text>
+      <rect x="590" y="335" width="9" height="9" fill="#7a8099"/>
+      <text x="605" y="343" font-family="'Fira Code',monospace" font-size="7" fill="#7a8099">Control plane</text>
+
+      <!-- TAGLINE -->
+      <text x="380" y="382" font-family="'Nunito',sans-serif" font-size="11.5" fill="#38bdf8" text-anchor="middle" font-weight="700">Measure First · Cut Waste Second · Commit Last</text>
+    </svg>
+  </div><!-- /article-hero -->
+
+  <div class="article-intro">
+    <p>The AWS bill for a Kubernetes-heavy team follows a shape you can set your watch by. It starts small enough that nobody looks at it. It grows faster than the product, because every new service adds nodes, a database, a bucket, and a load balancer, and none of those get removed when the service is deprecated. By the time somebody in finance draws a red circle around a number, the cluster is running overnight at 30% utilisation, half the deployments request ten times the CPU they use, and there are 240 GB of unattached EBS volumes from nodes that were terminated in March.</p>
+    <p>The good news is that this is one of the most solvable problems in infrastructure. The tools exist and they are boring and well understood: Karpenter for node efficiency, KEDA for scale-to-zero, Goldilocks for rightsizing, OpenCost for attribution, Savings Plans for the residual. Teams that work through all of them consistently land in the <strong>40 to 60 percent reduction</strong> range without touching engineering throughput or reliability.</p>
+    <p>What most "top ten" lists get wrong is the <em>order</em>. They present the levers as a menu, and teams pull the one that looks easiest, which is usually buying a Savings Plan. That is the worst possible first move: it locks a three-year commitment around infrastructure you have not optimised yet. This guide covers the same ten levers, ordered the way you should actually pull them, with the caveats and the failure modes I have hit running these on real clusters.</p>
+  </div>
+
+  <article class="article-body">
+
+    <h2 id="rule-zero">Rule Zero: You Cannot Optimise What You Cannot Attribute</h2>
+
+    <p>Before touching a NodePool or buying a commitment, instrument cost attribution. AWS Cost Explorer tells you that EC2 cost $11,200 last month. It cannot tell you that $3,000 of that was one team's ML inference service that has been running at zero requests since the experiment ended in April. That gap between "we spent money on EC2" and "this deployment in this namespace spent that money" is where every cost programme succeeds or fails.</p>
+
+    <p>Optimisation without per-workload visibility is guesswork, and guesswork produces the classic failure mode: an engineer spends two weeks shaving 8% off a service that accounts for 3% of the bill, while the actual cost driver sits untouched because nobody knew it existed.</p>
+
+    <div class="callout">
+      <strong>The one metric that changes behaviour:</strong> a weekly Slack message with cost per namespace, week over week, plus the top three movers. Teams that see their own number take different decisions than teams that do not. The question "why did the bill go up two thousand dollars" stops being a monthly finance surprise and becomes an operational signal that gets investigated the same day.
+    </div>
+
+    <h2 id="lever-1-opencost">Lever 1 · OpenCost for Per-Namespace Attribution</h2>
+
+    <p>OpenCost is the CNCF project that came out of Kubecost's open core. It joins Kubernetes resource allocation data with the AWS pricing API and produces cost per namespace, per controller, per pod, per label. It is a Helm install and a Prometheus scrape target.</p>
+
+    <pre><span class="cm"># Install</span>
+helm repo add opencost https://opencost.github.io/opencost-helm-chart
+helm install opencost opencost/opencost \
+  --namespace opencost --create-namespace \
+  --set opencost.prometheus.internal.enabled=<span class="nm">true</span>
+
+<span class="cm"># Query allocation for the last 7 days, grouped by namespace</span>
+kubectl port-forward -n opencost svc/opencost <span class="nm">9003</span>:<span class="nm">9003</span> &amp;
+curl -s <span class="st">'http://localhost:9003/allocation?window=7d&amp;aggregate=namespace'</span> \
+  | jq -r <span class="st">'.data[0] | to_entries[] | [.key, (.value.totalCost|round)] | @tsv'</span> \
+  | sort -k2 -rn | head -<span class="nm">15</span></pre>
+
+    <h3>What it actually gives you</h3>
+
+    <ul>
+      <li><strong>Cost per namespace, deployment, and pod</strong>, computed from actual resource usage multiplied by the real node price. It reads the Spot price API, so a pod on a Spot node is attributed at the Spot rate, not the on-demand rate.</li>
+      <li><strong>Efficiency scores</strong>: actual usage divided by requested resources. This is the input to Lever 4, and it is the number that makes rightsizing an easy conversation. "Your service requests 4 vCPU and uses 0.3" is not an argument, it is a measurement.</li>
+      <li><strong>Idle cost</strong>: the portion of node cost not allocated to any pod. High idle cost means poor bin-packing, which points at Karpenter consolidation rather than at any individual workload.</li>
+      <li><strong>Chargeback aggregation</strong> by label. Tag namespaces with <code>team</code> and <code>cost_center</code> and OpenCost will roll costs up to whatever org structure you actually use.</li>
+    </ul>
+
+    <p>The Grafana dashboard (ID <code>15714</code>) ships with the project. Import it next to your other operational dashboards so cost lives where reliability already lives, not in a separate finance tool that engineers never open.</p>
+
+    <div class="callout">
+      <strong>Honest limitation:</strong> OpenCost sees the cluster. It does not see your RDS instances, your NAT Gateways, your S3 buckets, or your load balancers, which together are frequently 35 to 40 percent of a Kubernetes platform's bill. Pair it with tag-based allocation in Cost Explorer for the out-of-cluster spend. Levers 6 through 9 all live in that blind spot, which is exactly why they get ignored.
+    </div>
+
+    <h2 id="lever-2-karpenter-spot">Lever 2 · Karpenter with Spot-First Provisioning</h2>
+
+    <p>Typical saving: <strong>50 to 70 percent on EC2 worker node cost</strong>. This is the single biggest lever for most clusters, because worker nodes are usually 60 percent or more of the bill.</p>
+
+    <p>Karpenter replaces Cluster Autoscaler with a just-in-time provisioner that reads pending pods, picks the cheapest compatible instance type from the entire EC2 catalogue, and has a node joined and ready in under 60 seconds instead of the 3 to 5 minutes an Auto Scaling Group takes. I have written the full mechanics in <a href="/blog/eks-scaling-with-karpenter">Karpenter on EKS: Right-Sized Nodes in 60 Seconds</a> and the decision framework in <a href="/blog/eks-cluster-autoscaler-vs-karpenter">Cluster Autoscaler vs Karpenter</a>, so here I will focus on the cost surface specifically.</p>
+
+    <h3>Two effects, not one</h3>
+
+    <p>Karpenter saves money twice, and teams routinely only count the first:</p>
+
+    <ol>
+      <li><strong>Spot discount.</strong> EC2 Spot runs at 60 to 90 percent off on-demand. A cluster spending $8,000/month on on-demand nodes lands around $2,400 to $3,200 once Spot is the default capacity type. See <a href="/blog/eks-spot-instances">EKS Spot Instances</a> for the interruption-handling detail.</li>
+      <li><strong>Consolidation.</strong> Karpenter continuously checks whether the pods on a node could fit elsewhere. If they can, it drains the node and terminates it. A ten-node cluster at 40% average utilisation collapses to five nodes at 80% overnight with no human involved. This effect compounds with Lever 4: the more honest your resource requests, the more consolidation Karpenter can do.</li>
+    </ol>
+
+    <h3>The NodePool that does both</h3>
+
+    <pre><span class="cm"># Karpenter NodePool: Spot preferred, on-demand fallback, arm64 allowed</span>
+<span class="ky">apiVersion</span>: karpenter.sh/v1
+<span class="ky">kind</span>: NodePool
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: general-compute
+<span class="ky">spec</span>:
+  <span class="ky">template</span>:
+    <span class="ky">spec</span>:
+      <span class="ky">requirements</span>:
+        - <span class="ky">key</span>: karpenter.sh/capacity-type
+          <span class="ky">operator</span>: In
+          <span class="ky">values</span>: [<span class="st">spot</span>, <span class="st">on-demand</span>]        <span class="cm"># Spot chosen when available</span>
+        - <span class="ky">key</span>: karpenter.k8s.aws/instance-category
+          <span class="ky">operator</span>: In
+          <span class="ky">values</span>: [<span class="st">c</span>, <span class="st">m</span>, <span class="st">r</span>]
+        - <span class="ky">key</span>: karpenter.k8s.aws/instance-generation
+          <span class="ky">operator</span>: Gt
+          <span class="ky">values</span>: [<span class="st">"6"</span>]                       <span class="cm"># Modern generations only</span>
+        - <span class="ky">key</span>: kubernetes.io/arch
+          <span class="ky">operator</span>: In
+          <span class="ky">values</span>: [<span class="st">arm64</span>, <span class="st">amd64</span>]           <span class="cm"># Graviton in the mix (Lever 3)</span>
+      <span class="ky">nodeClassRef</span>:
+        <span class="ky">group</span>: karpenter.k8s.aws
+        <span class="ky">kind</span>: EC2NodeClass
+        <span class="ky">name</span>: default
+  <span class="ky">disruption</span>:
+    <span class="ky">consolidationPolicy</span>: WhenEmptyOrUnderutilized
+    <span class="ky">consolidateAfter</span>: <span class="nm">1m</span>
+  <span class="ky">limits</span>:
+    <span class="ky">cpu</span>: <span class="st">"200"</span>                              <span class="cm"># Blast radius cap</span>
+---
+<span class="cm"># Every deployment on a Spot NodePool needs one of these</span>
+<span class="ky">apiVersion</span>: policy/v1
+<span class="ky">kind</span>: PodDisruptionBudget
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: payments-api-pdb
+  <span class="ky">namespace</span>: production
+<span class="ky">spec</span>:
+  <span class="ky">minAvailable</span>: <span class="st">"50%"</span>
+  <span class="ky">selector</span>:
+    <span class="ky">matchLabels</span>: {<span class="ky">app</span>: payments-api}</pre>
+
+    <h3>What to watch</h3>
+
+    <ul>
+      <li><strong>PodDisruptionBudgets are not optional.</strong> Karpenter respects PDBs during consolidation and will not evict a pod that would violate one. Without a PDB, consolidation is free to take a two-replica service down to zero mid-drain. Add PDBs before you turn consolidation on, not after the first incident.</li>
+      <li><strong>A PDB that can never be satisfied blocks consolidation forever.</strong> The mirror-image failure. <code>minAvailable: 100%</code> or a single-replica deployment with <code>minAvailable: 1</code> means Karpenter can never drain that node, and you quietly lose the consolidation savings on every node that pod lands on. Check for stuck nodes in the Karpenter logs.</li>
+      <li><strong>Keep stateful workloads on on-demand.</strong> Databases, Kafka, anything with local state or a strict latency SLO gets its own NodePool with <code>capacity-type: on-demand</code> and a conservative disruption policy. Karpenter supports as many NodePools as you need, with different disruption settings each.</li>
+      <li><strong>Widen the instance list, do not narrow it.</strong> The most common Spot mistake is restricting to two or three instance types, which shrinks the capacity pool and multiplies interruption frequency. Let Karpenter choose across a category, not a shortlist.</li>
+      <li><strong><code>consolidateAfter</code> is a churn dial.</strong> Set it to 30 seconds and you will get aggressive consolidation and a lot of pod churn on spiky workloads. One to five minutes is a saner default for production.</li>
+    </ul>
+
+    <h2 id="lever-3-graviton">Lever 3 · Put Graviton in the NodePool</h2>
+
+    <p>Typical saving: <strong>20 to 40 percent on compute versus equivalent x86</strong>, and it stacks on top of the Spot discount rather than competing with it.</p>
+
+    <p>Graviton4 instance families (<code>m8g</code>, <code>c8g</code>, <code>r8g</code>) deliver materially better price-performance than the equivalent Intel or AMD generation. A <code>c8g.4xlarge</code> costs roughly 20 percent less per hour than a <code>c6i.4xlarge</code> and matches or beats it on most containerised workloads. When you combine "cheaper per hour" with "fewer instances needed for the same throughput", the effective saving lands at the top of that range.</p>
+
+    <p>The lever itself is one line: add <code>arm64</code> to the <code>kubernetes.io/arch</code> requirement in your NodePool, as in the manifest above. Karpenter will then include ARM instances in its price comparison and pick them when they win. The work is not in the NodePool, it is in the images.</p>
+
+    <h3>Multi-arch images are the actual task</h3>
+
+    <pre><span class="cm"># .github/workflows/build.yml</span>
+- <span class="ky">uses</span>: <span class="st">docker/setup-buildx-action@v3</span>
+- <span class="ky">uses</span>: <span class="st">docker/build-push-action@v6</span>
+  <span class="ky">with</span>:
+    <span class="ky">platforms</span>: <span class="st">linux/amd64,linux/arm64</span>
+    <span class="ky">push</span>: <span class="nm">true</span>
+    <span class="ky">tags</span>: <span class="st">${{ env.ECR }}/payments-api:${{ github.sha }}</span>
+    <span class="ky">cache-from</span>: <span class="st">type=gha</span>
+    <span class="ky">cache-to</span>: <span class="st">type=gha,mode=max</span></pre>
+
+    <p>That produces a manifest list. Kubernetes pulls the layer matching the node architecture automatically, so a single image tag works on both node types and no manifest changes are needed per workload.</p>
+
+    <h3>Where it goes wrong</h3>
+
+    <ul>
+      <li><strong>Native extensions.</strong> Python packages with C extensions, Node modules with prebuilt binaries, anything vendoring a compiled <code>.so</code>. Most publish ARM wheels now, but the ones that do not will fail at image build time on the arm64 leg, which is the good failure. The bad failure is a package that builds but has no ARM-optimised path and runs slower.</li>
+      <li><strong>Third-party images you do not build.</strong> Sidecars, agents, and vendor containers are the usual blockers. Check <code>docker manifest inspect</code> before assuming.</li>
+      <li><strong>Emulated builds are slow.</strong> Building arm64 under QEMU on an amd64 runner can be five to ten times slower. Use native ARM runners for the arm64 leg if your CI supports them.</li>
+      <li><strong>Roll out gradually.</strong> Add <code>arm64</code> to the NodePool, then watch for pods stuck in <code>ImagePullBackOff</code> or <code>CrashLoopBackOff</code> with <code>exec format error</code>. Pin those workloads back to amd64 with a <code>nodeSelector</code> on <code>kubernetes.io/arch: amd64</code> until their images are fixed.</li>
+    </ul>
+
+    <h2 id="lever-4-rightsizing">Lever 4 · Rightsize Pod Requests with VPA or Goldilocks</h2>
+
+    <p>Typical saving: <strong>20 to 40 percent on compute</strong>, and it is the lever that makes Lever 2 work properly.</p>
+
+    <p>Resource requests are set by intuition, or by copying the values from whichever service the engineer looked at first. The result is a fleet where CPU requests of <code>2000m</code> sit against a p99 actual usage of <code>150m</code>. Kubernetes schedules on <em>requests</em>, not usage, so those numbers are not harmless documentation. They are a claim on node capacity that forces Karpenter to provision nodes for resources nobody consumes. You pay for the gap between requested and used, every hour, forever.</p>
+
+    <h3>Goldilocks gives you the list</h3>
+
+    <p>Goldilocks (from Fairwinds) runs a VPA in recommendation mode for every deployment in a labelled namespace and renders the results in a dashboard: current requests next to recommended requests, per container. Services running at ten times over-provisioned show up immediately.</p>
+
+    <pre>helm repo add fairwinds-stable https://charts.fairwinds.com/stable
+helm install goldilocks fairwinds-stable/goldilocks \
+  --namespace goldilocks --create-namespace
+
+<span class="cm"># Opt a namespace in</span>
+kubectl label ns production goldilocks.fairwinds.com/enabled=<span class="nm">true</span>
+
+<span class="cm"># Or read the raw VPA recommendation directly</span>
+kubectl get vpa -n production goldilocks-payments-api \
+  -o jsonpath=<span class="st">'{.status.recommendation.containerRecommendations[*]}'</span> | jq</pre>
+
+    <p>Run VPA in <code>Off</code> or <code>Initial</code> update mode. In <code>Auto</code> mode VPA evicts pods to apply new requests, which is a behaviour you do not want to discover during a traffic peak. Recommendation mode gives you the numbers; you apply them to your Helm values or Kustomize overlays and ship them through the normal review process.</p>
+
+    <h3>The baseline I use</h3>
+
+    <div class="callout">
+      <strong>Rule of thumb:</strong> CPU request at p99 observed usage plus 20 percent headroom. Memory request at p95 observed usage plus 30 percent headroom. Set the memory <em>limit</em> above the request to allow bursting, and in most cases leave the CPU limit unset. That combination eliminates the 50 to 200 percent over-provisioning typical of unmeasured deployments while keeping normal-load performance intact.
+    </div>
+
+    <p>Two details behind that rule that matter more than the numbers:</p>
+
+    <ul>
+      <li><strong>CPU limits cause throttling, not protection.</strong> The CFS quota throttles a container that exceeds its CPU limit even when the node is idle, which turns a latency problem into a worse latency problem. Set CPU <em>requests</em> honestly and let the scheduler do capacity management. Keep CPU limits only where you genuinely need to cap a noisy batch job.</li>
+      <li><strong>Memory is not compressible.</strong> Exceeding a memory limit means OOMKill, not slowdown. This is why memory gets a bigger headroom margin than CPU, and why memory recommendations should be applied more conservatively than CPU ones.</li>
+      <li><strong>Do not rightsize on a week of data.</strong> VPA needs to have seen your monthly batch job, your Black Friday, and your quarter-end. Let it observe for at least two weeks, ideally through one full business cycle, before you trust the p99.</li>
+    </ul>
+
+    <h2 id="lever-5-keda">Lever 5 · Scale Non-24/7 Workloads to Zero with KEDA</h2>
+
+    <p>Typical saving: <strong>40 to 70 percent on the compute for anything that is not busy around the clock</strong>.</p>
+
+    <p>A deployment with two replicas costs the same at 3am processing nothing as it does at 3pm processing ten thousand requests per hour. For batch consumers, ML inference services, staging environments, and preview deployments, that idle period is pure waste, and it is usually two-thirds of the wall clock.</p>
+
+    <p>KEDA scales a deployment to zero when the trigger source is empty and back up within 30 to 60 seconds when work arrives. I covered the SQS pattern end to end in <a href="/blog/eks-scaling-with-keda">KEDA on EKS: Event-Driven Scaling with SQS Queue Depth</a>. The cost-relevant configuration is <code>minReplicaCount: 0</code>, and the highest-return application is not production at all.</p>
+
+    <h3>The highest-return target is staging</h3>
+
+    <p>Staging and preview environments run 168 hours a week and are used for maybe 50 of them. KEDA's Cron scaler turns that into a schedule with no application changes at all:</p>
+
+    <pre><span class="ky">apiVersion</span>: keda.sh/v1alpha1
+<span class="ky">kind</span>: ScaledObject
+<span class="ky">metadata</span>:
+  <span class="ky">name</span>: staging-api-hours
+  <span class="ky">namespace</span>: staging
+<span class="ky">spec</span>:
+  <span class="ky">scaleTargetRef</span>:
+    <span class="ky">name</span>: api
+  <span class="ky">minReplicaCount</span>: <span class="nm">0</span>              <span class="cm"># Off outside the window</span>
+  <span class="ky">maxReplicaCount</span>: <span class="nm">3</span>
+  <span class="ky">triggers</span>:
+    - <span class="ky">type</span>: cron
+      <span class="ky">metadata</span>:
+        <span class="ky">timezone</span>: <span class="st">Europe/Berlin</span>
+        <span class="ky">start</span>: <span class="st">"0 7 * * 1-5"</span>       <span class="cm"># Mon–Fri 07:00</span>
+        <span class="ky">end</span>: <span class="st">"0 20 * * 1-5"</span>         <span class="cm"># Mon–Fri 20:00</span>
+        <span class="ky">desiredReplicas</span>: <span class="st">"2"</span></pre>
+
+    <p>That schedule runs the environment 65 hours a week instead of 168, a 61 percent cut. For a team spending $4,000/month on staging compute, that is roughly $2,400 back, and the only cost is that an engineer working at 22:00 has to wait 45 seconds for a scale-up, or add a label that pins it warm.</p>
+
+    <h3>Cold starts, and when scale-to-zero is wrong</h3>
+
+    <ul>
+      <li><strong>Queue consumers: always fine.</strong> The message waits in SQS. Nobody notices a 40-second scale-up because nothing is blocked on it.</li>
+      <li><strong>Human-facing HTTP: usually not fine.</strong> A first request that takes 45 seconds reads as an outage. Keep one warm replica during expected active hours, or use the HTTP add-on which holds the request open during scale-up rather than dropping it.</li>
+      <li><strong>Watch the JVM.</strong> A Spring Boot service with a 90-second startup is not a scale-to-zero candidate no matter what the trigger looks like. Measure real readiness time before enabling this, not container start time.</li>
+      <li><strong>Scaling to zero does not free the node instantly.</strong> The saving only materialises when Karpenter consolidates the now-empty node. Levers 2 and 5 are a pair; neither delivers its full number alone.</li>
+    </ul>
+
+    <h2 id="lever-6-nat">Lever 6 · Stop Paying NAT Gateway Tolls on AWS API Traffic</h2>
+
+    <p>Typical saving: <strong>$300 to $2,000 per month</strong>, depending on cluster size and image churn. This is the lever nobody looks at, because NAT Gateway charges arrive as an undifferentiated line item that looks like a fixed cost of having a VPC.</p>
+
+    <p>A NAT Gateway costs about $0.045 per hour to exist, plus <strong>$0.045 per GB processed</strong>. That per-GB charge is the problem. Every ECR image pull on a new node, every log shipped to CloudWatch, every S3 read, every Secrets Manager call goes out through the NAT Gateway and is billed by the gigabyte. On a cluster with active node churn (which Karpenter, by design, gives you plenty of) image pulls alone can run into terabytes per month.</p>
+
+    <h3>VPC endpoints move that traffic off the NAT path</h3>
+
+    <p>Traffic to an AWS service through a VPC endpoint stays on the AWS network and never touches the NAT Gateway. The endpoints worth adding for an EKS cluster, roughly in order of impact:</p>
+
+    <div class="table-scroll">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Endpoint</th>
+          <th>Type</th>
+          <th>Why it matters for EKS</th>
+          <th>Endpoint cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>s3</code></td>
+          <td>Gateway</td>
+          <td>ECR image <em>layers</em> are stored in S3. This is the single biggest win.</td>
+          <td class="good">Free</td>
+        </tr>
+        <tr>
+          <td><code>dynamodb</code></td>
+          <td>Gateway</td>
+          <td>Any app using DynamoDB directly.</td>
+          <td class="good">Free</td>
+        </tr>
+        <tr>
+          <td><code>ecr.dkr</code>, <code>ecr.api</code></td>
+          <td>Interface</td>
+          <td>Image manifest pulls and auth on every node join.</td>
+          <td class="mid">Hourly + per GB</td>
+        </tr>
+        <tr>
+          <td><code>logs</code></td>
+          <td>Interface</td>
+          <td>Fluent Bit shipping container logs to CloudWatch, continuously.</td>
+          <td class="mid">Hourly + per GB</td>
+        </tr>
+        <tr>
+          <td><code>sts</code></td>
+          <td>Interface</td>
+          <td>IRSA and Pod Identity token exchange, on every pod start.</td>
+          <td class="mid">Hourly + per GB</td>
+        </tr>
+        <tr>
+          <td><code>secretsmanager</code>, <code>ssm</code></td>
+          <td>Interface</td>
+          <td>Secret fetches at pod start and on refresh.</td>
+          <td class="mid">Hourly + per GB</td>
+        </tr>
+        <tr>
+          <td><code>sqs</code>, <code>sns</code></td>
+          <td>Interface</td>
+          <td>High-volume queue traffic from workers and from KEDA polling.</td>
+          <td class="mid">Hourly + per GB</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="callout">
+      <strong>The caveat every list omits:</strong> gateway endpoints (S3, DynamoDB) are genuinely free. Interface endpoints are not. They cost roughly $0.01 per hour <em>per availability zone</em> plus about $0.01 per GB processed. Across three AZs that is around $22 per month per endpoint before data charges. Add eight interface endpoints across three AZs and you have committed $175/month to save NAT charges that might only be $120/month. <strong>Add the S3 gateway endpoint unconditionally.</strong> For interface endpoints, check your VPC flow logs first and add only the ones carrying real volume.
+    </div>
+
+    <p>While you are in the flow logs, look for the other transfer charge that hides in Kubernetes clusters: <strong>cross-AZ traffic at $0.01 per GB in each direction</strong>. A chatty service mesh spread across three AZs pays that toll on every internal call that happens to cross a zone boundary. Topology-aware routing (<code>service.kubernetes.io/topology-mode: Auto</code>) keeps traffic zone-local where replicas allow it, and costs nothing to enable.</p>
+
+    <h2 id="lever-7-zombies">Lever 7 · Delete the Zombies</h2>
+
+    <p>Typical saving: <strong>$200 to $1,000 per month</strong>, though I have seen accounts where it was five times that. This lever has the best effort-to-return ratio on the entire list, and it is the one that gets postponed indefinitely because it is not interesting.</p>
+
+    <p>Zombies accumulate through normal operations. A node is terminated without proper volume cleanup. A test environment is torn down but its Elastic IPs are not released. A snapshot policy runs for two years with no expiry. Nothing is broken, so nothing gets noticed.</p>
+
+    <pre><span class="cm"># Unattached EBS volumes, at $0.08–0.10/GB/month each</span>
+aws ec2 describe-volumes --filters Name=status,Values=available \
+  --query <span class="st">'Volumes[].{ID:VolumeId,GB:Size,AZ:AvailabilityZone,Created:CreateTime}'</span> \
+  --output table
+
+<span class="cm"># Unattached Elastic IPs</span>
+aws ec2 describe-addresses --query <span class="st">'Addresses[?AssociationId==`null`].[PublicIp,AllocationId]'</span> \
+  --output text
+
+<span class="cm"># Snapshots older than 180 days owned by this account</span>
+aws ec2 describe-snapshots --owner-ids self \
+  --query <span class="st">"Snapshots[?StartTime&lt;='$(date -v-180d +%Y-%m-%d)'].[SnapshotId,VolumeSize,StartTime]"</span> \
+  --output text
+
+<span class="cm"># Load balancers with no healthy targets (orphaned Ingress / Service objects)</span>
+aws elbv2 describe-target-groups \
+  --query <span class="st">'TargetGroups[].TargetGroupArn'</span> --output text | tr <span class="st">'\t'</span> <span class="st">'\n'</span> | \
+  while read tg; <span class="ky">do</span>
+    n=$(aws elbv2 describe-target-health --target-group-arn <span class="st">"$tg"</span> \
+        --query <span class="st">'length(TargetHealthDescriptions)'</span>)
+    [ <span class="st">"$n"</span> = <span class="st">"0"</span> ] &amp;&amp; <span class="ky">echo</span> <span class="st">"empty: $tg"</span>
+  <span class="ky">done</span></pre>
+
+    <h3>The Kubernetes-specific ones</h3>
+
+    <ul>
+      <li><strong>Orphaned PersistentVolumes.</strong> A PVC deleted while its StorageClass has <code>reclaimPolicy: Retain</code> leaves the EBS volume behind, forever, billed. Check <code>kubectl get pv --field-selector status.phase=Released</code>.</li>
+      <li><strong>Orphaned load balancers.</strong> Deleting a namespace with <code>kubectl delete ns</code> while the AWS Load Balancer Controller is unhealthy can leave the ALB and its target groups alive in AWS with nothing pointing at them. At roughly $18/month per ALB plus LCU charges, a handful adds up.</li>
+      <li><strong>ECR repositories with no lifecycle policy.</strong> Every CI build pushes an image. At $0.10/GB/month and a 400 MB image built 40 times a day, an unmanaged repository crosses $100/month within a year. A lifecycle policy keeping the last 20 tagged images and expiring untagged ones after 7 days fixes this permanently.</li>
+      <li><strong>All public IPv4 addresses are now billed.</strong> Since February 2024, every public IPv4 costs $0.005/hour whether attached or not. A cluster with 40 nodes in public subnets is paying about $146/month purely for addresses. Moving worker nodes to private subnets removes that entirely, and is better security posture regardless.</li>
+    </ul>
+
+    <p>Do this once by hand, then automate it. A weekly Lambda or a scheduled GitHub Action that posts the zombie list to Slack keeps the number near zero and takes an afternoon to write. Automatic deletion is tempting but I would keep a human in the loop: the cost of deleting a volume someone was about to restore from is much higher than a month of storage.</p>
+
+    <h2 id="lever-8-s3">Lever 8 · Intelligent-Tiering on Log and Backup Buckets</h2>
+
+    <p>Typical saving: <strong>40 to 80 percent on storage for infrequently accessed data</strong>.</p>
+
+    <p>Logs, database backups, Terraform state history, build artifacts, and exported metrics all land in S3 STANDARD at $0.023/GB/month and stay there. An object written once and never read again costs exactly the same as one served a thousand times a day. Intelligent-Tiering fixes that automatically:</p>
+
+    <div class="table-scroll">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Tier</th>
+          <th>Moves after</th>
+          <th>Price / GB / month</th>
+          <th>Retrieval</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Frequent Access</td><td>Default</td><td>$0.023</td><td class="good">None</td></tr>
+        <tr><td>Infrequent Access</td><td>30 days idle</td><td>$0.0125</td><td class="good">None</td></tr>
+        <tr><td>Archive Instant Access</td><td>90 days idle</td><td>$0.004</td><td class="good">None, milliseconds</td></tr>
+        <tr><td>Archive Access (opt-in)</td><td>90+ days idle</td><td>$0.0036</td><td class="mid">Minutes to hours</td></tr>
+        <tr><td>Deep Archive Access (opt-in)</td><td>180+ days idle</td><td>$0.00099</td><td class="bad">Up to 12 hours</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <pre><span class="cm"># Terraform: Intelligent-Tiering on a log bucket, with deep archive opted in</span>
+<span class="ky">resource</span> <span class="st">"aws_s3_bucket_intelligent_tiering_configuration"</span> <span class="st">"logs"</span> {
+  <span class="ky">bucket</span> = aws_s3_bucket.logs.id
+  <span class="ky">name</span>   = <span class="st">"entire-bucket"</span>
+
+  <span class="ky">tiering</span> {
+    <span class="ky">access_tier</span> = <span class="st">"ARCHIVE_ACCESS"</span>
+    <span class="ky">days</span>        = <span class="nm">120</span>
+  }
+  <span class="ky">tiering</span> {
+    <span class="ky">access_tier</span> = <span class="st">"DEEP_ARCHIVE_ACCESS"</span>
+    <span class="ky">days</span>        = <span class="nm">200</span>
+  }
+}</pre>
+
+    <div class="callout">
+      <strong>The gotcha that makes this backfire:</strong> Intelligent-Tiering charges a monitoring fee of about $0.0025 per 1,000 objects per month. For a bucket of large objects that is a rounding error. For a bucket holding 50 million tiny JSON log lines as individual objects, the monitoring fee alone is $125/month and can exceed the storage saving outright. Objects under 128 KB are never moved out of the Frequent Access tier anyway, so they pay the monitoring fee for nothing. <strong>Rule: Intelligent-Tiering for buckets with large objects and unpredictable access. A plain lifecycle rule for buckets with many small objects and a known access pattern.</strong>
+    </div>
+
+    <p>The other half of this lever is expiry. Tiering makes old data cheaper; a lifecycle rule makes it disappear. If your retention policy says 90 days, set a lifecycle expiration at 90 days and you save 100 percent rather than 80 percent. Also enable <code>abort_incomplete_multipart_upload</code> at 7 days on every bucket: failed multipart uploads leave orphaned parts that are billed but invisible in the console object listing.</p>
+
+    <h2 id="lever-9-rds">Lever 9 · Rightsize and Reserve the Databases</h2>
+
+    <p>Typical saving: <strong>40 to 60 percent on database cost</strong>, which is usually the second-largest line after compute.</p>
+
+    <p>Databases escape cost review because they feel risky to touch, so they get sized for a peak that was estimated during the initial design and never revisited. The rightsizing conversation for RDS is more constrained than for pods (you cannot resize without a restart window) but the waste is just as large, and it concentrates in the environments nobody watches.</p>
+
+    <h3>Start where the risk is zero</h3>
+
+    <p>RDS Performance Insights shows actual CPU, memory, and IO utilisation per instance. Sort by utilisation ascending and the top of the list will be development and staging databases sitting at 3 to 8 percent CPU on a <code>db.r7g.2xlarge</code> because it was cloned from production. Halving those instance classes is a 50 percent cut with essentially no production risk.</p>
+
+    <p>For dev and staging specifically, two options beat rightsizing:</p>
+
+    <ul>
+      <li><strong>Stop them overnight.</strong> A stopped RDS instance bills storage only. Note the sharp edge: RDS auto-starts any instance stopped for 7 consecutive days, so this needs a scheduled Lambda or EventBridge rule that restarts the stop cycle, not a one-time click.</li>
+      <li><strong>Aurora Serverless v2.</strong> It scales between 0 and 128 ACUs on demand and, since the minimum capacity of zero shipped, genuinely pauses when idle rather than holding a floor of 0.5 ACU. For dev and staging Aurora clusters that is a 70 to 80 percent reduction. Resume takes a few seconds, which is fine for non-production and is a real consideration for production.</li>
+    </ul>
+
+    <h3>Then reserve the production baseline</h3>
+
+    <p>RDS Reserved Instances give 40 to 60 percent off for a 1-year or 3-year commitment. Unlike Compute Savings Plans, RDS RIs are tied to instance family, region, and engine, so they are a tighter commitment. That is acceptable precisely because production databases are the least elastic thing you own: the instance class you run today is very likely the one you run in twelve months. Reserve the production instances, leave dev and staging on-demand where you can stop and resize them freely.</p>
+
+    <div class="callout">
+      <strong>Order matters here too:</strong> rightsize first, reserve second. A Reserved Instance bought against an oversized <code>db.r7g.2xlarge</code> gives you a 45 percent discount on an instance that is 100 percent too large. Downsizing first and then reserving compounds the two savings instead of trading one for the other.
+    </div>
+
+    <h2 id="lever-10-savings-plans">Lever 10 · Buy Savings Plans, Last and Deliberately</h2>
+
+    <p>Typical saving: <strong>24 to 66 percent on whatever on-demand spend remains</strong>. This lever is last on the list on purpose.</p>
+
+    <p>A Compute Savings Plan is a commitment to spend a certain number of dollars per hour on compute for one or three years, in exchange for a discount. It is flexible in the ways that matter for Kubernetes: it applies to any instance family, any size, any region, any OS, and to Fargate and Lambda as well. Karpenter can swap instance types freely and the discount follows.</p>
+
+    <p>The reason it goes last is arithmetic. Every lever above it <em>reduces the baseline you would commit to</em>. Buy a three-year commitment sized against your unoptimised spend and you have contractually locked in the waste that Levers 2 through 9 were going to remove. I have watched a team buy a Savings Plan in month one, complete their Karpenter migration in month three, and then spend the next thirty-three months paying for compute they no longer used.</p>
+
+    <h3>Sizing the commitment</h3>
+
+    <ol>
+      <li>Pull the last 30 days of on-demand compute spend from Cost Explorer, <em>after</em> the other levers have landed and stabilised.</li>
+      <li>Find the minimum consistent hourly baseline: the on-demand spend you would still have on your quietest hour of your quietest day.</li>
+      <li>Commit to <strong>70 to 80 percent of that baseline</strong>. Not 100 percent. Unused commitment is money burned, and you want room to keep optimising.</li>
+      <li>Leave the variable portion to Spot via Karpenter, which is cheaper than any commitment anyway.</li>
+    </ol>
+
+    <div class="table-scroll">
+    <table class="compare-table">
+      <thead>
+        <tr><th>Commitment</th><th>Term</th><th>Discount</th><th>Flexibility</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Compute Savings Plan</td><td>1 year</td><td>Up to ~40%</td><td class="good">Any family, size, region, OS; covers Fargate and Lambda</td></tr>
+        <tr><td>Compute Savings Plan</td><td>3 years</td><td>Up to ~66%</td><td class="good">Same, but a long bet on your architecture</td></tr>
+        <tr><td>EC2 Instance Savings Plan</td><td>1–3 years</td><td>Up to ~72%</td><td class="mid">Locked to one instance family in one region</td></tr>
+        <tr><td>Fargate (via Compute SP)</td><td>1 / 3 years</td><td>~20% / ~52%</td><td class="mid">Covered by Compute SP, not by EC2 Instance SP</td></tr>
+        <tr><td>Spot</td><td>None</td><td>60–90%</td><td class="bad">Interruptible, and never covered by any Savings Plan</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="callout">
+      <strong>The correction worth internalising:</strong> Savings Plans never apply to Spot instances. Spot is already discounted and sits outside the commitment entirely. So the more successful your Karpenter and Spot migration is, the <em>smaller</em> your Savings Plan should be. If your on-demand footprint after Lever 2 is a handful of control-plane-adjacent nodes and your stateful NodePool, size the commitment against that and nothing more. The two levers are complements, but only if you sequence them correctly.
+    </div>
+
+    <p>If you are running Terraform, the companion practice is catching cost changes at review time rather than at invoice time. That is a different problem with a different tool, covered in <a href="/blog/infracost-terraform-aws">Infracost for Terraform</a>.</p>
+
+    <h2 id="priority-matrix">The Priority Matrix</h2>
+
+    <p>Effort and risk vary enormously across these ten, and the order you pull them in matters more than the individual percentages. This is how I sequence them:</p>
+
+    <div class="table-scroll">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Lever</th>
+          <th>Typical saving</th>
+          <th>Effort</th>
+          <th>Risk</th>
+          <th>Prerequisite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td><td>OpenCost visibility</td>
+          <td class="good">Enables everything</td><td class="good">Low</td><td class="good">None</td><td>Prometheus</td>
+        </tr>
+        <tr>
+          <td>7</td><td>Zombie cleanup</td>
+          <td class="good">$200–1,000/mo</td><td class="good">Low</td><td class="good">Low</td><td>None</td>
+        </tr>
+        <tr>
+          <td>8</td><td>S3 Intelligent-Tiering</td>
+          <td class="good">40–80% cold data</td><td class="good">Low</td><td class="good">None</td><td>Object size check</td>
+        </tr>
+        <tr>
+          <td>3</td><td>Graviton in NodePool</td>
+          <td class="good">20–40% compute</td><td class="mid">Medium</td><td class="good">Low</td><td>Multi-arch images</td>
+        </tr>
+        <tr>
+          <td>6</td><td>VPC endpoints</td>
+          <td class="good">$300–2,000/mo</td><td class="mid">Medium</td><td class="good">Low</td><td>Flow log analysis</td>
+        </tr>
+        <tr>
+          <td>2</td><td>Karpenter + Spot</td>
+          <td class="good">50–70% nodes</td><td class="mid">Medium</td><td class="mid">Medium</td><td>PDBs everywhere</td>
+        </tr>
+        <tr>
+          <td>4</td><td>Rightsize requests</td>
+          <td class="good">20–40% compute</td><td class="mid">Medium</td><td class="mid">Medium</td><td>2+ weeks VPA data</td>
+        </tr>
+        <tr>
+          <td>5</td><td>KEDA scale-to-zero</td>
+          <td class="good">40–70% idle</td><td class="mid">Medium</td><td class="mid">Medium</td><td>Cold start tolerance</td>
+        </tr>
+        <tr>
+          <td>9</td><td>RDS rightsize + reserve</td>
+          <td class="good">40–60% DB</td><td class="mid">Medium</td><td class="bad">Restart window</td><td>Perf Insights data</td>
+        </tr>
+        <tr>
+          <td>10</td><td>Savings Plans</td>
+          <td class="good">24–66% residual</td><td class="good">Low</td><td class="bad">1–3 yr lock-in</td><td>Everything above</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2 id="thirty-days">A Realistic 30-Day Plan</h2>
+
+    <p><strong>Week 1 · Measure.</strong> Install OpenCost, import dashboard 15714, and label namespaces with <code>team</code> and <code>cost_center</code>. Enable tag-based cost allocation in Cost Explorer for the out-of-cluster spend. Identify the top three cost drivers by namespace and the top three by AWS service. Do not change anything yet.</p>
+
+    <p><strong>Week 2 · Take the free money.</strong> Run the zombie audit and delete what is safe. Add the S3 gateway endpoint. Apply Intelligent-Tiering to log and backup buckets (after checking object counts) and set expiry rules where retention policy allows. Set ECR lifecycle policies. None of this needs a change window.</p>
+
+    <p><strong>Week 3 · Compute efficiency.</strong> Enable Karpenter consolidation with a conservative <code>consolidateAfter</code>, after confirming every production deployment has a sane PDB. Add <code>arm64</code> to the NodePool and start the multi-arch image work. Apply Goldilocks recommendations to the five most over-provisioned services. Identify idle workloads for KEDA and start with staging.</p>
+
+    <p><strong>Week 4 · Databases and the commitment.</strong> Downsize dev and staging RDS instances and put them on a stop schedule. Review Performance Insights for production. Only now, with a stabilised baseline, size and buy a Compute Savings Plan at 70 to 80 percent of your remaining on-demand floor.</p>
+
+    <p>Most teams land 30 to 45 percent in that first month, with the rest arriving over the following quarter as the multi-arch and rightsizing work completes across the full service catalogue.</p>
+
+    <h2 id="what-lists-omit">What These Lists Usually Leave Out</h2>
+
+    <p>Three things determine whether this works, and none of them are on the list of levers.</p>
+
+    <h3>The levers interact, and the interactions are not additive</h3>
+
+    <p>Rightsizing requests (Lever 4) is what lets consolidation (Lever 2) actually reclaim nodes. Scale-to-zero (Lever 5) delivers nothing until Karpenter removes the emptied node. Spot adoption (Lever 2) shrinks the correct size of your Savings Plan (Lever 10). If you model these as ten independent percentages and multiply them out, you will produce a forecast that promises an 85 percent reduction and then miss it by a mile, which does more damage to the programme's credibility than never forecasting at all. Estimate conservatively, measure the real delta, report the measured number.</p>
+
+    <h3>Engineering time is a real cost</h3>
+
+    <p>Making a service ARM-compatible might take two days. If that service costs $180/month and the saving is 25 percent, the payback period is eleven months of engineer time at any reasonable rate. Sort by absolute dollars, not by percentage. The 40 percent saving on a $200 service is noise; the 15 percent saving on a $9,000 service is the entire quarter's target.</p>
+
+    <h3>Cost is a behaviour problem wearing an infrastructure costume</h3>
+
+    <p>Every optimisation on this list decays. Requests drift back up when a service is copied from an old template. New buckets get created without lifecycle rules. Somebody adds a NodePool restricted to two instance types during an incident and it stays. The infrastructure work is a one-time cut; the weekly cost report per team, and a cost check in the PR review, is what keeps the number down. Teams that do the cut but not the loop are back where they started in eighteen months.</p>
+
+    <h2 id="takeaways">Key Takeaways</h2>
+
+    <ol>
+      <li><strong>Visibility first, always.</strong> OpenCost for in-cluster attribution, tag-based Cost Explorer for everything outside it. Optimisation without attribution is guessing, and guessing sends engineers after the wrong 3 percent.</li>
+      <li><strong>Compute is the whale.</strong> Worker nodes are usually 60 percent or more of the bill. Karpenter with Spot-first provisioning plus consolidation is the single largest lever, worth 50 to 70 percent on that line.</li>
+      <li><strong>Rightsizing multiplies Karpenter.</strong> Honest resource requests are what let consolidation actually reclaim nodes. Run VPA in recommendation mode, wait two weeks, apply the numbers through normal review.</li>
+      <li><strong>Graviton is nearly free money once your images are multi-arch.</strong> One line in the NodePool, and the discount stacks on top of Spot instead of competing with it.</li>
+      <li><strong>Idle is a schedule problem.</strong> Staging that runs 168 hours a week for 50 hours of use is the highest-return KEDA target in any organisation, and it carries no production risk.</li>
+      <li><strong>Check the endpoint maths before adding endpoints.</strong> The S3 gateway endpoint is free and always worth it. Interface endpoints cost roughly $22/month per AZ trio each, so add them from flow log evidence, not from a list.</li>
+      <li><strong>Small objects break Intelligent-Tiering.</strong> The monitoring fee can exceed the saving on buckets with millions of tiny objects. Use plain lifecycle rules there instead.</li>
+      <li><strong>Rightsize databases before reserving them.</strong> A Reserved Instance on an oversized database locks in the oversizing for a year.</li>
+      <li><strong>Savings Plans go last, at 70 to 80 percent of the optimised baseline.</strong> They never cover Spot, so a successful Spot migration means a smaller commitment, not a larger one.</li>
+      <li><strong>The cut is one-time; the discipline is permanent.</strong> Weekly per-team cost reporting is what stops the bill climbing back.</li>
+    </ol>
+
+    <h2 id="reference">Reference</h2>
+    <ul>
+      <li>OpenCost: <a href="https://www.opencost.io/docs/" target="_blank" rel="noopener">opencost.io/docs</a> · Grafana dashboard ID <code>15714</code></li>
+      <li>Karpenter: <a href="https://karpenter.sh/docs/concepts/disruption/" target="_blank" rel="noopener">Disruption and consolidation</a></li>
+      <li>Goldilocks: <a href="https://goldilocks.docs.fairwinds.com/" target="_blank" rel="noopener">goldilocks.docs.fairwinds.com</a> · <a href="https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler" target="_blank" rel="noopener">Vertical Pod Autoscaler</a></li>
+      <li>KEDA scalers: <a href="https://keda.sh/docs/latest/scalers/cron/" target="_blank" rel="noopener">Cron scaler</a> · <a href="https://keda.sh/docs/latest/scalers/aws-sqs/" target="_blank" rel="noopener">AWS SQS scaler</a></li>
+      <li>AWS: <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/privatelink-access-aws-services.html" target="_blank" rel="noopener">VPC endpoints</a> · <a href="https://aws.amazon.com/s3/storage-classes/intelligent-tiering/" target="_blank" rel="noopener">S3 Intelligent-Tiering</a> · <a href="https://aws.amazon.com/savingsplans/compute-pricing/" target="_blank" rel="noopener">Compute Savings Plans</a></li>
+      <li>Source that prompted this piece: <a href="https://medium.com/devops-ai-decoded/top-10-aws-cost-reduction-tips-for-kubernetes-teams-in-2026-b46ee23b991f" target="_blank" rel="noopener">Top 10 AWS Cost Reduction Tips for Kubernetes Teams in 2026</a> by Neel Shah, Devops &amp; AI Hub</li>
+      <li>Related reading here: <a href="/blog/eks-spot-instances">EKS Spot Instances</a> · <a href="/blog/eks-scaling-with-karpenter">Karpenter on EKS</a> · <a href="/blog/eks-cluster-autoscaler-vs-karpenter">Cluster Autoscaler vs Karpenter</a> · <a href="/blog/eks-scaling-with-keda">KEDA on EKS</a> · <a href="/blog/infracost-terraform-aws">Infracost for Terraform</a> · <a href="/blog/eks-auto-mode">EKS Auto Mode</a></li>
+    </ul>
+
+    <p style="font-size:0.88rem;color:var(--muted);margin-top:2rem;">Dollar figures in the hero diagram are an illustrative composite for a mid-size platform cluster, not an invoice. Your ratios will differ; the ordering of the levers will not.</p>
+
+  </article>
+
+  <div class="article-divider"></div>
+  <footer class="article-footer">
+    <div class="article-author">
+      <div class="author-avatar">R³</div>
+      <div>
+        <div class="author-name">Richie Richard Rajkumar</div>
+        <div class="author-role">Infrastructure Architect · Platform Leader · Berlin</div>
+      </div>
+    </div>
+    <a href="/blog" class="back-btn">← All articles</a>
+  </footer>
+
+</div><!-- /article-page -->
+
+<script src="/js/main.js"></script>
+</body>
+</html>
