@@ -31,7 +31,9 @@ richierichard.github.io/
 │   ├── helm-to-kustomize.html                  # Article: Helm to Kustomize Migration (May 2026)
 │   ├── infracost-terraform-aws.html            # Article: Infracost for Terraform on AWS (May 2026)
 │   ├── local-llm-openclaw-rtx-3050.html        # Article: Self-Hosting OpenClaw on OptiPlex 990 + RTX 3050 (May 2026)
-│   └── eks-auto-mode.html                      # Article: EKS Auto Mode comparison + migration (June 2026)
+│   ├── eks-auto-mode.html                      # Article: EKS Auto Mode comparison + migration (June 2026)
+│   ├── aws-cost-reduction-kubernetes.html      # Article: Ten AWS cost levers for Kubernetes teams (September 2026)
+│   └── aws-mcp-servers.html                    # Article: Five AWS Labs MCP servers + IAM boundary (September 2026)
 ├── CNAME                    # GitHub Pages artefact (no longer used by Vercel)
 └── README.md
 ```
@@ -150,6 +152,7 @@ Each article is a standalone HTML file in the `blog/` directory with:
 - **Callout boxes** — `.callout` div with accent left border, used for key takeaways and author opinions
 - **Comparison tables** — `.compare-table` with `.good` (accent/green) and `.bad` (red) cell classes
 - **Conversation blocks** — `.conversation` div with `.human` (accent blue), `.ai` (purple #a78bfa), `.msg` children; used for AI dialogue examples
+- **Prompt lists** — `.prompt-list` div (accent left border like `.callout`) with a `.prompt-list-label` (`// prompts worth trying`) and a `<ul>` of `<li><q>prompt</q><span class="why">why it works</span></li>`; `▸` bullets via `::before`, all colours from CSS variables so both themes work. Used in `aws-mcp-servers.html` for copy-and-paste example prompts per tool
 
 **Published articles:**
 | Slug | Title | Date | Tags |
@@ -166,6 +169,8 @@ Each article is a standalone HTML file in the `blog/` directory with:
 | `infracost-terraform-aws` | Infracost for Terraform: Catching AWS Cost Surprises Before They Hit Production | May 2026 | AWS, Terraform, FinOps, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
 | `local-llm-openclaw-rtx-3050` | From Cloud Throttling to a Home Server: Self-Hosting OpenClaw with a Local LLM on an OptiPlex 990 | May 2026 | AI, DevOps, Infrastructure, Platform Engineering |
 | `eks-auto-mode` | EKS Auto Mode: Letting AWS Run the Data Plane (and What It Costs You) | June 2026 | Kubernetes, AWS, Cost Engineering, FinOps, DevOps, Infrastructure, Platform Engineering |
+| `aws-cost-reduction-kubernetes` | Cutting the AWS Bill for Kubernetes: Ten Levers, Ranked by Payback | September 2026 | Kubernetes, AWS, FinOps, Cost Engineering, DevOps, Infrastructure, Platform Engineering |
+| `aws-mcp-servers` | Five AWS MCP Servers Worth Wiring Up, and the IAM Boundary That Makes Them Safe | September 2026 | AWS, AI, DevOps, FinOps, Infrastructure, Platform Engineering |
 
 ## favicon.svg
 - SVG favicon, transparent background, green R³ in Courier New bold
